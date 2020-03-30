@@ -1,0 +1,258 @@
+---
+title: "COVID-GIBD"
+output: 
+  html_document:
+    toc: true
+    toc_float: true
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+library(readr)
+library(dplyr)
+library(tidyr)
+library(ggplot2)
+library(lubridate)
+library(knitr)
+library(kableExtra)
+
+covid19 <- read_csv("https://github.com/CSSEGISandData/COVID-19/raw/master/csse_covid_19_data/csse_covid_19_time_series/time_series_covid19_confirmed_global.csv")
+covid19 <- covid19[-1]
+
+covid19_m <- read_csv("https://github.com/CSSEGISandData/COVID-19/raw/master/csse_covid_19_data/csse_covid_19_time_series/time_series_covid19_deaths_global.csv")
+covid19_m <- covid19_m[-1]
+
+paises_sa <- c('Brazil', 'Argentina', 'Chile', 'Peru', 'Paraguay', 'Bolivia', 'Uruguay', 'Colombia', 'Venezuela',  'Ecuador', 'Guayana Francesa')
+
+## Sudamérica
+sudamerica <- covid19 %>% 
+  filter(`Country/Region` %in% paises_sa) 
+sudamerica <- sudamerica[,-c(2:38)]
+sudamerica <- sudamerica %>% 
+  gather(fecha, casos, 2:max(col(sudamerica)), -`Country/Region`) 
+
+names(sudamerica) <- c('pais', 'fecha', 'casos')
+sudamerica$fecha <-paste0(sudamerica$fecha,'20')
+sudamerica$fecha <- as.Date(sudamerica$fecha ,"%m/%d/%Y")
+
+sudamerica<-sudamerica %>%
+  filter(casos > 0) %>% 
+  group_by(pais) %>% 
+  arrange(pais,fecha) %>% 
+  mutate(dia= 1:n())
+
+sudamerica<-sudamerica %>%
+  filter(casos > 0) %>% 
+  group_by(pais)
+
+sudamerica_m <- covid19_m %>% 
+  filter(`Country/Region` %in% paises_sa) 
+sudamerica_m <- sudamerica_m[,-c(2:38)]
+sudamerica_m <- sudamerica_m %>% 
+  gather(fecha, casos, 2:max(col(sudamerica_m)), -`Country/Region`) 
+
+names(sudamerica_m) <- c('pais', 'fecha', 'fallecidos')
+sudamerica_m$fecha <-paste0(sudamerica_m$fecha,'20')
+sudamerica_m$fecha <- as.Date(sudamerica_m$fecha ,"%m/%d/%Y")
+
+sudamerica_m<-sudamerica_m %>%
+  filter(fallecidos > 0) %>% 
+  group_by(pais) %>% 
+  arrange(pais,fecha) %>% 
+  mutate(dia= 1:n())
+
+sudamerica_m<-sudamerica_m %>%
+  filter(fallecidos > 0) %>% 
+  group_by(pais)
+
+```
+
+## Sudamérica
+
+En Sud América se informa el día `r day(min(sudamerica$fecha))` de `r format(min(sudamerica$fecha), "%b")` del 2020 en `r sudamerica %>% filter(fecha==min(sudamerica$fecha)) %>% select(pais)`. A continuación se muestran las fechas en que se detectó por primera vez un infectado:
+
+```{r tablaFechas, echo=FALSE, message=FALSE, warning=FALSE, paged.print=FALSE, fig.align='center', out.width='50%'}
+
+t_fechas <- sudamerica %>% 
+  group_by(pais) %>%  arrange( fecha ) %>% 
+  mutate(inicio= format(min(fecha),'%d/%m/%Y') ) %>% 
+  select(pais, inicio)%>% 
+  unique() 
+ 
+t_fechas %>%  kable( col.names =  c("País", "Fecha 1° Caso"), align = c('l','c')) %>% kable_styling()
+```
+
+### Evolución de nuevos casos
+La evolución de casos acumulados por país se muestra desde el día en que se detectó por primera vez un infectado.
+
+A las gráficas se les ha agregado la tendencia (basada en el modelo de regresión local)
+
+```{r casospais, echo=FALSE, message=FALSE, warning=FALSE, paged.print=FALSE, out.width='100%'}
+
+sudamerica %>% 
+  group_by(pais) %>% 
+  ggplot(aes(x=dia, y=casos, color=pais))+
+  geom_line( show.legend=FALSE) +
+  geom_smooth(se=F, show.legend = F) +                  
+  labs(title="Casos detectados COVID-19 ", x='día',
+       y="Cantidad de casos", caption="Datos: Universidad Johns Hopkins") + 
+  facet_wrap(~pais,  ncol=4)
+# scales="free",
+```
+
+Las curvas de evolución de los países en simultáneo:
+```{r pressure, echo=FALSE, out.width='90%'}
+sudamerica %>%
+  ggplot(aes(x=dia, y=casos, group=pais, color=pais)) + 
+  geom_line(size=1.2 ) + geom_point()+
+  labs(title="COVID-19 en Sudamérica", y="Cantidad de casos", caption="Datos: Universidad Johns Hopkins") + 
+  theme_minimal() + labs(color='Países') 
+```
+
+
+### Incidencia Acumulada
+La incidencia acumulada (IA) proporciona una estimación de la probabilidad o el riesgo de que un individuo libre de una determinada enfermedad la desarrolle durante un período especificado de tiempo.
+
+Al día de la fecha las incidencias acumuladas por cada 100000 habitantes de los países de Sud América es: 
+
+```{r ia, echo=FALSE, message=FALSE, warning=FALSE, paged.print=FALSE, out.width='100%'}
+poblacion <- data.frame(
+  c('Argentina', 'Bolivia', 'Brazil', 'Chile', 'Colombia', 'Ecuador',  'Paraguay',	'Peru',	'Surinam', 'Uruguay',  'Venezuela'), 
+  c(44938712, 11383094,	210147125,19107216,	50372424,	17300000,	 7152703, 33105273,524000, 3529014, 28067000)) 
+names(poblacion) <- c('pais', 'poblacion')
+
+ia <- sudamerica %>% 
+  group_by(pais) %>% 
+  filter(dia==max(dia)) %>% 
+  left_join(poblacion ) %>% 
+  mutate(inc= as.double(round(casos/poblacion*100000, 2))) %>%  
+  select(pais, dia, poblacion, casos, inc) %>% 
+  arrange(desc(inc))
+  ia  %>% kable( col.names =  c("País", "Días", "Población","# Casos", "IA"),
+          align =  c('l', 'c', 'c', 'c', 'c') ) %>% 
+    kable_styling()
+```
+
+
+Como se observa, el país con la mayor Incidencia Acumulada al día de hoy es **`r ia[1,1] `**, que lleva *`r ia[1,2] ` días* desde la detección del primer caso.
+
+
+### Mortalidad
+A continuación se grafica la evolución de las cantidades de fallecimientos desde la detección del virus en cada país, y la tabla correspondiente a la cantidad acumulada al día de la fecha.
+
+####  {.tabset}
+##### Gráfico
+```{r muertesg, echo=FALSE, message=FALSE, warning=FALSE, paged.print=FALSE, out.width='100%'}
+
+sudamerica_m %>% 
+  group_by(pais) %>% 
+  ggplot(aes(x=dia, y=fallecidos, color=pais))+
+  geom_line( show.legend=FALSE) +
+  geom_smooth(se=F, show.legend = F) +                  
+  labs(title="", x='día',
+       y="Cantidad de Fallecidos", caption="Datos: Universidad Johns Hopkins") + 
+  facet_wrap(~pais,  ncol=4)
+# scales="free",
+```
+
+##### Tabla
+
+Al día de la fecha las incidencias acumuladas por cada 100000 habitantes de los países de Sud América es: 
+
+```{r muertes_t, echo=FALSE, message=FALSE, warning=FALSE, paged.print=FALSE, out.width='100%'}
+ambos <- sudamerica %>% 
+  left_join(sudamerica_m, by=c('pais', 'fecha'))
+ambos$fallecidos <- if_else(is.na(ambos$fallecidos), 0, ambos$fallecidos)
+ambos <- ambos[-6]
+
+muertes <- sudamerica_m %>% 
+  group_by(pais) %>% 
+  filter(dia==max(dia)) %>% 
+  select(pais, fallecidos) %>% arrange(desc(fallecidos))
+  muertes  %>% kable( col.names =  c("País", "# Fallecidos"),
+          align =  c('l', 'c') ) %>%    kable_styling()
+```
+
+#### Tasa de Mortalidad
+Una proporción interesante a comparar es la **tasa de mortalidad particular**, es decir la cantidad de personas que fallecieron respecto al total de casos en un período de tiempo.
+A continuación se muestra la evolución de la tasa de mortalidad en los distintos países considerando el primer día de detección del virus
+
+```{r tasa_mort, echo=FALSE, message=FALSE, warning=FALSE, paged.print=FALSE, out.width='100%'}
+
+ambos <- ambos %>%   mutate(tasa_m= fallecidos/casos * 100)
+
+ambos %>%
+  ggplot(aes(x=dia.x, y=tasa_m, group=pais, color=pais)) + 
+  geom_line(size=1.2 ) + geom_point()+
+  labs(title="Tasa de mortalidad en Sudamérica", y="Tasa de mortalidad", caption="Datos: Universidad Johns Hopkins") + theme_minimal() + labs(color='Países') 
+
+```
+
+En el siguiente gráfico se muestran las series de cantidades de casos y cantidades de fallecidos en cada país
+
+```{r casos_muertes, echo=FALSE, message=FALSE, warning=FALSE, paged.print=FALSE, out.width='100%'}
+
+ casos<- ambos %>% select(pais, dia.x, casos, fallecidos) %>% 
+  gather(tipo, cant, -c(pais, dia.x))
+
+ggplot(data = casos, aes(x=dia.x, y=cant, group=tipo))+
+        geom_line(aes(linetype=tipo, color=tipo))+
+        geom_point(aes(shape=tipo, color=tipo))+
+          labs(title='Cantidades de Casos y Fallecidos')+
+          labs(x = 'Año', y = expression(''))+
+          # scale_color_manual(values=c("navy", "red2"))+
+          theme(legend.position="bottom") + 
+  facet_wrap(~pais,  ncol=4) 
+# scales="free",
+```
+
+
+## Argentina
+
+En Argentina los datos son informados diariamente por el Ministerio de Salud de la Nación. Estos datos se informan de manera desestructurada y diariamente se modifican los datos brindados.
+
+Los datos con los que se trabajarán son de procesamiento propio en base a los informes mencionados
+
+```{r mapaArg, include=FALSE, message=FALSE, warning=FALSE, out.width='100%',  paged.print=FALSE}
+library(highcharter)
+library(rjson)
+
+argentina <- fromJSON(file = "data/ar-all.geo.json")
+covidArg <-read_delim("data/COVID_Arg.csv", ";", 
+                      escape_double = FALSE, trim_ws = TRUE, locale = locale(encoding = "ISO-8859-1"))
+```
+
+```{r mapas, echo=FALSE, message=FALSE, warning=FALSE}
+covidArg_hoy <- covidArg %>% 
+  group_by(PROVINCIA) %>% 
+  mutate(total=sum(CASOS)) %>% select(PROVINCIA, total) %>% unique()
+
+
+highchart() %>%
+        hc_title(text = "<i>Mapa dinámico de COVID-19 en Argentina</i> - <b>GIBD</b>",
+           margin = 20, align = "center",
+           style = list(color = "#08338F", useHTML = TRUE)) %>% 
+        hc_subtitle(text = "Casos detectados por provincia",
+              align = "center",
+              style = list(color = "#0C5C9E", fontWeight = "bold")) %>% 
+        hc_tooltip(followPointer =  FALSE) %>%
+        hc_add_series_map(argentina, covidArg_hoy, name = "Total",
+                          value = "total", joinBy = c("name", "PROVINCIA"),
+                          dataLabels = list(enabled = TRUE,
+                                            format = '{point.properties.woe-name}')) %>%
+        hc_colorAxis(minColor = "#B7D4EB", maxColor = "#08338F")  %>%
+        hc_legend(align = "center", x = 0, y = -70) %>%
+        hc_mapNavigation(enabled = TRUE) %>%
+        hc_add_theme(hc_theme_ffx()) %>% 
+        hc_add_annotation(xValue = 0, yValue = 0, title = list(text = 'Fuente: Datos Propios')) %>% 
+        hc_chart(borderColor = "#08338F",
+           borderRadius = 10,
+           borderWidth = 2)
+```
+
+### Evolución por Provincia
+
+La notificación de los casos por jurisdicción se realiza teniendo en cuenta la residencia según el Registro Nacional de las Personas. Pudiendo variar en función de la investigación de la jurisdicción.
+
+
+ 

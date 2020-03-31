@@ -73,18 +73,8 @@ sudamerica_m<-sudamerica_m %>%
 
 ## Sudamérica
 
-En Sud América se informa el día `r day(min(sudamerica$fecha))` de `r format(min(sudamerica$fecha), "%b")` del 2020 en `r sudamerica %>% filter(fecha==min(sudamerica$fecha)) %>% select(pais)`. A continuación se muestran las fechas en que se detectó por primera vez un infectado:
+En Sud América se informa el día `r day(min(sudamerica$fecha))` de `r format(min(sudamerica$fecha), "%b")` del 2020 en `r sudamerica %>% filter(fecha==min(sudamerica$fecha)) %>% select(pais)`. 
 
-```{r tablaFechas, echo=FALSE, message=FALSE, warning=FALSE, paged.print=FALSE, fig.align='center', out.width='50%'}
-
-t_fechas <- sudamerica %>% 
-  group_by(pais) %>%  arrange( fecha ) %>% 
-  mutate(inicio= format(min(fecha),'%d/%m/%Y') ) %>% 
-  select(pais, inicio)%>% 
-  unique() 
- 
-t_fechas %>%  kable( col.names =  c("País", "Fecha 1° Caso"), align = c('l','c')) %>% kable_styling()
-```
 
 ### Evolución de nuevos casos
 La evolución de casos acumulados por país se muestra desde el día en que se detectó por primera vez un infectado.
@@ -103,6 +93,19 @@ sudamerica %>%
   facet_wrap(~pais,  ncol=4)
 # scales="free",
 ```
+
+A continuación se muestran las fechas en que se detectó por primera vez un infectado en cada país:
+```{r tablaFechas, echo=FALSE, message=FALSE, warning=FALSE, paged.print=FALSE, fig.align='center', out.width='50%'}
+
+t_fechas <- sudamerica %>% 
+  group_by(pais) %>%  arrange( fecha ) %>% 
+  mutate(inicio= format(min(fecha),'%d/%m/%Y') ) %>% 
+  select(pais, inicio)%>% 
+  unique() 
+ 
+t_fechas %>%  kable( col.names =  c("País", "Fecha 1° Caso"), align = c('l','c')) %>% kable_styling()
+```
+
 
 Las curvas de evolución de los países en simultáneo:
 ```{r pressure, echo=FALSE, out.width='90%'}

@@ -215,7 +215,9 @@ ggplot(data = casos, aes(x=dia.x, y=cant, group=tipo))+
 
 En Argentina los datos son informados diariamente por el Ministerio de Salud de la Nación. Estos datos se informan de manera desestructurada y diariamente se modifican los datos brindados.
 
-Los datos con los que se trabajarán son de procesamiento propio en base a los informes mencionados
+Los datos con los que se trabajarán son de procesamiento propio en base a los informes mencionados.
+
+
 
 ```{r mapaArg, include=FALSE, message=FALSE, warning=FALSE, out.width='100%',  paged.print=FALSE}
 library(highcharter)

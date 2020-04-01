@@ -272,7 +272,7 @@ ggplot(data = casos, aes(x=dia.x, y=cant, group=tipo))+
 ### Trayectoria de Nuevos Casos
 Este gráfico (propuesto por https://aatishb.com/covidtrends/) muestra los nuevos casos confirmados de COVID-19 en la última semana frente al total de casos confirmados hasta la fecha. Cuando se traza de esta manera, el crecimiento exponencial se representa como una línea recta que se inclina hacia arriba. Tenga en cuenta que casi todos los países siguen un camino muy similar de crecimiento exponencial.
 
-```{r grafTray, echo=FALSE, message=FALSE, warning=TRUE, paged.print=FALSE}
+```{r grafTray, echo=FALSE, message=FALSE, warning=TRUE, paged.print=FALSE, out.width='100%'}
  
   sudamerica %>% 
     group_by(pais) %>% 
@@ -315,6 +315,8 @@ Este gráfico (propuesto por https://aatishb.com/covidtrends/) muestra los nuevo
 En Argentina los datos son informados diariamente por el Ministerio de Salud de la Nación. Estos datos se informan de manera desestructurada y diariamente se modifican los datos brindados.
 
 Los datos con los que se trabajarán son de procesamiento propio en base a los informes mencionados.
+
+Datos actualizados al `r max(covidArg$FECHA) `.
 ```{r mapas, echo=FALSE, message=FALSE, warning=FALSE}
 covidArg_hoy <- covidArg %>% 
   group_by(PROVINCIA) %>% 
@@ -347,7 +349,7 @@ highchart() %>%
 
 La notificación de los casos por jurisdicción se realiza teniendo en cuenta la residencia según el Registro Nacional de las Personas. Pudiendo variar en función de la investigación de la jurisdicción. 
 A continuación se muestra la evolución de nuevos casos detectados por día para cada una de las provincias argentinas.
-Actualizado al `r max(covidArg$FECHA)`
+Actualizado al `r max(covidArg$FECHA)`.
 
 ```{r ev_prov, echo=FALSE, fig.align='center', message=FALSE,fig.show='asis',fig.dim = c(5, 7), warning=FALSE, out.width='100%', paged.print=FALSE}
 
@@ -375,23 +377,23 @@ covidArg %>%
 En la provincia de Buenos Aires y Ciudad de Buenos Aires se observa una cantidad decreciente muy pronunciada el día 29/03/2020, esto se debe a la reasignación de jurisdicción informada por Ministerio. Se asignó al día en que fueron informadas debido a la falta del dato sobre el caso reasignado.
 
 
-Este gráfico interactivo muestra los nuevos casos confirmados de COVID-19 en la última semana frente al total de casos confirmados hasta la fecha. Cuando se traza de esta manera, el crecimiento exponencial se representa como una línea recta que se inclina hacia arriba. Tenga en cuenta que casi todos los países siguen un camino muy similar de crecimiento exponencial.
+<!-- Este gráfico interactivo muestra los nuevos casos confirmados de COVID-19 en la última semana frente al total de casos confirmados hasta la fecha. Cuando se traza de esta manera, el crecimiento exponencial se representa como una línea recta que se inclina hacia arriba. Tenga en cuenta que casi todos los países siguen un camino muy similar de crecimiento exponencial. -->
 
 ```{r argGral, echo=FALSE, message=FALSE, warning=FALSE}
 # gralArg<- read_delim("data/detalle_casos.csv", ";", 
 #                       escape_double = FALSE, trim_ws = TRUE, locale = locale(encoding = "ISO-8859-1"))
-gralArg <- read_delim("data/detalle_casos.csv", 
-    ";", escape_double = FALSE, locale = locale(decimal_mark = ","), 
-    na = "0", trim_ws = TRUE)
-
-gralArg$Fallecidos <- if_else(is.na(gralArg$Fallecidos ), 0, gralArg$Fallecidos )
-gralArg$Recuperados <- if_else(is.na(gralArg$Recuperados ), 0, gralArg$Recuperados )
-gralArg$Terapia <- if_else(is.na(gralArg$Terapia ), 0, gralArg$Terapia )
-gralArg$`Tests Totales` <- if_else(is.na(gralArg$`Tests Totales`), 0, gralArg$`Tests Totales`)
-gralArg$TasaExp <- if_else(is.na(gralArg$TasaExp), 0.0, gralArg$TasaExp)
-
-ggplot(data = gralArg, aes(x = CasosTot, y = Nuevos)) +
-     geom_line()
+# gralArg <- read_delim("data/detalle_casos.csv", 
+#     ";", escape_double = FALSE, locale = locale(decimal_mark = ","), 
+#     na = "0", trim_ws = TRUE)
+# 
+# gralArg$Fallecidos <- if_else(is.na(gralArg$Fallecidos ), 0, gralArg$Fallecidos )
+# gralArg$Recuperados <- if_else(is.na(gralArg$Recuperados ), 0, gralArg$Recuperados )
+# gralArg$Terapia <- if_else(is.na(gralArg$Terapia ), 0, gralArg$Terapia )
+# gralArg$`Tests Totales` <- if_else(is.na(gralArg$`Tests Totales`), 0, gralArg$`Tests Totales`)
+# gralArg$TasaExp <- if_else(is.na(gralArg$TasaExp), 0.0, gralArg$TasaExp)
+# 
+# ggplot(data = gralArg, aes(x = CasosTot, y = Nuevos)) +
+#      geom_line()
   
  
 ```

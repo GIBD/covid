@@ -12,6 +12,7 @@ output:
 
 ```{r setup, include=FALSE}
 knitr::opts_chunk$set(echo = TRUE)
+
 library(readr)
 library(dplyr)
 library(tidyr)
@@ -21,6 +22,7 @@ library(knitr)
 library(kableExtra)
 library(highcharter)
 library(rjson)
+library(plotly)
 
 covid19 <- read_csv("https://github.com/CSSEGISandData/COVID-19/raw/master/csse_covid_19_data/csse_covid_19_time_series/time_series_covid19_confirmed_global.csv")
 covid19 <- covid19[-1]
@@ -38,8 +40,6 @@ poblacion <- data.frame( c('Argentina', 'Bolivia', 'Brazil', 'Chile', 'Colombia'
   c(44938712, 11383094,	210147125,19107216,	50372424,	17300000,	 7152703, 33105273,524000, 3529014, 28067000)) 
 
 names(poblacion) <- c('pais', 'poblacion')
-
-
 
 covidArg$recuperados <- if_else(is.na(covidArg$recuperados), 0, covidArg$recuperados)
 covidArg$FALLECIDOS <- if_else(is.na(covidArg$FALLECIDOS), 0, covidArg$FALLECIDOS)
@@ -86,6 +86,23 @@ sudamerica_m<-sudamerica_m %>%
 sudamerica_m<-sudamerica_m %>%
   filter(fallecidos > 0) %>% 
   group_by(pais)
+
+
+ sudamerica$nuevos <- 0
+  for(p in sudamerica$pais){
+    for(i in 3:max(sudamerica$dia[sudamerica$pais==p])-1){
+      nuevo <- (sudamerica$casos[((sudamerica[,"pais"]==p) & (sudamerica[,"dia"]==i))] - sudamerica$casos[((sudamerica[,"pais"]==p) & (sudamerica[,"dia"]==(i-1) ))])
+      sudamerica$nuevos[((sudamerica[,"pais"]==p) & (sudamerica[,"dia"]==i))] <- if_else(nuevo >0, nuevo, 0)
+    }  
+  }
+  
+ sudamerica$semanal <- 0
+  for(p in sudamerica$pais){
+    for(i in 8:max(sudamerica$dia[sudamerica$pais==p])){
+      semanal <- sum(sudamerica$nuevos[((sudamerica[,"pais"] == p) & (sudamerica[,"dia"] <= i) & (sudamerica[,"dia"] >= (i-6) ))])
+      sudamerica$semanal[((sudamerica[,"pais"]==p) & (sudamerica[,"dia"]==i))] <- if_else(semanal >0, semanal, 0)
+    }  
+  }
 
 ```
 
@@ -235,14 +252,11 @@ ambos %>%
 
 
 ### Casos letales sobre Casos Totales
-
 En el siguiente gráfico se muestran las series de cantidades de casos y cantidades de fallecidos en cada país
 
 ```{r casos_muertes, echo=FALSE, message=FALSE, warning=FALSE, paged.print=FALSE, out.width='100%'}
-
- casos<- ambos %>% select(pais, dia.x, casos, fallecidos) %>% 
+casos<- ambos %>% select(pais, dia.x, casos, fallecidos) %>% 
   gather(tipo, cant, -c(pais, dia.x))
-
 ggplot(data = casos, aes(x=dia.x, y=cant, group=tipo))+
         geom_line(aes(linetype=tipo, color=tipo))+
         geom_point(aes(shape=tipo, color=tipo))+
@@ -254,8 +268,47 @@ ggplot(data = casos, aes(x=dia.x, y=cant, group=tipo))+
 # scales="free",
 ```
 
-#### Trayectoria de Nuevos Casos
+
+### Trayectoria de Nuevos Casos
 Este gráfico (propuesto por https://aatishb.com/covidtrends/) muestra los nuevos casos confirmados de COVID-19 en la última semana frente al total de casos confirmados hasta la fecha. Cuando se traza de esta manera, el crecimiento exponencial se representa como una línea recta que se inclina hacia arriba. Tenga en cuenta que casi todos los países siguen un camino muy similar de crecimiento exponencial.
+
+```{r grafTray, echo=FALSE, message=FALSE, warning=TRUE, paged.print=FALSE}
+ 
+  sudamerica %>% 
+    group_by(pais) %>% 
+    ggplot(aes(x=casos, y=semanal, color=pais))+
+    geom_line( show.legend=FALSE) +
+    labs(title="", x='Total de Casos',
+         y="Trayectoria de COVID-19 en SudAmérica", caption="Datos: Universidad Johns Hopkins") + 
+    facet_wrap(~pais,  ncol=5)
+
+```
+
+
+```{r dinamico, echo=FALSE, message=FALSE, warning=FALSE, paged.print=FALSE}
+# # 
+# dh <- sudamerica  %>% #filter(pais=="Argentina") %>%
+#   select(pais, dia, casos, semanal)
+# 
+# plot_ly(dh) %>%
+#   add_lines(
+#     x = ~casos, y = ~abs(semanal),
+#     frame = ~fecha, 
+#     color = ~factor(pais),
+#     line = list(simplify = FALSE)
+#   ) %>%
+#   layout(yaxis = list(title = "US population"))
+
+# p <- ggplot(data = dh, aes(x = casos, y = semanal, colour=pais) ) +
+#        geom_point(aes(frame = dia), size=1) +
+#        theme_void() +
+#        coord_fixed()
+# 
+# 
+# pg <- ggplotly(p, width=600, height=400) %>%
+#                  animation_opts(200, redraw = FALSE, easing = "linear")
+# pg
+```
 
 ## Argentina
 
@@ -294,6 +347,7 @@ highchart() %>%
 
 La notificación de los casos por jurisdicción se realiza teniendo en cuenta la residencia según el Registro Nacional de las Personas. Pudiendo variar en función de la investigación de la jurisdicción. 
 A continuación se muestra la evolución de nuevos casos detectados por día para cada una de las provincias argentinas.
+Actualizado al `r max(covidArg$FECHA)`
 
 ```{r ev_prov, echo=FALSE, fig.align='center', message=FALSE,fig.show='asis',fig.dim = c(5, 7), warning=FALSE, out.width='100%', paged.print=FALSE}
 
@@ -305,20 +359,16 @@ covidArg %>%
   select(PROVINCIA, FECHA, diario) %>% unique() %>% 
     ggplot(aes(x=FECHA, y=diario, group_by(PROVINCIA)))+
     geom_line( show.legend=FALSE, color='blue') +
-    # geom_smooth(se=F, show.legend = F) +                  
-    labs( #title="Casos detectados COVID-19 ", 
-          x='',
-         y="Cantidad de casos", caption="Datos: Min. Salud Arg.") + 
-    # facet_wrap(PROVINCIA ~ .,  ncol=1) +
- facet_wrap( ~PROVINCIA,  ncol=3) +
-  theme_bw() +
+    labs( x='', y="Cantidad de casos", caption="Datos: Min. Salud Arg.") + 
+    facet_wrap( ~PROVINCIA,  ncol=3) +
+  # theme_bw() +
      theme(panel.grid.major.x = element_blank(), 
        panel.grid.minor.x = element_blank(),
        panel.grid.major.y = element_blank(),
        panel.grid.minor.y = element_blank())+
-  theme(axis.text.x = element_text(colour="grey20", size=8, angle=45, hjust=.5, vjust=.5),
-                        axis.text.y = element_text(colour="grey20", size=8),
-          text=element_text(size=11, family="Arial"))
+  theme(axis.text.x = element_text(colour="grey20", size=7, angle=45, hjust=.5, vjust=.5),
+                        axis.text.y = element_text(colour="grey20", size=7),
+          text=element_text(size=9, family="Arial"))
 
 
 ```

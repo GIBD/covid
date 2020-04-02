@@ -8,7 +8,7 @@
 *.Rproj
 
 ## Archivo fuente
-*.Rmd
+index.Rmd
 =======
 .Rproj.user
 .Rhistory

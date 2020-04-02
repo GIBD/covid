@@ -127,21 +127,18 @@ El 30 de enero, la Organización Mundial de la Salud declaró la emergencia de s
 En Sud América el primer caso detectado de COVID-19 se informa el día `r day(min(sudamerica$fecha))` de `r format(min(sudamerica$fecha), "%b")` del 2020 en `r sudamerica %>% filter(fecha==min(sudamerica$fecha)) %>% select(pais)`. 
 
 A continuación se muestran las fechas en que se detectó por primera vez un infectado en cada país:
-```{r tablaFechas, echo=FALSE, message=FALSE, warning=FALSE, paged.print=FALSE, fig.align='center', out.width='50%'}
+```{r tablaFechas, echo=FALSE, fig.align='center', message=FALSE, warning=FALSE, out.width='100%', paged.print=FALSE}
   fechas <- sudamerica %>%
     group_by(pais) %>%  arrange( fecha ) %>%
     mutate(inicio= format(min(fecha),'%d/%m/%Y') ) %>%
     select(pais, inicio)%>%
     unique()
-# t_fechas %>%  kable( col.names =  c("País", "Fecha 1° Caso"), align = c('l','c')) %>% kable_styling()
 
   names(fechas) <- c('content', 'start')
   fechas$start <- as.Date(as.character(fechas$start), format="%d/%m/%Y")
   
   timevis::timevis(fechas)
-
 ```
-
 ### Evolución de nuevos casos
 La evolución de casos acumulados por país se muestra desde el día en que se detectó por primera vez un infectado.
 
@@ -357,22 +354,35 @@ Los datos con los que se trabajarán son de procesamiento propio en base a los i
    select(dia, Detectados, Fallecidos, Recuperados) %>% 
    gather(tipo, cantidad, c(Detectados, Fallecidos, Recuperados), -dia) 
  
- evolArg %>% ggplot(aes(x=dia, y=cantidad, color = tipo)) +
-   geom_area() +
-   # scale_fill_manual(values=c("#0a70ad","#00bf7d",'#f54b41'),
-   #                   breaks=c("Detectados", "Fallecidos", "Recuperados"))+
-   labs(title='Evolución de COVID en Argentina') + labs(x = 'Día', y = "Casos") 
+ ggplot(evolArg,
+       aes(x = dia,
+           y = cantidad,
+           group = tipo,
+           fill = tipo)) +
+     geom_area() +
+    labs(title="Evolución COVID-19 en Argentina", 
+         caption="Fuente: Ministerio de Salud", 
+         y="Cantidad de Casos", 
+         x="día")
    
 ```
 
 ##### Tabla
 ```{r datoEvolArg, echo=FALSE, message=FALSE, warning=FALSE}
-  # covidArg_hoy  %>% kable( col.names =  c("Provincia", "Casos Totales"),
-  #           align =  c('l', 'c') ) %>%  kable_styling()
-
+ totalesArg <- argCov %>%
+   select(dia, Detectados, Fallecidos, Recuperados) 
+ totalesArg %>% kable( col.names =  c("Fecha", "Casos Detectados", "Fallecidos", "Recuperados"),
+            align =  c('l', 'c', 'c', 'c') ) %>%  kable_styling()
 ```
 
 
+### Evolución por Provincia
+
+La notificación de los casos por jurisdicción se realiza teniendo en cuenta la residencia según el Registro Nacional de las Personas, pudiendo variar en función de la investigación de la jurisdicción.
+El Ministerio diariamente informa la cantidad de casos por provincia pudiendo rectificar luego cantidades de casos reasignados. 
+
+
+<!-- La cantidad de casos reportados  -->
 ####  {.tabset  .tabset-fade .tabset-pills}
 ##### Mapa
 ```{r mapas, echo=FALSE, message=FALSE, warning=FALSE, fig.align='center'}
@@ -407,15 +417,8 @@ Los datos con los que se trabajarán son de procesamiento propio en base a los i
 ```{r tabProv, echo=FALSE, message=FALSE, warning=FALSE}
   covidArg_hoy  %>% kable( col.names =  c("Provincia", "Casos Totales"),
             align =  c('l', 'c') ) %>%  kable_styling()
-
 ```
 
-
-
-### Evolución por Provincia
-
-La notificación de los casos por jurisdicción se realiza teniendo en cuenta la residencia según el Registro Nacional de las Personas, pudiendo variar en función de la investigación de la jurisdicción.
-El Ministerio diariamente informa la cantidad de casos por provincia pudiendo rectificar luego cantidades de casos reasignados. 
 
 A continuación se muestra la evolución de nuevos casos detectados por día para cada una de las provincias argentinas y la cantidad de casos acumulados.
 Actualizado al `r max(covidArg$FECHA)`. El total de casos acumulados en el país es de `r sum(covidArg$casos)`.
@@ -452,6 +455,27 @@ Actualizado al `r max(covidArg$FECHA)`. El total de casos acumulados en el país
 En la provincia de Buenos Aires y Ciudad de Buenos Aires el día 29/03/2020 se observa una cantidad de nuevos casos detectados muy decreciente debido a la reasignación de jurisdicción informada por Ministerio ese día. Esta cifra se asignó a cada provincia el día en que fue informada debido a la falta del dato sobre el caso reasignado.
 
 
+### Mortalidad en Argentina
+
+En la actualidad (`r max(totalesArg$dia)`) en Argentina, la **tasa de mortalidad particular** es de `r round(totalesArg$Fallecidos[totalesArg$dia==max(totalesArg$dia)]/totalesArg$Detectados[totalesArg$dia==max(totalesArg$dia)] * 100, 2)`%, mientras que el **porcentaje pacientes recuperados** es del `r round(totalesArg$Recuperados[totalesArg$dia==max(totalesArg$dia)]/totalesArg$Detectados[totalesArg$dia==max(totalesArg$dia)] * 100, 2)`%.
+
+El detalle de los pacientes fallecidos según el sexo y la edad muestra que la edad media de mortalidad en los Hombres fallecidos es de `r round(mean(muertosArg$edad[muertosArg$genero=="Hombre"]), 0)` años y la edad media en las Mujeres es de `r round(mean(muertosArg$edad[muertosArg$genero=="Mujer"]), 0)` años.
+
+```{r fallArg, echo=FALSE, fig.align='center', message=FALSE, warning=FALSE, out.width='100%'}
+
+  ggplot(muertosArg, aes(x=genero, y=edad, fill= genero) )+
+      geom_violin(alpha=0.6) +
+      labs( 
+           subtitle="Distribución de fallecidos según el sexo y la edad", 
+           caption="Fuente: Ministerio de Salud", 
+           y="Edad", 
+           x="Sexo",
+           color=NULL) +  
+  scale_fill_manual( values = c("lightsteelblue", "lightpink1"),
+                     name= "Sexo", breaks = c("Hombre", "Mujer"), labels = c("Hombre", "Mujer"))
+
+```
+
 <!-- ## Argentina frente a los países con más casos -->
 <!-- mayores <- ("Italy", "Spain", "China", "Germany", "France", "US", "Argentina") -->
 
@@ -464,7 +488,7 @@ En la provincia de Buenos Aires y Ciudad de Buenos Aires el día 29/03/2020 se o
       
       
 <!-- ### IA por Provincia -->
-<!-- ### Mortalidad por Provincia -->
+<!--
 
 <!-- ## Fallecidos en Arg por edad y sexo -->
 

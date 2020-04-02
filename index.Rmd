@@ -23,93 +23,124 @@ library(kableExtra)
 library(highcharter)
 library(rjson)
 library(plotly)
+library(gganimate)
+library(gifski)
+library(timevis)
+#################
+# Carga de Datos
+#################
 
-covid19 <- read_csv("https://github.com/CSSEGISandData/COVID-19/raw/master/csse_covid_19_data/csse_covid_19_time_series/time_series_covid19_confirmed_global.csv")
-covid19 <- covid19[-1]
-
-covid19_m <- read_csv("https://github.com/CSSEGISandData/COVID-19/raw/master/csse_covid_19_data/csse_covid_19_time_series/time_series_covid19_deaths_global.csv")
-covid19_m <- covid19_m[-1]
-
-argentina <- fromJSON(file = "data/ar-all.geo.json")
-sud <- fromJSON(file="data/south-america.geo.json")
-
-covidArg <-read_delim("data/COVID_Arg.csv", ";", 
-                      escape_double = FALSE, trim_ws = TRUE, locale = locale(encoding = "ISO-8859-1"))
-
-poblacion <- data.frame( c('Argentina', 'Bolivia', 'Brazil', 'Chile', 'Colombia', 'Ecuador',  'Paraguay',	'Peru',	'Surinam', 'Uruguay',  'Venezuela'), 
-  c(44938712, 11383094,	210147125,19107216,	50372424,	17300000,	 7152703, 33105273,524000, 3529014, 28067000)) 
-
-names(poblacion) <- c('pais', 'poblacion')
-
-covidArg$recuperados <- if_else(is.na(covidArg$recuperados), 0, covidArg$recuperados)
-covidArg$FALLECIDOS <- if_else(is.na(covidArg$FALLECIDOS), 0, covidArg$FALLECIDOS)
-
-paises_sa <- c('Brazil', 'Argentina', 'Chile', 'Peru', 'Paraguay', 'Bolivia', 'Uruguay', 'Colombia', 'Venezuela',  'Ecuador', 'Guayana Francesa')
-
-## Sudamérica
-sudamerica <- covid19 %>% 
-  filter(`Country/Region` %in% paises_sa) 
-sudamerica <- sudamerica[,-c(2:38)]
-sudamerica <- sudamerica %>% 
-  gather(fecha, casos, 2:max(col(sudamerica)), -`Country/Region`) 
-
-names(sudamerica) <- c('pais', 'fecha', 'casos')
-sudamerica$fecha <-paste0(sudamerica$fecha,'20')
-sudamerica$fecha <- as.Date(sudamerica$fecha ,"%m/%d/%Y")
-
-sudamerica<-sudamerica %>%
-  filter(casos > 0) %>% 
-  group_by(pais) %>% 
-  arrange(pais,fecha) %>% 
-  mutate(dia= 1:n())
-
-sudamerica<-sudamerica %>%
-  filter(casos > 0) %>% 
-  group_by(pais)
-
-sudamerica_m <- covid19_m %>% 
-  filter(`Country/Region` %in% paises_sa) 
-sudamerica_m <- sudamerica_m[,-c(2:38)]
-sudamerica_m <- sudamerica_m %>% 
-  gather(fecha, casos, 2:max(col(sudamerica_m)), -`Country/Region`) 
-
-names(sudamerica_m) <- c('pais', 'fecha', 'fallecidos')
-sudamerica_m$fecha <-paste0(sudamerica_m$fecha,'20')
-sudamerica_m$fecha <- as.Date(sudamerica_m$fecha ,"%m/%d/%Y")
-
-sudamerica_m<-sudamerica_m %>%
-  filter(fallecidos > 0) %>% 
-  group_by(pais) %>% 
-  arrange(pais,fecha) %>% 
-  mutate(dia= 1:n())
-
-sudamerica_m<-sudamerica_m %>%
-  filter(fallecidos > 0) %>% 
-  group_by(pais)
-
-
- sudamerica$nuevos <- 0
-  for(p in sudamerica$pais){
-    for(i in 3:max(sudamerica$dia[sudamerica$pais==p])-1){
-      nuevo <- (sudamerica$casos[((sudamerica[,"pais"]==p) & (sudamerica[,"dia"]==i))] - sudamerica$casos[((sudamerica[,"pais"]==p) & (sudamerica[,"dia"]==(i-1) ))])
-      sudamerica$nuevos[((sudamerica[,"pais"]==p) & (sudamerica[,"dia"]==i))] <- if_else(nuevo >0, nuevo, 0)
-    }  
-  }
+## Datos mundiales
+  covid19 <- read_csv("https://github.com/CSSEGISandData/COVID-19/raw/master/csse_covid_19_data/csse_covid_19_time_series/time_series_covid19_confirmed_global.csv")
+  covid19 <- covid19[-1]
+  covid19_m <- read_csv("https://github.com/CSSEGISandData/COVID-19/raw/master/csse_covid_19_data/csse_covid_19_time_series/time_series_covid19_deaths_global.csv")
+  covid19_m <- covid19_m[-1]
+  paises_sa <- c('Brazil', 'Argentina', 'Chile', 'Peru', 'Paraguay', 'Bolivia', 'Uruguay', 'Colombia', 'Venezuela',  'Ecuador', 'Guayana Francesa')
+  poblacion <- data.frame( c('Argentina', 'Bolivia', 'Brazil', 'Chile', 'Colombia', 'Ecuador',  'Paraguay',	'Peru',	'Surinam', 'Uruguay',  'Venezuela'), c(44938712, 11383094,	210147125,19107216,	50372424,	17300000,	 7152703, 33105273,524000, 3529014, 28067000)) 
+  names(poblacion) <- c('pais', 'poblacion')
   
- sudamerica$semanal <- 0
-  for(p in sudamerica$pais){
-    for(i in 8:max(sudamerica$dia[sudamerica$pais==p])){
-      semanal <- sum(sudamerica$nuevos[((sudamerica[,"pais"] == p) & (sudamerica[,"dia"] <= i) & (sudamerica[,"dia"] >= (i-6) ))])
-      sudamerica$semanal[((sudamerica[,"pais"]==p) & (sudamerica[,"dia"]==i))] <- if_else(semanal >0, semanal, 0)
-    }  
-  }
+  ### Sudamérica
+    sudamerica <- covid19 %>% 
+      filter(`Country/Region` %in% paises_sa) 
+    sudamerica <- sudamerica[,-c(2:38)]
+    sudamerica <- sudamerica %>% 
+      gather(fecha, casos, 2:max(col(sudamerica)), -`Country/Region`) 
+    
+    names(sudamerica) <- c('pais', 'fecha', 'casos')
+    sudamerica$fecha <-paste0(sudamerica$fecha,'20')
+    sudamerica$fecha <- as.Date(sudamerica$fecha ,"%m/%d/%Y")
+    
+    sudamerica<-sudamerica %>%
+      filter(casos > 0) %>% 
+      group_by(pais) %>% 
+      arrange(pais,fecha) %>% 
+      mutate(dia= 1:n())
+    
+    sudamerica<-sudamerica %>%
+      filter(casos > 0) %>% 
+      group_by(pais)
+    
+    sudamerica_m <- covid19_m %>% 
+      filter(`Country/Region` %in% paises_sa) 
+    sudamerica_m <- sudamerica_m[,-c(2:38)]
+    sudamerica_m <- sudamerica_m %>% 
+      gather(fecha, casos, 2:max(col(sudamerica_m)), -`Country/Region`) 
+    
+    names(sudamerica_m) <- c('pais', 'fecha', 'fallecidos')
+    sudamerica_m$fecha <- paste0(sudamerica_m$fecha,'20')
+    sudamerica_m$fecha <- as.Date(sudamerica_m$fecha ,"%m/%d/%Y")
+    
+    sudamerica_m<-sudamerica_m %>%
+      filter(fallecidos > 0) %>% 
+      group_by(pais) %>% 
+      arrange(pais,fecha) %>% 
+      mutate(dia= 1:n())
+    
+    sudamerica_m<-sudamerica_m %>%
+      filter(fallecidos > 0) %>% 
+      group_by(pais)
+    
+     sudamerica$nuevos <- 0
+      for(p in sudamerica$pais){
+        for(i in 3:max(sudamerica$dia[sudamerica$pais==p])-1){
+          nuevo <- (sudamerica$casos[((sudamerica[,"pais"]==p)&(sudamerica[,"dia"]==i))]-sudamerica$casos[((sudamerica[,"pais"]==p) & (sudamerica[,"dia"]==(i-1) ))])
+          sudamerica$nuevos[((sudamerica[,"pais"]==p) & (sudamerica[,"dia"]==i))] <- if_else(nuevo >0, nuevo, 0)
+        }}
+      
+     sudamerica$semanal <- 0
+      for(p in sudamerica$pais){
+        for(i in 8:max(sudamerica$dia[sudamerica$pais==p])){
+          semanal <- sum(sudamerica$nuevos[((sudamerica[,"pais"]==p)&(sudamerica[,"dia"]<=i)&(sudamerica[,"dia"]>=(i-6)))])
+          sudamerica$semanal[((sudamerica[,"pais"]==p) & (sudamerica[,"dia"]==i))] <- if_else(semanal >0, semanal, 0)
+        }}
+     
+  ambos <- sudamerica %>% 
+    left_join(sudamerica_m, by=c('pais', 'fecha'))
 
+  ambos$fallecidos <- if_else(is.na(ambos$fallecidos), 0, ambos$fallecidos)
+  ambos <- ambos[-6]
+  
+## Mapas
+  argentina <- fromJSON(file = "data/ar-all.geo.json")
+  sud <- fromJSON(file="data/south-america.geo.json")
+  
+## Argentina
+  ### Totales generales
+    argCov <- read_delim("data/argentina.csv", ";", escape_double = FALSE, trim_ws = TRUE, locale = locale(encoding = "ISO-8859-1"))
+    
+  ### Detalle por provincias
+    covidArg <-read_delim("data/COVID_Arg.csv", ";", escape_double = FALSE, trim_ws = TRUE, locale = locale(encoding = "ISO-8859-1"))
+    covidArg$recuperados <- if_else(is.na(covidArg$recuperados), 0, covidArg$recuperados)
+    covidArg$FALLECIDOS <- if_else(is.na(covidArg$FALLECIDOS), 0, covidArg$FALLECIDOS)
+    covidArg$FECHA <- as.Date(covidArg$FECHA, '%d/%m/%Y')
+  
+  ### Detalle fallecidos
+    muertosArg <- read_delim("data/fallecidos.csv", ";", escape_double = FALSE, trim_ws = TRUE, locale = locale(encoding = "ISO-8859-1"))
+    
 ```
 
+
+El 30 de enero, la Organización Mundial de la Salud declaró la emergencia de salud pública internacional por el brote epidémico de coronavirus. 
+
 ## Sudamérica
 
-En Sud América se informa el día `r day(min(sudamerica$fecha))` de `r format(min(sudamerica$fecha), "%b")` del 2020 en `r sudamerica %>% filter(fecha==min(sudamerica$fecha)) %>% select(pais)`. 
+En Sud América el primer caso detectado de COVID-19 se informa el día `r day(min(sudamerica$fecha))` de `r format(min(sudamerica$fecha), "%b")` del 2020 en `r sudamerica %>% filter(fecha==min(sudamerica$fecha)) %>% select(pais)`. 
 
+A continuación se muestran las fechas en que se detectó por primera vez un infectado en cada país:
+```{r tablaFechas, echo=FALSE, message=FALSE, warning=FALSE, paged.print=FALSE, fig.align='center', out.width='50%'}
+  fechas <- sudamerica %>%
+    group_by(pais) %>%  arrange( fecha ) %>%
+    mutate(inicio= format(min(fecha),'%d/%m/%Y') ) %>%
+    select(pais, inicio)%>%
+    unique()
+# t_fechas %>%  kable( col.names =  c("País", "Fecha 1° Caso"), align = c('l','c')) %>% kable_styling()
+
+  names(fechas) <- c('content', 'start')
+  fechas$start <- as.Date(as.character(fechas$start), format="%d/%m/%Y")
+  
+  timevis::timevis(fechas)
+
+```
 
 ### Evolución de nuevos casos
 La evolución de casos acumulados por país se muestra desde el día en que se detectó por primera vez un infectado.
@@ -119,39 +150,29 @@ A las gráficas se les ha agregado la tendencia (basada en el modelo de regresi�
 ####  {.tabset  .tabset-fade .tabset-pills}
 ##### Por país
 ```{r casospais, echo=FALSE, message=FALSE, warning=FALSE, paged.print=FALSE, out.width='100%'}
-
-sudamerica %>% 
-  group_by(pais) %>% 
-  ggplot(aes(x=dia, y=casos, color=pais))+
-  geom_line( show.legend=FALSE) +
-  geom_smooth(se=F, show.legend = F) +                  
-  labs(title="Casos detectados COVID-19 ", x='día',
-       y="Cantidad de casos", caption="Datos: Universidad Johns Hopkins") + 
-  facet_wrap(~pais,  ncol=4)
+  sudamerica %>% 
+    group_by(pais) %>% 
+    ggplot(aes(x=dia, y=casos, color=pais))+
+    geom_line( show.legend=FALSE) +
+    geom_smooth(se=F, show.legend = F) +                  
+    labs(title="Casos detectados COVID-19 ", x='día',
+         y="Cantidad de casos", caption="Datos: Universidad Johns Hopkins") + 
+    facet_wrap(~pais,  ncol=4)
 ```
 
 ##### Sudamérica
 Las curvas de evolución de los países en simultáneo:
 
 ```{r pressure, echo=FALSE, out.width='90%', fig.align='center'}
-sudamerica %>%
-  ggplot(aes(x=dia, y=casos, group=pais, color=pais)) + 
-  geom_line(size=1.2 ) + geom_point()+
-  labs(title="COVID-19 en Sudamérica", y="Cantidad de casos", caption="Datos: Universidad Johns Hopkins") + 
-  theme_minimal() + labs(color='Países') 
+  sudamerica %>%
+    ggplot(aes(x=dia, y=casos, group=pais, color=pais)) + 
+    geom_line(size=1.2 ) + geom_point()+
+    labs(title="COVID-19 en Sudamérica", y="Cantidad de casos", caption="Datos: Universidad Johns Hopkins") + 
+    theme_minimal() + labs(color='Países') 
 ```
 
-##### Fechas de Inicio
-A continuación se muestran las fechas en que se detectó por primera vez un infectado en cada país:
-```{r tablaFechas, echo=FALSE, message=FALSE, warning=FALSE, paged.print=FALSE, fig.align='center', out.width='50%'}
+<!-- ##### Fechas de Inicio -->
 
-t_fechas <- sudamerica %>% 
-  group_by(pais) %>%  arrange( fecha ) %>% 
-  mutate(inicio= format(min(fecha),'%d/%m/%Y') ) %>% 
-  select(pais, inicio)%>% 
-  unique() 
-t_fechas %>%  kable( col.names =  c("País", "Fecha 1° Caso"), align = c('l','c')) %>% kable_styling()
-```
 
 
 ### Incidencia Acumulada
@@ -162,41 +183,42 @@ Al día de la fecha las incidencias acumuladas por cada 100000 habitantes de los
 ####  {.tabset  .tabset-fade .tabset-pills}
 ##### Mapa
 ```{r mapSud, echo=FALSE, message=FALSE, warning=FALSE, paged.print=FALSE}
-ia <- sudamerica %>% 
-  group_by(pais) %>% 
-  filter(dia==max(dia)) %>% 
-  left_join(poblacion ) %>% 
-  mutate(inc= as.double(round(casos/poblacion*100000, 2))) %>%  
-  select(pais, dia, poblacion, casos, inc) %>% 
-  arrange(desc(inc))
+  ia <- sudamerica %>% 
+    group_by(pais) %>% 
+    filter(dia==max(dia)) %>% 
+    left_join(poblacion ) %>% 
+    mutate(inc= as.double(round(casos/poblacion*100000, 2))) %>%  
+    select(pais, dia, poblacion, casos, inc) %>% 
+    arrange(desc(inc))
 
-highchart() %>%
-        hc_title(text = "<i>Incidencia COVID-19 en Sudamérica</i> - <b>GIBD</b>",
-           margin = 20, align = "center",
-           style = list(color = "#08338F", useHTML = TRUE)) %>% 
-               hc_tooltip(followPointer =  FALSE) %>%
-        hc_add_series_map(sud, ia, name = "IA",
-                          value = "inc", joinBy = c("name", "pais"),
-                          dataLabels = list(enabled = TRUE,
-                                            format = '{point.properties.woe-name}')) %>%
-        hc_colorAxis(minColor = "#B7D4EB", maxColor = "#08338F")  %>%
-        hc_legend(align = "center", x = 0, y = -70) %>%
-        hc_mapNavigation(enabled = TRUE) %>%
-        hc_add_theme(hc_theme_ffx()) %>% 
-        hc_add_annotation(xValue = 0, yValue = 0, title = list(text = 'Fuente: Datos Propios')) %>% 
-        hc_chart(borderColor = "#08338F",
-           borderRadius = 10,
-           borderWidth = 2)
+  highchart() %>%
+          hc_title(text = "<i>Incidencia COVID-19 en Sudamérica</i> - <b>GIBD</b>",
+             margin = 20, align = "center",
+             style = list(color = "#08338F", useHTML = TRUE)) %>% 
+                 hc_tooltip(followPointer =  FALSE) %>%
+          hc_add_series_map(sud, ia, name = "IA",
+                            value = "inc", joinBy = c("name", "pais"),
+                            dataLabels = list(enabled = TRUE,
+                                              format = '{point.properties.woe-name}')) %>%
+          hc_colorAxis(minColor = "#B7D4EB", maxColor = "#08338F")  %>%
+          hc_legend(align = "center", x = 0, y = -70) %>%
+          hc_mapNavigation(enabled = TRUE) %>%
+          hc_add_theme(hc_theme_ffx()) %>% 
+          hc_add_annotation(xValue = 0, yValue = 0, title = list(text = 'Fuente: Datos Propios')) %>% 
+          hc_chart(borderColor = "#08338F",
+             borderRadius = 10,
+             borderWidth = 2)
 
 ```
 
 ##### Tabla Datos
 Como se observa, el país con la mayor Incidencia Acumulada al día de hoy es **`r ia[1,1] `**, que lleva *`r ia[1,2] ` días* desde la detección del primer caso.
 ```{r ia, echo=FALSE, message=FALSE, warning=FALSE, paged.print=FALSE, out.width='100%'}
-ia  %>% kable( col.names =  c("País", "Días", "Población","# Casos", "IA"),
-          align =  c('l', 'c', 'c', 'c', 'c') ) %>% 
-    kable_styling()
+  ia  %>% kable( col.names =  c("País", "Días", "Población","# Casos", "IA"),
+            align =  c('l', 'c', 'c', 'c', 'c') ) %>% 
+      kable_styling()
 ```
+
 
 
 ### Mortalidad
@@ -205,195 +227,249 @@ A continuación se grafica la evolución de las cantidades de fallecimientos des
 ####  {.tabset  .tabset-fade .tabset-pills}
 ##### Gráfico
 ```{r muertesg, echo=FALSE, message=FALSE, warning=FALSE, paged.print=FALSE, out.width='100%'}
+  sudamerica_m %>% 
+    group_by(pais) %>% 
+    ggplot(aes(x=dia, y=fallecidos, color=pais))+
+    geom_line( show.legend=FALSE) +
+    geom_smooth(se=F, show.legend = F) +                  
+    labs(title="", x='día',
+         y="Cantidad de Fallecidos", caption="Datos: Universidad Johns Hopkins") + 
+    facet_wrap(~pais,  ncol=4)
 
-sudamerica_m %>% 
-  group_by(pais) %>% 
-  ggplot(aes(x=dia, y=fallecidos, color=pais))+
-  geom_line( show.legend=FALSE) +
-  geom_smooth(se=F, show.legend = F) +                  
-  labs(title="", x='día',
-       y="Cantidad de Fallecidos", caption="Datos: Universidad Johns Hopkins") + 
-  facet_wrap(~pais,  ncol=4)
-# scales="free",
 ```
 
 ##### Tabla
 
-Al día de la fecha las incidencias acumuladas por cada 100000 habitantes de los países de Sud América es: 
+Al día de la fecha las cantidad de muertes acumuladas país es de: 
 
-```{r muertes_t, echo=FALSE, message=FALSE, warning=FALSE, paged.print=FALSE, out.width='100%'}
-ambos <- sudamerica %>% 
-  left_join(sudamerica_m, by=c('pais', 'fecha'))
-ambos$fallecidos <- if_else(is.na(ambos$fallecidos), 0, ambos$fallecidos)
-ambos <- ambos[-6]
+```{r muertest, echo=FALSE, message=FALSE, warning=FALSE, paged.print=FALSE, out.width='100%'}
 
-muertes <- sudamerica_m %>% 
-  group_by(pais) %>% 
-  filter(dia==max(dia)) %>% 
-  select(pais, fallecidos) %>% arrange(desc(fallecidos))
-  muertes  %>% kable( col.names =  c("País", "# Fallecidos"),
-          align =  c('l', 'c') ) %>%    kable_styling()
+   muertes <- sudamerica_m %>% 
+    group_by(pais) %>% 
+    filter(dia==max(dia)) %>% 
+    select(pais, fallecidos) %>% arrange(desc(fallecidos))
+
+   muertes %>% kable( col.names =  c("País", "# Fallecidos"),
+            align =  c('l', 'c') ) %>%    kable_styling()
 ```
+
 
 ### Tasa de Mortalidad
 Una proporción interesante a comparar es la **tasa de mortalidad particular**, es decir la cantidad de personas que fallecieron respecto al total de casos en un período de tiempo.
 A continuación se muestra la evolución de la tasa de mortalidad en los distintos países considerando el primer día de detección del virus
 
-```{r tasa_mort, echo=FALSE, message=FALSE, warning=FALSE, paged.print=FALSE, out.width='100%'}
+####  {.tabset  .tabset-fade .tabset-pills}
+##### Gráfica
+```{r g_tasa_mort, echo=FALSE, message=FALSE, warning=FALSE, paged.print=FALSE, out.width='100%', fig.align='center'}
+  ambos <- ambos %>% mutate(tasa_m = round(fallecidos/casos * 100))
+  ambos %>%
+    ggplot(aes(x=dia.x, y=tasa_m, group=pais, color=pais)) + 
+    geom_line(size=1 ) + geom_point()+
+    labs(title="Tasa de mortalidad en Sudamérica", y="Tasa de mortalidad", caption="Datos: Universidad Johns Hopkins") +
+    # theme_minimal() +
+    labs(color='Países') 
+```
 
-ambos <- ambos %>%   mutate(tasa_m= fallecidos/casos * 100)
+##### Datos
+Los datos de la tasa de mortalidad al `r  max(ambos$fecha)` para cada país son:
+```{r d_tasa_mort, echo=FALSE, message=FALSE, warning=FALSE, paged.print=FALSE, out.width='100%', fig.align='center'}
 
-ambos %>%
-  ggplot(aes(x=dia.x, y=tasa_m, group=pais, color=pais)) + 
-  geom_line(size=1.2 ) + geom_point()+
-  labs(title="Tasa de mortalidad en Sudamérica", y="Tasa de mortalidad", caption="Datos: Universidad Johns Hopkins") + theme_minimal() + labs(color='Países') 
+  ambos %>% group_by(pais) %>% 
+    filter(fecha == max(fecha)) %>% 
+    select(pais, casos, fallecidos, tasa_m) %>% 
+    arrange(desc(tasa_m)) %>% 
+    kable( col.names =  c("País", "# Casos", "# Fallecidos", "Tasa de Mortalidad(%)"),
+            align =  c('l', 'c', 'c','c') ) %>%    
+    kable_styling()
 
 ```
+
 
 
 ### Casos letales sobre Casos Totales
 En el siguiente gráfico se muestran las series de cantidades de casos y cantidades de fallecidos en cada país
 
 ```{r casos_muertes, echo=FALSE, message=FALSE, warning=FALSE, paged.print=FALSE, out.width='100%'}
-casos<- ambos %>% select(pais, dia.x, casos, fallecidos) %>% 
-  gather(tipo, cant, -c(pais, dia.x))
-ggplot(data = casos, aes(x=dia.x, y=cant, group=tipo))+
-        geom_line(aes(linetype=tipo, color=tipo))+
-        geom_point(aes(shape=tipo, color=tipo))+
-          labs(title='Cantidades de Casos y Fallecidos')+
-          labs(x = 'Año', y = expression(''))+
-          # scale_color_manual(values=c("navy", "red2"))+
-          theme(legend.position="bottom") + 
-  facet_wrap(~pais,  ncol=4) 
-# scales="free",
+  casos<- ambos %>% select(pais, dia.x, casos, fallecidos) %>% 
+    gather(tipo, cant, -c(pais, dia.x))
+  ggplot(data = casos, aes(x=dia.x, y=cant, group=tipo))+
+          geom_line(aes(linetype=tipo, color=tipo))+
+          geom_point(aes(shape=tipo, color=tipo))+
+            labs(title='Cantidades de Casos y Fallecidos')+
+            labs(x = 'Año', y = expression(''))+
+            # scale_color_manual(values=c("navy", "red2"))+
+            theme(legend.position="bottom") + 
+    facet_wrap(~pais,  ncol=4) 
 ```
 
 
-### Trayectoria de Nuevos Casos
-Este gráfico (propuesto por https://aatishb.com/covidtrends/) muestra los nuevos casos confirmados de COVID-19 en la última semana frente al total de casos confirmados hasta la fecha. Cuando se traza de esta manera, el crecimiento exponencial se representa como una línea recta que se inclina hacia arriba. Tenga en cuenta que casi todos los países siguen un camino muy similar de crecimiento exponencial.
 
-```{r grafTray, echo=FALSE, message=FALSE, warning=TRUE, paged.print=FALSE, out.width='100%'}
+### Trayectoria de Nuevos Casos
+Este gráfico (propuesto por https://aatishb.com/covidtrends/) muestra la evolución entre la cantidad total de casos de COVID-19 en una fecha frente a los nuevos casos confirmados en la semana previa. 
+Cuando se traza de esta manera, el crecimiento exponencial se representa como una línea recta creciente. 
+Se puede observar que casi todos los países siguen un camino muy similar de crecimiento exponencial.
+
+####  {.tabset  .tabset-fade .tabset-pills}
+##### Sudamérica
+```{r dinamico, echo=FALSE, message=FALSE, warning=FALSE, paged.print=FALSE,fig.show='animate', fig.align='center'}
+   
+	avance <- sudamerica %>% group_by(pais) %>% filter(dia != max(dia))
+
+	estatico <- ggplot(avance) +
+	  geom_line(aes(casos, semanal, group=pais, color=pais), size=1.1)
+	# +	  scale_x_log10()
+
+	dinamico <- estatico + transition_reveal(casos)
+	animate(dinamico, renderer = ffmpeg_renderer(format = "webm"))
+```
+
+##### Por país
+```{r grafTray, echo=FALSE, message=FALSE, warning=TRUE, paged.print=FALSE, out.width='100%', fig.align='center'}
  
   sudamerica %>% 
     group_by(pais) %>% 
     ggplot(aes(x=casos, y=semanal, color=pais))+
-    geom_line( show.legend=FALSE) +
+    geom_line(show.legend=FALSE) +
     labs(title="", x='Total de Casos',
          y="Trayectoria de COVID-19 en SudAmérica", caption="Datos: Universidad Johns Hopkins") + 
     facet_wrap(~pais,  ncol=5)
-
 ```
 
 
-```{r dinamico, echo=FALSE, message=FALSE, warning=FALSE, paged.print=FALSE}
-# # 
-# dh <- sudamerica  %>% #filter(pais=="Argentina") %>%
-#   select(pais, dia, casos, semanal)
-# 
-# plot_ly(dh) %>%
-#   add_lines(
-#     x = ~casos, y = ~abs(semanal),
-#     frame = ~fecha, 
-#     color = ~factor(pais),
-#     line = list(simplify = FALSE)
-#   ) %>%
-#   layout(yaxis = list(title = "US population"))
 
-# p <- ggplot(data = dh, aes(x = casos, y = semanal, colour=pais) ) +
-#        geom_point(aes(frame = dia), size=1) +
-#        theme_void() +
-#        coord_fixed()
-# 
-# 
-# pg <- ggplotly(p, width=600, height=400) %>%
-#                  animation_opts(200, redraw = FALSE, easing = "linear")
-# pg
-```
 
 ## Argentina
 
-En Argentina los datos son informados diariamente por el Ministerio de Salud de la Nación. Estos datos se informan de manera desestructurada y diariamente se modifican los datos brindados.
+### Cantidad de Casos Actuales
+En Argentina los datos son informados diariamente por el Ministerio de Salud de la Nación. Estos datos se informan de manera desestructurada y diariamente se modifica la cantidad de datos brindados.
 
-Los datos con los que se trabajarán son de procesamiento propio en base a los informes mencionados.
-
-Datos actualizados al `r max(covidArg$FECHA) `.
-```{r mapas, echo=FALSE, message=FALSE, warning=FALSE}
-covidArg_hoy <- covidArg %>% 
-  group_by(PROVINCIA) %>% 
-  mutate(total=sum(CASOS)) %>% select(PROVINCIA, total) %>% unique()
+Los datos con los que se trabajarán son de procesamiento propio en base a los informes mencionados y se encuentran actualizados al `r max(covidArg$FECHA) `.
 
 
-highchart() %>%
-        hc_title(text = "<i>Mapa dinámico de COVID-19 en Argentina</i> - <b>GIBD</b>",
-           margin = 20, align = "center",
-           style = list(color = "#08338F", useHTML = TRUE)) %>% 
-        hc_subtitle(text = "Casos detectados por provincia",
-              align = "center",
-              style = list(color = "#0C5C9E", fontWeight = "bold")) %>% 
-        hc_tooltip(followPointer =  FALSE) %>%
-        hc_add_series_map(argentina, covidArg_hoy, name = "Total",
-                          value = "total", joinBy = c("name", "PROVINCIA"),
-                          dataLabels = list(enabled = TRUE,
-                                            format = '{point.properties.woe-name}')) %>%
-        hc_colorAxis(minColor = "#B7D4EB", maxColor = "#08338F")  %>%
-        hc_legend(align = "center", x = 0, y = -70) %>%
-        hc_mapNavigation(enabled = TRUE) %>%
-        hc_add_theme(hc_theme_ffx()) %>% 
-        hc_add_annotation(xValue = 0, yValue = 0, title = list(text = 'Fuente: Datos Propios')) %>% 
-        hc_chart(borderColor = "#08338F",
-           borderRadius = 10,
-           borderWidth = 2)
+####  {.tabset  .tabset-fade .tabset-pills}
+##### Evolución en Argentina
+```{r evolArg, echo=FALSE, message=FALSE, warning=FALSE, fig.align='center'}
+# class()
+ names(argCov) <- c("dia", "casosD", "Detectados", "muertesD", "Fallecidos", "Recuperados")
+ argCov$dia <- as.Date(argCov$dia, '%d/%m/%Y')
+ 
+ evolArg <- argCov %>%
+   select(dia, Detectados, Fallecidos, Recuperados) %>% 
+   gather(tipo, cantidad, c(Detectados, Fallecidos, Recuperados), -dia) 
+ 
+ evolArg %>% ggplot(aes(x=dia, y=cantidad, color = tipo)) +
+   # geom_col(show.legend = TRUE) +  
+   geom_area()+
+   scale_fill_manual(values=c("#0a70ad","#00bf7d",'#f54b41'),
+                     breaks=c("Detectados", "Fallecidos", "Recuperados"))+
+    # guides(colour = guide_legend(override.aes = list(size=10))) + 
+   labs(title='Evolución de COVID en Argentina')+labs(x = 'Día', y = "Casos") 
+   
 ```
+
+##### Tabla
+```{r datoEvolArg, echo=FALSE, message=FALSE, warning=FALSE}
+  # covidArg_hoy  %>% kable( col.names =  c("Provincia", "Casos Totales"),
+  #           align =  c('l', 'c') ) %>%  kable_styling()
+
+```
+
+
+####  {.tabset  .tabset-fade .tabset-pills}
+##### Mapa
+```{r mapas, echo=FALSE, message=FALSE, warning=FALSE, fig.align='center'}
+  covidArg_hoy <- covidArg %>% 
+    group_by(PROVINCIA) %>% 
+    mutate(total=sum(CASOS)) %>% select(PROVINCIA, total) %>% unique()
+
+
+  highchart() %>%
+          hc_title(text = "<i>Mapa dinámico de COVID-19 en Argentina</i> - <b>GIBD</b>",
+             margin = 5, align = "center",
+             style = list(color = "#08338F", useHTML = TRUE)) %>% 
+          hc_subtitle(text = "Casos detectados por provincia",
+                align = "center",
+                style = list(color = "#0C5C9E", fontWeight = "bold")) %>% 
+          hc_tooltip(followPointer =  FALSE) %>%
+          hc_add_series_map(argentina, covidArg_hoy, name = "Total",
+                            value = "total", joinBy = c("name", "PROVINCIA"),
+                            dataLabels = list(enabled = TRUE,
+                                              format = '{point.properties.woe-name}')) %>%
+          hc_colorAxis(minColor = "#B7D4EB", maxColor = "#08338F")  %>%
+          hc_legend(align = "center", x = 0, y = -70) %>%
+          hc_mapNavigation(enabled = TRUE) %>%
+          hc_add_theme(hc_theme_ffx()) %>% 
+          hc_add_annotation(xValue = 0, yValue = 0, title = list(text = 'Fuente: Datos Propios')) %>% 
+          hc_chart(borderColor = "#08338F",
+             borderRadius = 10,
+             borderWidth = 2)
+```
+
+##### Tabla
+```{r tabProv, echo=FALSE, message=FALSE, warning=FALSE}
+  covidArg_hoy  %>% kable( col.names =  c("Provincia", "Casos Totales"),
+            align =  c('l', 'c') ) %>%  kable_styling()
+
+```
+
+
 
 ### Evolución por Provincia
 
-La notificación de los casos por jurisdicción se realiza teniendo en cuenta la residencia según el Registro Nacional de las Personas. Pudiendo variar en función de la investigación de la jurisdicción. 
-A continuación se muestra la evolución de nuevos casos detectados por día para cada una de las provincias argentinas.
-Actualizado al `r max(covidArg$FECHA)`.
+La notificación de los casos por jurisdicción se realiza teniendo en cuenta la residencia según el Registro Nacional de las Personas, pudiendo variar en función de la investigación de la jurisdicción.
+El Ministerio diariamente informa la cantidad de casos por provincia pudiendo rectificar luego cantidades de casos reasignados. 
 
-```{r ev_prov, echo=FALSE, fig.align='center', message=FALSE,fig.show='asis',fig.dim = c(5, 7), warning=FALSE, out.width='100%', paged.print=FALSE}
+A continuación se muestra la evolución de nuevos casos detectados por día para cada una de las provincias argentinas y la cantidad de casos acumulados.
+Actualizado al `r max(covidArg$FECHA)`. El total de casos acumulados en el país es de `r sum(covidArg$casos)`.
 
-covidArg$FECHA<-as.Date(covidArg$FECHA, format = "%d/%m/%Y")
-
-covidArg %>% 
-  group_by(PROVINCIA, FECHA) %>%
-  mutate(diario=sum(CASOS)) %>% 
-  select(PROVINCIA, FECHA, diario) %>% unique() %>% 
-    ggplot(aes(x=FECHA, y=diario, group_by(PROVINCIA)))+
-    geom_line( show.legend=FALSE, color='blue') +
-    labs( x='', y="Cantidad de casos", caption="Datos: Min. Salud Arg.") + 
-    facet_wrap( ~PROVINCIA,  ncol=3) +
-  # theme_bw() +
-     theme(panel.grid.major.x = element_blank(), 
-       panel.grid.minor.x = element_blank(),
-       panel.grid.major.y = element_blank(),
-       panel.grid.minor.y = element_blank())+
-  theme(axis.text.x = element_text(colour="grey20", size=7, angle=45, hjust=.5, vjust=.5),
-                        axis.text.y = element_text(colour="grey20", size=7),
-          text=element_text(size=9, family="Arial"))
-
-
-```
-En la provincia de Buenos Aires y Ciudad de Buenos Aires se observa una cantidad decreciente muy pronunciada el día 29/03/2020, esto se debe a la reasignación de jurisdicción informada por Ministerio. Se asignó al día en que fueron informadas debido a la falta del dato sobre el caso reasignado.
-
-
-<!-- Este gráfico interactivo muestra los nuevos casos confirmados de COVID-19 en la última semana frente al total de casos confirmados hasta la fecha. Cuando se traza de esta manera, el crecimiento exponencial se representa como una línea recta que se inclina hacia arriba. Tenga en cuenta que casi todos los países siguen un camino muy similar de crecimiento exponencial. -->
-
-```{r argGral, echo=FALSE, message=FALSE, warning=FALSE}
-# gralArg<- read_delim("data/detalle_casos.csv", ";", 
-#                       escape_double = FALSE, trim_ws = TRUE, locale = locale(encoding = "ISO-8859-1"))
-# gralArg <- read_delim("data/detalle_casos.csv", 
-#     ";", escape_double = FALSE, locale = locale(decimal_mark = ","), 
-#     na = "0", trim_ws = TRUE)
-# 
-# gralArg$Fallecidos <- if_else(is.na(gralArg$Fallecidos ), 0, gralArg$Fallecidos )
-# gralArg$Recuperados <- if_else(is.na(gralArg$Recuperados ), 0, gralArg$Recuperados )
-# gralArg$Terapia <- if_else(is.na(gralArg$Terapia ), 0, gralArg$Terapia )
-# gralArg$`Tests Totales` <- if_else(is.na(gralArg$`Tests Totales`), 0, gralArg$`Tests Totales`)
-# gralArg$TasaExp <- if_else(is.na(gralArg$TasaExp), 0.0, gralArg$TasaExp)
-# 
-# ggplot(data = gralArg, aes(x = CasosTot, y = Nuevos)) +
-#      geom_line()
+```{r ev_prov, echo=FALSE, fig.align='center', message=FALSE, warning=FALSE, out.width='100%'}
+  tabla_prov<- covidArg %>% 
+    group_by(PROVINCIA, FECHA) %>% mutate(casos=sum(CASOS)) %>% select(PROVINCIA, FECHA, casos) %>% unique()
   
- 
+  tabla_prov$acum <- 0
+  for(prov in tabla_prov$PROVINCIA){
+    for(dia in tabla_prov$FECHA){
+      total = sum(tabla_prov$casos[tabla_prov$PROVINCIA==prov & tabla_prov$FECHA<= dia])
+      tabla_prov$acum[tabla_prov$PROVINCIA==prov & tabla_prov$FECHA == dia] = total
+    }
+  }
+  
+  tabla_prov <- tabla_prov %>%  
+    gather(casos, acum, -c(PROVINCIA, FECHA)) 
+  names(tabla_prov) <- c("provincia", "fecha", "tipo", "cant")
+  
+  tabla_prov %>% 
+    ggplot(aes(x=fecha, y=cant, group=tipo, color=tipo))+
+    geom_line( show.legend=FALSE) +
+    # geom_smooth(se=F, show.legend = F) +                  
+    labs(title="", x='día',
+         y="Cantidad de casos", caption="Datos: Min. Salud Arg.") +
+      theme(
+        axis.text.x = element_text(colour="grey20", size=7, angle=45, hjust=.5, vjust=.5),
+        axis.text.y = element_text(colour="grey20", size=7),
+        text=element_text(size=9, family="Arial")) + 
+    facet_wrap(~provincia,  ncol=5)
+     
 ```
+En la provincia de Buenos Aires y Ciudad de Buenos Aires el día 29/03/2020 se observa una cantidad de nuevos casos detectados muy decreciente debido a la reasignación de jurisdicción informada por Ministerio ese día. Esta cifra se asignó a cada provincia el día en que fue informada debido a la falta del dato sobre el caso reasignado.
+
+
+<!-- ## Argentina frente a los países con más casos -->
+<!-- mayores <- ("Italy", "Spain", "China", "Germany", "France", "US", "Argentina") -->
+
+<!-- paisesmay <- covid19 %>%  -->
+<!--       filter(`Country/Region` %in% mayores)  -->
+
+<!--     sudamerica <- sudamerica[,-c(2:38)] -->
+<!--     sudamerica <- sudamerica %>%  -->
+<!--       gather(fecha, casos, 2:max(col(sudamerica)), -`Country/Region`)  -->
+      
+      
+<!-- ### IA por Provincia -->
+<!-- ### Mortalidad por Provincia -->
+
+<!-- ## Fallecidos en Arg por edad y sexo -->
+
+<!-- ## Confirmados /Fallecidos/Recuperados -->
+<!-- ### Cantidad de Casos /Cantidad de Test -->
+

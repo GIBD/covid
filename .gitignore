@@ -1,3 +1,4 @@
+<<<<<<< HEAD
 .Rproj.user
 .Rhistory
 .RData
@@ -8,3 +9,15 @@
 
 ## Archivo fuente
 *.Rmd
+=======
+.Rproj.user
+.Rhistory
+.RData
+.Ruserdata
+
+### Proyecto R
+*.Rproj
+
+## Archivo fuente
+*.Rmd
+>>>>>>> 603336933be48586ebedd66633d3d9ec20feb26e

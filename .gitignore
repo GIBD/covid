@@ -2,4 +2,9 @@
 .Rhistory
 .RData
 .Ruserdata
-.Rmd
+
+### Proyecto R
+*.Rproj
+
+## Archivo fuente
+*.Rmd

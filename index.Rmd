@@ -127,7 +127,7 @@ El 30 de enero, la Organización Mundial de la Salud declaró la emergencia de s
 En Sud América el primer caso detectado de COVID-19 se informa el día `r day(min(sudamerica$fecha))` de `r format(min(sudamerica$fecha), "%b")` del 2020 en `r sudamerica %>% filter(fecha==min(sudamerica$fecha)) %>% select(pais)`. 
 
 A continuación se muestran las fechas en que se detectó por primera vez un infectado en cada país:
-```{r tablaFechas, echo=FALSE, fig.align='center', message=FALSE, warning=FALSE, out.width='100%', paged.print=FALSE}
+```{r tablaFechas, echo=FALSE, fig.align='center', message=FALSE, warning=FALSE, out.width='100%', out.height='70%', paged.print=FALSE}
   fechas <- sudamerica %>%
     group_by(pais) %>%  arrange( fecha ) %>%
     mutate(inicio= format(min(fecha),'%d/%m/%Y') ) %>%
@@ -139,6 +139,7 @@ A continuación se muestran las fechas en que se detectó por primera vez un inf
   
   timevis::timevis(fechas)
 ```
+
 ### Evolución de nuevos casos
 La evolución de casos acumulados por país se muestra desde el día en que se detectó por primera vez un infectado.
 

@@ -358,12 +358,10 @@ Los datos con los que se trabajarán son de procesamiento propio en base a los i
    gather(tipo, cantidad, c(Detectados, Fallecidos, Recuperados), -dia) 
  
  evolArg %>% ggplot(aes(x=dia, y=cantidad, color = tipo)) +
-   # geom_col(show.legend = TRUE) +  
-   geom_area()+
-   scale_fill_manual(values=c("#0a70ad","#00bf7d",'#f54b41'),
-                     breaks=c("Detectados", "Fallecidos", "Recuperados"))+
-    # guides(colour = guide_legend(override.aes = list(size=10))) + 
-   labs(title='Evolución de COVID en Argentina')+labs(x = 'Día', y = "Casos") 
+   geom_area() +
+   # scale_fill_manual(values=c("#0a70ad","#00bf7d",'#f54b41'),
+   #                   breaks=c("Detectados", "Fallecidos", "Recuperados"))+
+   labs(title='Evolución de COVID en Argentina') + labs(x = 'Día', y = "Casos") 
    
 ```
 

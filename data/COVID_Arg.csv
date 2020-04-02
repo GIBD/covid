@@ -1,4 +1,4 @@
-PROVINCIA;FECHA;CASOS;FALLECIDOS;recuperados;terapia;test negativos;test totales
+PROVINCIA;FECHA;CASOS;FALLECIDOS;recuperados;descartados epidemiologia;test negativos;test totales
 Ciudad de Buenos Aires;3/3/2020;1;;;;;
 Ciudad de Buenos Aires;5/3/2020;1;;;;;
 Buenos Aires;6/3/2020;1;;;;;
@@ -8,7 +8,7 @@ Ciudad de Buenos Aires;6/3/2020;1;;;;;
 Ciudad de Buenos Aires;6/3/2020;1;;;;;
 Córdoba;6/3/2020;1;;;;;
 Ciudad de Buenos Aires;7/3/2020;1;;;;;
-Buenos Aires;8/3/2020;1;;;;;
+Buenos Aires;8/3/2020;1;;;;25;28
 Ciudad de Buenos Aires;8/3/2020;1;;;;;
 Ciudad de Buenos Aires;8/3/2020;1;;;;;
 Buenos Aires;9/3/2020;0;1;;;;
@@ -117,7 +117,7 @@ Chaco;23/3/2020;4;;;;;
 Ciudad de Buenos Aires;23/3/2020;11;;;;;
 Córdoba;23/3/2020;3;;;;;
 Santa Fe;23/3/2020;13;;;;;
-Buenos Aires;24/3/2020;28;1;63;;1453;1838
+Buenos Aires;24/3/2020;28;1;63;1242;1453;1838
 Chaco;24/3/2020;9;1;;;;
 Ciudad de Buenos Aires;24/3/2020;30;;;;;
 Córdoba;24/3/2020;7;;;;;
@@ -126,7 +126,7 @@ Neuquén;24/3/2020;1;;;;;
 Santa Cruz;24/3/2020;1;;;;;
 Santa Fe;24/3/2020;3;;;;;
 Tierra del Fuego;24/3/2020;4;;;;;
-Buenos Aires;25/3/2020;30;;72;22;1946;2448
+Buenos Aires;25/3/2020;30;;72;;1946;2448
 Chaco;25/3/2020;12;1;;;;
 Ciudad de Buenos Aires;25/3/2020;21;1;;;;
 Córdoba;25/3/2020;15;;;;;
@@ -211,3 +211,15 @@ Río Negro;31/3/2020;1;;;;;
 Santa Fe;31/3/2020;22;;;;;
 Tierra del Fuego;31/3/2020;7;;;;;
 Tucumán;31/3/2020;1;;;;;
+Buenos Aires;1/4/2020;10;1;;;;
+Ciudad de Buenos Aires;1/4/2020;10;3;;;;
+Chaco;1/4/2020;12;;;;;
+Córdoba;1/4/2020;6;;;;;
+Corrientes;1/4/2020;1;;;;;
+Entre Ríos;1/4/2020;1;;;;;
+Mendoza;1/4/2020;10;;;;;
+Neuquén;1/4/2020;4;;;;;
+Salta;1/4/2020;2;;;;;
+San Luis;1/4/2020;1;;;;;
+Santa Fe;1/4/2020;11;1;;;;
+Tucumán;1/4/2020;1;;;;;

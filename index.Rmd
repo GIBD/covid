@@ -1,5 +1,5 @@
 ---
-title: "COVID-GIBD"
+title: "GIBD"
 knit: (function(inputFile, encoding) { 
          rmarkdown::render(inputFile,
                            encoding=encoding, 
@@ -7,13 +7,18 @@ knit: (function(inputFile, encoding) {
 output: 
   html_document:
     toc: true
-    toc_float: true
+    toc_float:
+       collapsed: false
+       smooth_scroll: false
   github_document: default
 ---
 
 ```{r setup, include=FALSE}
-knitr::opts_chunk$set(echo = TRUE)
-
+knitr::opts_chunk$set(
+	echo = FALSE,
+	message = FALSE,
+	warning = FALSE
+)
 library(readr)
 library(dplyr)
 library(tidyr)
@@ -206,10 +211,17 @@ library(timevis)
   
 ```
 
+## COVID-19
+
+
+> Análisis realizado por el Grupo de Investigación en Bases de Datos - UTN - FRCU 
+> <http://www.frcu.utn.edu.ar/gibd>
+> gibd@frcu.utn.edu.ar
+
 
 El 30 de enero, la Organización Mundial de la Salud declaró la emergencia de salud pública internacional por el brote epidémico de coronavirus. 
 
-La cifra de contagios confirmados del nuevo coronavirus SARS-CoV-2 alcanzó la barrera de un millón, siendo en la actualidad `r  as.integer(sum(covid19[,ncol(covid19)])) ` los casos confirmados.
+La cifra de contagios confirmados del nuevo coronavirus SARS-CoV-2 superó la barrera del millón, siendo en la actualidad **`r  as.integer(sum(covid19[,ncol(covid19)])) `** los casos confirmados.
 
 Las muertes por la pandemia alcanzan las `r   as.integer(sum(covid19_m[,ncol(covid19_m)])) `, de acuerdo con el recuento de la universidad estadounidense Johns Hopkins, uno de los indicadores más consultados del mundo.
 
@@ -219,19 +231,18 @@ En el siguiente gráfico se puede analizar la velocidad y magnitud que ha tenido
 
   p <- afectados %>% select(pais, fecha, casos)
 
-  fig <- plot_ly(p, x = ~fecha, color = ~pais) %>%
-   add_lines(y = ~casos)
+  fig <- plot_ly(p, x = ~fecha, y = ~casos, color = ~pais, type = "scatter", mode='lines+markers') 
+  # %>% add_lines(y = ~casos)
   
   fig <- layout(fig, yaxis = list(type = "log"))
   fig
   
 ```
 
-<!-- ##  -->
 <!-- ## Argentina vs Países más afectados -->
 Las curvas de evolución de casos detectados de COVID-19 en Argentina y en los países mas afectados a nivel mundial son:
 
-```{r mundo, echo=FALSE, out.width='100%', fig.align='center'}
+```{r mundo, echo=FALSE, out.width='75%', fig.align='center'}
   afectados %>%
     ggplot(aes(x=dia.x, y=casos, group=pais, color=pais)) + 
     geom_line(size=1 ) + geom_point()+
@@ -240,9 +251,11 @@ Las curvas de evolución de casos detectados de COVID-19 en Argentina y en los p
     labs(title="COVID-19 en el Mundo", x="días", y="Cantidad de casos", caption="Datos: Universidad Johns Hopkins") + 
     theme_minimal() + labs(color='Países') 
 ```
+
 Si se excluye China y se comparan estos paises en los primeros `r max(afectados$dia.x[afectados$pais=="Argentina"]) ` días, que son los transcurridos desde el primer caso detectado en Argentina, se obtienen las siguientes curvas: 
 
-```{r mundo20, echo=FALSE, out.width='100%', fig.align='center'}
+
+```{r mundo20, echo=FALSE, out.width='75%', fig.align='center'}
 
   diasArg <- max(afectados$dia.x[afectados$pais=="Argentina"])
   afectados %>%
@@ -257,7 +270,7 @@ Si se excluye China y se comparan estos paises en los primeros `r max(afectados$
 
 Para poner en contexto la situación, en el siguiente gráfico puede verse cómo fueron evolucionando los casos confirmados en estos países una vez que acanzaron los 100 casos
 
-```{r dia100mundo, echo=FALSE, out.width='100%', fig.align='center'}
+```{r dia100mundo, echo=FALSE, out.width='75%', fig.align='center'}
 
   afectados100 <- afectados %>%
     filter(casos>100 & pais != "China") %>% 
@@ -321,8 +334,6 @@ Las curvas de evolución de los países en simultáneo:
     labs(title="COVID-19 en Sudamérica", y="Cantidad de casos", caption="Datos: Universidad Johns Hopkins") + 
     theme_minimal() + labs(color='Países') 
 ```
-
-<!-- ##### Fechas de Inicio -->
 
 
 
@@ -437,6 +448,7 @@ Los datos de la tasa de mortalidad al `r  max(ambos$fecha)` para cada país son:
 
 
 
+
 ### Casos letales sobre Casos Totales
 En el siguiente gráfico se muestran las series de cantidades de casos y cantidades de fallecidos en cada país
 
@@ -452,8 +464,6 @@ En el siguiente gráfico se muestran las series de cantidades de casos y cantida
             theme(legend.position="bottom") + 
     facet_wrap(~pais,  ncol=4) 
 ```
-
-
 
 ### Trayectoria de Nuevos Casos
 Este gráfico (propuesto por https://aatishb.com/covidtrends/) muestra la evolución entre la cantidad total de casos de COVID-19 en una fecha frente a los nuevos casos confirmados en la semana previa. 
@@ -485,6 +495,7 @@ Se puede observar que casi todos los países siguen un camino muy similar de cre
          y="Trayectoria de COVID-19 en SudAmérica", caption="Datos: Universidad Johns Hopkins") + 
     facet_wrap(~pais,  ncol=5)
 ```
+
 
 
 
@@ -530,13 +541,13 @@ Los datos con los que se trabajarán son de procesamiento propio en base a los i
 ```
 
 
+
 ### Evolución por Provincia
 
 La notificación de los casos por jurisdicción se realiza teniendo en cuenta la residencia según el Registro Nacional de las Personas, pudiendo variar en función de la investigación de la jurisdicción.
 El Ministerio diariamente informa la cantidad de casos por provincia pudiendo rectificar luego cantidades de casos reasignados. 
 
 
-<!-- La cantidad de casos reportados  -->
 ####  {.tabset  .tabset-fade .tabset-pills}
 ##### Mapa
 ```{r mapas, echo=FALSE, message=FALSE, warning=FALSE, fig.align='center'}
@@ -607,6 +618,7 @@ Actualizado al `r max(covidArg$FECHA)`. El total de casos acumulados en el país
      
 ```
 En la provincia de Buenos Aires y Ciudad de Buenos Aires el día 29/03/2020 se observa una cantidad de nuevos casos detectados muy decreciente debido a la reasignación de jurisdicción informada por Ministerio ese día. Esta cifra se asignó a cada provincia el día en que fue informada debido a la falta del dato sobre el caso reasignado.
+
 
 
 ### Mortalidad en Argentina

@@ -8,6 +8,7 @@ output:
   html_document:
     toc: true
     toc_float: true
+  github_document: default
 ---
 
 ```{r setup, include=FALSE}
@@ -31,16 +32,96 @@ library(timevis)
 #################
 
 ## Datos mundiales
+  # Confirmados
   covid19 <- read_csv("https://github.com/CSSEGISandData/COVID-19/raw/master/csse_covid_19_data/csse_covid_19_time_series/time_series_covid19_confirmed_global.csv")
   covid19 <- covid19[-1]
+  
+  # Fallecidos
   covid19_m <- read_csv("https://github.com/CSSEGISandData/COVID-19/raw/master/csse_covid_19_data/csse_covid_19_time_series/time_series_covid19_deaths_global.csv")
   covid19_m <- covid19_m[-1]
+  
+  # Paises Sud América
   paises_sa <- c('Brazil', 'Argentina', 'Chile', 'Peru', 'Paraguay', 'Bolivia', 'Uruguay', 'Colombia', 'Venezuela',  'Ecuador', 'Guayana Francesa')
   poblacion <- data.frame( c('Argentina', 'Bolivia', 'Brazil', 'Chile', 'Colombia', 'Ecuador',  'Paraguay',	'Peru',	'Surinam', 'Uruguay',  'Venezuela'), c(44938712, 11383094,	210147125,19107216,	50372424,	17300000,	 7152703, 33105273,524000, 3529014, 28067000)) 
   names(poblacion) <- c('pais', 'poblacion')
+ 
+  #Paises mas afectados fuera de China
+  #'France',   
+  mayores <- c('China', 'France', 'US', 'Spain', 'Italy',  'Germany', 'Argentina', 'Korea, South')
+  
+  ### Paises mas afectados
+  {
+    # unique(covid19$`Country/Region`)
+    masAfectados <- covid19 %>% 
+      filter(`Country/Region` %in% mayores) 
+    
+    masAfectados <- masAfectados[,-c(2,3)]
+    
+    masAfectados <- masAfectados %>% gather(fecha, casos, 2:max(col(masAfectados)), -`Country/Region`) 
+    names(masAfectados) <- c('pais', 'fecha', 'confirmados')
+    masAfectados <- masAfectados %>% group_by(pais, fecha) %>% 
+      mutate(casos =sum(confirmados)) %>% select(pais, fecha, casos) %>% unique()
+    
+    masAfectados$fecha <-paste0(masAfectados$fecha,'20')
+    masAfectados$fecha <-as.Date(masAfectados$fecha ,"%m/%d/%Y")
+    
+    masAfectados<-masAfectados %>%
+      filter(casos > 0) %>% 
+      group_by(pais) %>% 
+      arrange(pais,fecha) %>% 
+      mutate(dia= 1:n())
+    
+    # Creo campos para cant. semanales
+    {
+    masAfectados$nuevos <- 0
+      for(p in masAfectados$pais){
+        for(i in 3:max(masAfectados$dia[masAfectados$pais==p])-1){
+          nuevo <- (masAfectados$casos[((masAfectados[,"pais"]==p)&(masAfectados[,"dia"]==i))] - masAfectados$casos[((masAfectados[,"pais"]==p) & (masAfectados[,"dia"]==(i-1) ))])
+          masAfectados$nuevos[((masAfectados[,"pais"]==p) & (masAfectados[,"dia"]==i))] <- if_else(nuevo >0, nuevo, 0)
+        }}
+      
+     masAfectados$semanal <- 0
+      for(p in masAfectados$pais){
+        for(i in 8:max(masAfectados$dia[masAfectados$pais==p])){
+          semanal <- sum(masAfectados$nuevos[((masAfectados[,"pais"]==p)&(masAfectados[,"dia"]<=i)&(masAfectados[,"dia"]>=(i-6)))])
+          masAfectados$semanal[((masAfectados[,"pais"]==p) & (masAfectados[,"dia"]==i))] <- if_else(semanal >0, semanal, 0)
+        }}
+      }
+    
+    masAfectados_m <- covid19_m %>% 
+      filter(`Country/Region` %in% mayores) 
+    
+    masAfectados_m <- masAfectados_m[,-c(2,3)]
+    masAfectados_m <- masAfectados_m %>% gather(fecha, casos, 2:max(col(masAfectados_m)), -`Country/Region`) 
+    names(masAfectados_m) <- c('pais', 'fecha', 'fallecidos')
+    
+    masAfectados_m <- masAfectados_m %>% group_by(pais, fecha) %>% 
+      mutate(muertes =sum(fallecidos)) %>% select(pais, fecha, muertes) %>% unique()
+     
+    masAfectados_m$fecha <-paste0(masAfectados_m$fecha,'20')
+    masAfectados_m$fecha <- as.Date(masAfectados_m$fecha ,"%m/%d/%Y")
+    
+    masAfectados_m<-masAfectados_m %>%
+      filter(muertes > 0) %>% 
+      group_by(pais) %>% 
+      arrange(pais,fecha) %>% 
+      mutate(dia= 1:n())
+     
+    afectados <- masAfectados %>%  left_join(masAfectados_m, by=c('pais', 'fecha'))
+    afectados$muertes <- if_else(is.na(afectados$muertes), 0, afectados$muertes)
+    afectados <- afectados[-8]
+    
+    afectados$pais <- gsub("US", "EEUU", afectados$pais)
+    afectados$pais <- gsub("Spain", "España", afectados$pais)
+    afectados$pais <- gsub("Korea, South", "Corea del Sur", afectados$pais)
+    afectados$pais <- gsub("Italy", "Italia", afectados$pais)
+    afectados$pais <- gsub("Germany", "Alemania", afectados$pais)
+    afectados$pais <- gsub("France", "Francia", afectados$pais)
+    
+  }
   
   ### Sudamérica
-    sudamerica <- covid19 %>% 
+ {   sudamerica <- covid19 %>% 
       filter(`Country/Region` %in% paises_sa) 
     sudamerica <- sudamerica[,-c(2:38)]
     sudamerica <- sudamerica %>% 
@@ -94,18 +175,23 @@ library(timevis)
           sudamerica$semanal[((sudamerica[,"pais"]==p) & (sudamerica[,"dia"]==i))] <- if_else(semanal >0, semanal, 0)
         }}
      
+     sudamerica$pais <- gsub("Brazil", "Brasil", sudamerica$pais)
+     sudamerica_m$pais <- gsub("Brazil", "Brasil", sudamerica_m$pais)
+     
   ambos <- sudamerica %>% 
     left_join(sudamerica_m, by=c('pais', 'fecha'))
 
   ambos$fallecidos <- if_else(is.na(ambos$fallecidos), 0, ambos$fallecidos)
   ambos <- ambos[-6]
+
+}
   
 ## Mapas
   argentina <- fromJSON(file = "data/ar-all.geo.json")
   sud <- fromJSON(file="data/south-america.geo.json")
   
 ## Argentina
-  ### Totales generales
+{  ### Totales generales
     argCov <- read_delim("data/argentina.csv", ";", escape_double = FALSE, trim_ws = TRUE, locale = locale(encoding = "ISO-8859-1"))
     
   ### Detalle por provincias
@@ -116,11 +202,31 @@ library(timevis)
   
   ### Detalle fallecidos
     muertosArg <- read_delim("data/fallecidos.csv", ";", escape_double = FALSE, trim_ws = TRUE, locale = locale(encoding = "ISO-8859-1"))
-    
+  }
+  
 ```
 
 
 El 30 de enero, la Organización Mundial de la Salud declaró la emergencia de salud pública internacional por el brote epidémico de coronavirus. 
+
+La cifra de contagios confirmados del nuevo coronavirus SARS-CoV-2 alcanzó la barrera de un millón, siendo en la actualidad `r  as.integer(sum(covid19[,ncol(covid19)])) ` los casos confirmados.
+
+Las muertes por la pandemia alcanzan las `r   as.integer(sum(covid19_m[,ncol(covid19_m)])) `, de acuerdo con el recuento de la universidad estadounidense Johns Hopkins, uno de los indicadores más consultados del mundo.
+
+<!-- ##  -->
+<!-- ## Argentina vs Países más afectados -->
+Las curvas de evolución de casos detectados de COVID-19 en Argentina y en los países mas afectados a nivel mundial son:
+
+```{r mundo, echo=FALSE, out.width='100%', fig.align='center'}
+ # as.integer(sum(covid19_m[,ncol(covid19_m)]))
+  afectados %>%
+    ggplot(aes(x=dia.x, y=casos, group=pais, color=pais)) + 
+    geom_line(size=1 ) + geom_point()+
+    # scale_color_manual(values=c( "#31319c","#3194f7", '#319c31', '#9cce31', '#ffff31', '#ff9c31', '#ff3100', '#f7396b')) +
+    # guides(colour = guide_legend(override.aes = list(size=10))) +
+    labs(title="COVID-19 en el Mundo", x="días", y="Cantidad de casos", caption="Datos: Universidad Johns Hopkins") + 
+    theme_minimal() + labs(color='Países') 
+```
 
 ## Sudamérica
 
@@ -309,13 +415,13 @@ Se puede observar que casi todos los países siguen un camino muy similar de cre
 
 ####  {.tabset  .tabset-fade .tabset-pills}
 ##### Sudamérica
-```{r dinamico, echo=FALSE, message=FALSE, warning=FALSE, paged.print=FALSE,fig.show='animate', fig.align='center'}
+```{r dinamico, echo=FALSE, fig.align='center', fig.show='animate', message=FALSE, warning=FALSE, paged.print=FALSE}
    
 	avance <- sudamerica %>% group_by(pais) %>% filter(dia != max(dia))
 
 	estatico <- ggplot(avance) +
 	  geom_line(aes(casos, semanal, group=pais, color=pais), size=1.1)
-	# +	  scale_x_log10()
+	# +	  scale_y_log10()
 
 	dinamico <- estatico + transition_reveal(casos)
 	animate(dinamico, renderer = ffmpeg_renderer(format = "webm"))
@@ -347,8 +453,8 @@ Los datos con los que se trabajarán son de procesamiento propio en base a los i
 ####  {.tabset  .tabset-fade .tabset-pills}
 ##### Evolución en Argentina
 ```{r evolArg, echo=FALSE, message=FALSE, warning=FALSE, fig.align='center'}
-# class()
- names(argCov) <- c("dia", "casosD", "Detectados", "muertesD", "Fallecidos", "Recuperados")
+
+ names(argCov) <- c("dia", "casosD", "Detectados", "muertesD", "Fallecidos", "Recuperados", "UTI", "Descartados")
  argCov$dia <- as.Date(argCov$dia, '%d/%m/%Y')
  
  evolArg <- argCov %>%

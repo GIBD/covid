@@ -213,12 +213,25 @@ La cifra de contagios confirmados del nuevo coronavirus SARS-CoV-2 alcanzó la b
 
 Las muertes por la pandemia alcanzan las `r   as.integer(sum(covid19_m[,ncol(covid19_m)])) `, de acuerdo con el recuento de la universidad estadounidense Johns Hopkins, uno de los indicadores más consultados del mundo.
 
+
+En el siguiente gráfico se puede analizar la velocidad y magnitud que ha tenido la propagación del Covid-19 en diferentes países hasta la fecha indicada. El hecho de que la visión de este sea logarítmica permite analizar en una escala más adecuada cómo ha sido la evolución de la pandemia. Se incluye China.
+```{r logar, echo=FALSE, out.width='100%', fig.align='center'}
+
+  p <- afectados %>% select(pais, fecha, casos)
+
+  fig <- plot_ly(p, x = ~fecha, color = ~pais) %>%
+   add_lines(y = ~casos)
+  
+  fig <- layout(fig, yaxis = list(type = "log"))
+  fig
+  
+```
+
 <!-- ##  -->
 <!-- ## Argentina vs Países más afectados -->
 Las curvas de evolución de casos detectados de COVID-19 en Argentina y en los países mas afectados a nivel mundial son:
 
 ```{r mundo, echo=FALSE, out.width='100%', fig.align='center'}
- # as.integer(sum(covid19_m[,ncol(covid19_m)]))
   afectados %>%
     ggplot(aes(x=dia.x, y=casos, group=pais, color=pais)) + 
     geom_line(size=1 ) + geom_point()+
@@ -227,6 +240,40 @@ Las curvas de evolución de casos detectados de COVID-19 en Argentina y en los p
     labs(title="COVID-19 en el Mundo", x="días", y="Cantidad de casos", caption="Datos: Universidad Johns Hopkins") + 
     theme_minimal() + labs(color='Países') 
 ```
+Si se excluye China y se comparan estos paises en los primeros `r max(afectados$dia.x[afectados$pais=="Argentina"]) ` días, que son los transcurridos desde el primer caso detectado en Argentina, se obtienen las siguientes curvas: 
+
+```{r mundo20, echo=FALSE, out.width='100%', fig.align='center'}
+
+  diasArg <- max(afectados$dia.x[afectados$pais=="Argentina"])
+  afectados %>%
+    filter(dia.x <= diasArg & pais != "China") %>% 
+    ggplot(aes(x=dia.x, y=casos, group=pais, color=pais)) + 
+    geom_line(size=1 ) + geom_point()+
+    labs(title="", x="días", y="Cantidad de casos", caption="Datos: Universidad Johns Hopkins") + 
+    theme_minimal() + labs(color='Países') 
+  
+```
+
+
+Para poner en contexto la situación, en el siguiente gráfico puede verse cómo fueron evolucionando los casos confirmados en estos países una vez que acanzaron los 100 casos
+
+```{r dia100mundo, echo=FALSE, out.width='100%', fig.align='center'}
+
+  afectados100 <- afectados %>%
+    filter(casos>100 & pais != "China") %>% 
+    group_by(pais) %>% arrange(fecha) %>% mutate(dia100 = row_number()) 
+  
+   afectados100 %>%
+    ggplot(aes(x=dia.x, y=casos, group=pais, color=pais)) + 
+    geom_line(size=1 ) + geom_point() +
+    labs(title="", x="días transcurridos luego de los 100 casos", y="Cantidad de casos", caption="Datos: Universidad Johns Hopkins") + 
+    theme_minimal() + labs(color='Países') 
+
+  
+```
+
+
+
 
 ## Sudamérica
 

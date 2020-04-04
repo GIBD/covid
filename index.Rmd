@@ -624,39 +624,15 @@ Actualizado al `r max(covidArg$FECHA)`. El total de casos acumulados en el país
 ```
 En la provincia de Buenos Aires y Ciudad de Buenos Aires el día 29/03/2020 se observa una cantidad de nuevos casos detectados muy decreciente debido a la reasignación de jurisdicción informada por Ministerio ese día. Esta cifra se asignó a cada provincia el día en que fue informada debido a la falta del dato sobre el caso reasignado.
 
-### Distribución de Casos por Tipo
-Los tipos de Casos confirmados se clasifican en:
-*Importados* (cuando se registra trasmisión relacionada viajes al exterior del país)
-
-*Contacto estrecho/Conglomerado*: casos en los que se puede determinar la cadena de transmisión por contacto estrecho con infectados
-
-*Comunitario*: aquellos casos en los que no se puede relacionar a los casos confirmados con cadenas de trasmisión conocidas. 
-
-*Investigacion*: casos que se encuentran en estudio para definir el tipo de transmisión. En algún momento tiene que pasar a alguno de los otros 3 casos
-
-La evolución y distribución de los casos según el tipo en Argentina es:
-
-```{r estudioCasos, echo=FALSE, fig.align='center', message=FALSE, warning=FALSE, out.width='100%'}
-library(ggplot2)
-  tipoCaso <- argCov %>% select(dia, Importados, Estrecho, Comunitaria, Investigacion) %>%
-    gather(tipo, cantidad, c(Importados, Estrecho, Comunitaria, Investigacion), -dia) %>% 
-    select(dia, tipo, cantidad) %>% 
-    group_by(dia) %>% 
-    mutate(porc= prop.table(cantidad))
-  
-ggplot(tipoCaso,aes(x=dia,y=porc, fill=tipo))+
-  geom_bar(stat = "identity", color="white")
-
-
-```
-
 
 
 ### Mortalidad en Argentina
 
 En la actualidad (`r max(totalesArg$dia)`) en Argentina, la **tasa de mortalidad particular** es de `r round(totalesArg$Fallecidos[totalesArg$dia==max(totalesArg$dia)]/totalesArg$Detectados[totalesArg$dia==max(totalesArg$dia)] * 100, 2)`%, mientras que el **porcentaje pacientes recuperados** es del `r round(totalesArg$Recuperados[totalesArg$dia==max(totalesArg$dia)]/totalesArg$Detectados[totalesArg$dia==max(totalesArg$dia)] * 100, 2)`%.
 
-El detalle de los pacientes fallecidos según el sexo y la edad muestra que la edad media de mortalidad en los Hombres fallecidos es de `r round(mean(muertosArg$edad[muertosArg$genero=="Hombre"]), 0)` años y la edad media en las Mujeres es de `r round(mean(muertosArg$edad[muertosArg$genero=="Mujer"]), 0)` años.
+La edad media de los pacientes fallecidos es de `r round(mean(muertosArg$edad), 0)` años, y en particular la edad media de los Hombres fallecidos es de `r round(mean(muertosArg$edad[muertosArg$genero=="Hombre"]), 0)` años y en la Mujeres de `r round(mean(muertosArg$edad[muertosArg$genero=="Mujer"]), 0)` años.
+
+En el siguiente gráfico se observa la distribución de los pacientes fallecidos por sexo y edad.
 
 ```{r fallArg, echo=FALSE, fig.align='center', message=FALSE, warning=FALSE, out.width='100%'}
 
@@ -673,22 +649,59 @@ El detalle de los pacientes fallecidos según el sexo y la edad muestra que la e
 
 ```
 
-<!-- ## Argentina frente a los países con más casos -->
-<!-- mayores <- ("Italy", "Spain", "China", "Germany", "France", "US", "Argentina") -->
 
-<!-- paisesmay <- covid19 %>%  -->
-<!--       filter(`Country/Region` %in% mayores)  -->
 
-<!--     sudamerica <- sudamerica[,-c(2:38)] -->
-<!--     sudamerica <- sudamerica %>%  -->
-<!--       gather(fecha, casos, 2:max(col(sudamerica)), -`Country/Region`)  -->
-      
-      
+### Distribución de Casos por Tipo
+Los tipos de Casos confirmados se clasifican en:
+*Importados* (cuando se registra trasmisión relacionada viajes al exterior del país)
+
+*Contacto estrecho/Conglomerado*: casos en los que se puede determinar la cadena de transmisión por contacto estrecho con infectados
+
+*Comunitario*: aquellos casos en los que no se puede relacionar a los casos confirmados con cadenas de trasmisión conocidas. 
+
+*Investigacion*: casos que se encuentran en estudio para definir el tipo de transmisión. En algún momento tiene que pasar a alguno de los otros 3 casos
+
+La evolución y distribución de los casos según el tipo en Argentina es:
+
+```{r estudioCasos, echo=FALSE, fig.align='center', message=FALSE, warning=FALSE, out.width='100%'}
+
+  tipoCaso <- argCov %>% select(dia, Importados, Estrecho, Comunitaria, Investigacion) %>%
+    gather(tipo, cantidad, c(Importados, Estrecho, Comunitaria, Investigacion), -dia) %>% 
+    select(dia, tipo, cantidad) %>% 
+    group_by(dia) %>% 
+    mutate(porc= prop.table(cantidad))
+  
+ggplot(tipoCaso,aes(x=dia,y=porc, fill=tipo))+
+  geom_bar(stat = "identity", color="white")
+
+
+```
+
+### Cantidad de Casos /Cantidad de Test
+
+Desde el día 16/03/2020 el Ministerio de Salud comenzó a informar la cantidad de casos descartados de COVID-19.
+A continuación se visualiará la evolución en la proporción de los casos detectados sobre casos estudiados 
+<!-- y la tabla correspondiente a dichas cantidades. -->
+
+```{r test, echo=FALSE, fig.align='center', message=FALSE, warning=FALSE, out.width='100%'}
+
+  test <- argCov %>% select(dia, Detectados, Descartados) %>%
+      mutate(total= Detectados + Descartados)
+  test <- test %>% filter(Descartados>=0) %>%  mutate(prop=Detectados/total * 100)
+    
+  ggplot(test,aes(x=dia,y=prop,  label = round(prop, 1)))+
+    geom_bar(stat = "identity", fill= "steelblue", color="steelblue") +
+    geom_text(aes(label = paste0(round(prop,1),"%")), 
+                   position = position_stack(vjust = 0.5),
+              # color="white",
+              color="black",
+              size=3) +
+    scale_y_continuous("Porcentaje")
+  #,labels=scales::percent)
+
+
+```
+
 <!-- ### IA por Provincia -->
-<!--
 
-<!-- ## Fallecidos en Arg por edad y sexo -->
-
-<!-- ## Confirmados /Fallecidos/Recuperados -->
-<!-- ### Cantidad de Casos /Cantidad de Test -->
 

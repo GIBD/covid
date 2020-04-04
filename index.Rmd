@@ -514,10 +514,12 @@ Los datos con los que se trabajarán son de procesamiento propio en base a los i
 
  names(argCov) <- c("dia", "casosD", "Detectados", "muertesD", "Fallecidos", "Recuperados", "UTI", "Descartados")
  argCov$dia <- as.Date(argCov$dia, '%d/%m/%Y')
- 
+ argCov$Recuperados <- if_else(is.na(argCov$Recuperados), 0, argCov$Recuperados)
  evolArg <- argCov %>%
    select(dia, Detectados, Fallecidos, Recuperados) %>% 
-   gather(tipo, cantidad, c(Detectados, Fallecidos, Recuperados), -dia) 
+   mutate(Confirmados =Detectados - Fallecidos - Recuperados) %>% 
+   select(dia, Confirmados, Fallecidos, Recuperados) %>% 
+   gather(tipo, cantidad, c(Confirmados, Fallecidos, Recuperados), -dia) 
  
  ggplot(evolArg,
        aes(x = dia,
@@ -542,7 +544,9 @@ Los datos con los que se trabajarán son de procesamiento propio en base a los i
 
 
 
-### Evolución por Provincia
+
+
+### Distribución por Provincia
 
 La notificación de los casos por jurisdicción se realiza teniendo en cuenta la residencia según el Registro Nacional de las Personas, pudiendo variar en función de la investigación de la jurisdicción.
 El Ministerio diariamente informa la cantidad de casos por provincia pudiendo rectificar luego cantidades de casos reasignados. 
@@ -585,8 +589,9 @@ El Ministerio diariamente informa la cantidad de casos por provincia pudiendo re
 ```
 
 
+### Evolución por Provincia
 A continuación se muestra la evolución de nuevos casos detectados por día para cada una de las provincias argentinas y la cantidad de casos acumulados.
-Actualizado al `r max(covidArg$FECHA)`. El total de casos acumulados en el país es de `r sum(covidArg$casos)`.
+Actualizado al `r max(covidArg$FECHA)`. El total de casos acumulados en el país es de `r sum(covidArg$CASOS)`.
 
 ```{r ev_prov, echo=FALSE, fig.align='center', message=FALSE, warning=FALSE, out.width='100%'}
   tabla_prov<- covidArg %>% 

@@ -512,7 +512,7 @@ Los datos con los que se trabajarán son de procesamiento propio en base a los i
 ##### Evolución en Argentina
 ```{r evolArg, echo=FALSE, message=FALSE, warning=FALSE, fig.align='center'}
 
- names(argCov) <- c("dia", "casosD", "Detectados", "muertesD", "Fallecidos", "Recuperados", "UTI", "Descartados")
+ names(argCov) <- c("dia", "casosD", "Detectados", "muertesD", "Fallecidos", "Recuperados", "UTI", "Descartados", "Mujeres", "Hombres", "Importados", "Estrecho", "Comunitaria", "Investigacion")
  argCov$dia <- as.Date(argCov$dia, '%d/%m/%Y')
  argCov$Recuperados <- if_else(is.na(argCov$Recuperados), 0, argCov$Recuperados)
  evolArg <- argCov %>%
@@ -623,6 +623,32 @@ Actualizado al `r max(covidArg$FECHA)`. El total de casos acumulados en el país
      
 ```
 En la provincia de Buenos Aires y Ciudad de Buenos Aires el día 29/03/2020 se observa una cantidad de nuevos casos detectados muy decreciente debido a la reasignación de jurisdicción informada por Ministerio ese día. Esta cifra se asignó a cada provincia el día en que fue informada debido a la falta del dato sobre el caso reasignado.
+
+### Distribución de Casos por Tipo
+Los tipos de Casos confirmados se clasifican en:
+*Importados* (cuando se registra trasmisión relacionada viajes al exterior del país)
+
+*Contacto estrecho/Conglomerado*: casos en los que se puede determinar la cadena de transmisión por contacto estrecho con infectados
+
+*Comunitario*: aquellos casos en los que no se puede relacionar a los casos confirmados con cadenas de trasmisión conocidas. 
+
+*Investigacion*: casos que se encuentran en estudio para definir el tipo de transmisión. En algún momento tiene que pasar a alguno de los otros 3 casos
+
+La evolución y distribución de los casos según el tipo en Argentina es:
+
+```{r estudioCasos, echo=FALSE, fig.align='center', message=FALSE, warning=FALSE, out.width='100%'}
+library(ggplot2)
+  tipoCaso <- argCov %>% select(dia, Importados, Estrecho, Comunitaria, Investigacion) %>%
+    gather(tipo, cantidad, c(Importados, Estrecho, Comunitaria, Investigacion), -dia) %>% 
+    select(dia, tipo, cantidad) %>% 
+    group_by(dia) %>% 
+    mutate(porc= prop.table(cantidad))
+  
+ggplot(tipoCaso,aes(x=dia,y=porc, fill=tipo))+
+  geom_bar(stat = "identity", color="white")
+
+
+```
 
 
 

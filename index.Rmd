@@ -180,8 +180,8 @@ library(timevis)
           sudamerica$semanal[((sudamerica[,"pais"]==p) & (sudamerica[,"dia"]==i))] <- if_else(semanal >0, semanal, 0)
         }}
      
-     sudamerica$pais <- gsub("Brazil", "Brasil", sudamerica$pais)
-     sudamerica_m$pais <- gsub("Brazil", "Brasil", sudamerica_m$pais)
+     # sudamerica$pais <- gsub("Brazil", "Brasil", sudamerica$pais)
+     # sudamerica_m$pais <- gsub("Brazil", "Brasil", sudamerica_m$pais)
      
   ambos <- sudamerica %>% 
     left_join(sudamerica_m, by=c('pais', 'fecha'))

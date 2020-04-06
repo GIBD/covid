@@ -710,9 +710,9 @@ A continuación se visualiará la evolución en la proporción de los casos dete
 
 ### IA por Provincia
 
-La incidencia acumulada (IA) proporciona una estimación de la probabilidad o el riesgo de que un individuo libre de una determinada enfermedad la desarrolle durante un período especificado de tiempo.
+La incidencia acumulada (IA) proporciona una estimación de la probabilidad o el riesgo de que un individuo, libre de una determinada enfermedad, la desarrolle durante un período específico de tiempo.
 
-Al día de la fecha las incidencias acumuladas por cada 100000 habitantes en la provincias de Argentina son: 
+Al día de la fecha las incidencias acumuladas por cada 100.000 habitantes en la provincias de Argentina son: 
 
 ####  {.tabset  .tabset-fade .tabset-pills}
 ##### Mapa

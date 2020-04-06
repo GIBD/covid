@@ -215,7 +215,8 @@ library(timevis)
 
 
 > Análisis realizado por el Grupo de Investigación en Bases de Datos - UTN - FRCU 
-> <http://www.frcu.utn.edu.ar/gibd>
+<!-- > <http://www.frcu.utn.edu.ar/gibd> -->
+
 > gibd@frcu.utn.edu.ar
 
 
@@ -672,8 +673,13 @@ La evolución y distribución de los casos según el tipo en Argentina es:
     mutate(porc= prop.table(cantidad))
   
 ggplot(tipoCaso,aes(x=dia,y=porc, fill=tipo))+
-  geom_bar(stat = "identity", color="white")
-
+  geom_bar(stat = "identity", color="white") +
+  geom_text(aes(label = paste0(round(porc*100,0),"%")), 
+                   position = position_stack(vjust = 0.5),
+              # color="white",
+              color="black",
+              size=2) +
+  scale_y_continuous("Porcentaje", labels=scales::percent)
 
 ```
 
@@ -695,7 +701,7 @@ A continuación se visualiará la evolución en la proporción de los casos dete
                    position = position_stack(vjust = 0.5),
               # color="white",
               color="black",
-              size=3) +
+              size=2) +
     scale_y_continuous("Porcentaje")
   #,labels=scales::percent)
 

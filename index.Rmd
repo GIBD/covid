@@ -708,6 +708,56 @@ A continuación se visualiará la evolución en la proporción de los casos dete
 
 ```
 
-<!-- ### IA por Provincia -->
+### IA por Provincia
+
+La incidencia acumulada (IA) proporciona una estimación de la probabilidad o el riesgo de que un individuo libre de una determinada enfermedad la desarrolle durante un período especificado de tiempo.
+
+Al día de la fecha las incidencias acumuladas por cada 100000 habitantes en la provincias de Argentina son: 
+
+####  {.tabset  .tabset-fade .tabset-pills}
+##### Mapa
+```{r mapIAArg, echo=FALSE, message=FALSE, warning=FALSE, paged.print=FALSE}
+ poblacionArg <- read_delim("data/poblacionArg.csv", 
+    ";", escape_double = FALSE, locale = locale(decimal_mark = ",", 
+        grouping_mark = ".", encoding = "ISO-8859-1"), 
+    trim_ws = TRUE)
+
+ia_prov <- tabla_prov %>% 
+  filter(tipo == "acum") %>% 
+  group_by(provincia) %>% 
+  filter(fecha == max(fecha)) %>% 
+  select(provincia, cant) %>% 
+  left_join(poblacionArg) %>% 
+  mutate(ia= round(cant/poblacion * 100000, 2)) %>% 
+  arrange(desc(ia))
+
+  highchart() %>%
+          hc_title(text = "<i>Incidencia Acumulada COVID-19 en Argentina</i> ",
+             margin = 20, align = "center",
+             style = list(color = "#780000", useHTML = TRUE)) %>% 
+                 hc_tooltip(followPointer =  FALSE) %>%
+          hc_add_series_map(argentina, ia_prov, name = "IA",
+                            value = "ia", joinBy = c("name", "provincia"),
+                            dataLabels = list(enabled = TRUE,
+                                              format = '{point.properties.woe-name}')) %>%
+          hc_colorAxis(minColor = "#FFAAAA", maxColor = "#780000")  %>%
+          hc_legend(align = "center", x = 0, y = -10) %>%
+          hc_mapNavigation(enabled = TRUE) %>%
+          hc_add_theme(hc_theme_ffx()) %>% 
+          hc_add_annotation(xValue = 0, yValue = 0, title = list(text = 'Fuente: Ministerio Salud - INDEC')) %>% 
+          hc_chart(borderColor = "#780000",
+             borderRadius = 10,
+             borderWidth = 2)
+
+```
+
+##### Tabla Datos
+Como se observa, la provincia con la mayor Incidencia Acumulada al día de hoy es **`r ia_prov[1,1] `** y le siguen **`r ia_prov[2,1] `** y **`r ia_prov[3,1] `**.
+```{r tablaIAArg, echo=FALSE, message=FALSE, warning=FALSE, paged.print=FALSE, out.width='100%'}
+  ia_prov  %>% kable( col.names =  c("Provincia", "Casos", "Población", "IA"),
+            align =  c('l', 'c', 'c', 'c', 'c') ) %>% 
+      kable_styling()
+
+```
 
 

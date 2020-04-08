@@ -50,8 +50,7 @@ library(timevis)
   poblacion <- data.frame( c('Argentina', 'Bolivia', 'Brazil', 'Chile', 'Colombia', 'Ecuador',  'Paraguay',	'Peru',	'Surinam', 'Uruguay',  'Venezuela'), c(44938712, 11383094,	210147125,19107216,	50372424,	17300000,	 7152703, 33105273,524000, 3529014, 28067000)) 
   names(poblacion) <- c('pais', 'poblacion')
  
-  #Paises mas afectados fuera de China
-  #'France',   
+  #Paises mas afectados 
   mayores <- c('China', 'France', 'US', 'Spain', 'Italy',  'Germany', 'Argentina', 'Korea, South')
   
   ### Paises mas afectados
@@ -128,6 +127,7 @@ library(timevis)
   ### Sudamérica
  {   sudamerica <- covid19 %>% 
       filter(`Country/Region` %in% paises_sa) 
+   
     sudamerica <- sudamerica[,-c(2:38)]
     sudamerica <- sudamerica %>% 
       gather(fecha, casos, 2:max(col(sudamerica)), -`Country/Region`) 
@@ -142,9 +142,9 @@ library(timevis)
       arrange(pais,fecha) %>% 
       mutate(dia= 1:n())
     
-    sudamerica<-sudamerica %>%
-      filter(casos > 0) %>% 
-      group_by(pais)
+    # sudamerica<-sudamerica %>%
+    #   filter(casos > 0) %>% 
+    #   group_by(pais)
     
     sudamerica_m <- covid19_m %>% 
       filter(`Country/Region` %in% paises_sa) 
@@ -162,9 +162,9 @@ library(timevis)
       arrange(pais,fecha) %>% 
       mutate(dia= 1:n())
     
-    sudamerica_m<-sudamerica_m %>%
-      filter(fallecidos > 0) %>% 
-      group_by(pais)
+    # sudamerica_m<-sudamerica_m %>%
+    #   filter(fallecidos > 0) %>% 
+    #   group_by(pais)
     
      sudamerica$nuevos <- 0
       for(p in sudamerica$pais){
@@ -224,17 +224,16 @@ El 30 de enero, la Organización Mundial de la Salud declaró la emergencia de s
 
 La cifra de contagios confirmados del nuevo coronavirus SARS-CoV-2 superó la barrera del millón, siendo en la actualidad **`r  as.integer(sum(covid19[,ncol(covid19)])) `** los casos confirmados.
 
-Las muertes por la pandemia alcanzan las `r   as.integer(sum(covid19_m[,ncol(covid19_m)])) `, de acuerdo con el recuento de la universidad estadounidense Johns Hopkins, uno de los indicadores más consultados del mundo.
+Las muertes por la pandemia alcanzan las **`r   as.integer(sum(covid19_m[,ncol(covid19_m)])) `**, de acuerdo con los datos de la universidad estadounidense Johns Hopkins, uno de las fuentes más consultadas del mundo.
 
 
-En el siguiente gráfico se puede analizar la velocidad y magnitud que ha tenido la propagación del Covid-19 en diferentes países hasta la fecha indicada. El hecho de que la visión de este sea logarítmica permite analizar en una escala más adecuada cómo ha sido la evolución de la pandemia. Se incluye China.
+En el siguiente gráfico se puede analizar la velocidad y magnitud que ha tenido la propagación del Covid-19 en diferentes países hasta la fecha indicada. El hecho de que la visión de éste sea logarítmica permite analizar en una escala más adecuada cómo ha sido la evolución de la pandemia. Se incluye China.
 ```{r logar, echo=FALSE, out.width='100%', fig.align='center'}
 
   p <- afectados %>% select(pais, fecha, casos)
 
   fig <- plot_ly(p, x = ~fecha, y = ~casos, color = ~pais, type = "scatter", mode='lines+markers') 
-  # %>% add_lines(y = ~casos)
-  
+ 
   fig <- layout(fig, yaxis = list(type = "log"))
   fig
   
@@ -544,7 +543,8 @@ Los datos con los que se trabajarán son de procesamiento propio en base a los i
 ```
 
 
-
+<!-- ### Coronavirus Hoy -->
+Hacer un 
 
 
 ### Distribución por Provincia

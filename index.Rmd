@@ -46,8 +46,10 @@ output:
       covid19_m <- covid19_m[-1]
     }  
   
-    # Paises Sud América
-    paises_sa <- c('Brazil', 'Argentina', 'Chile', 'Peru', 'Paraguay', 'Bolivia', 'Uruguay', 'Colombia', 'Venezuela',  'Ecuador', 'Guayana Francesa')
+  paises_ameria <- read_csv("data/latinoamerica.csv")
+  
+    # Paises América
+    paises_sa <- c('Brazil', 'Argentina', 'Chile', 'Peru', 'Paraguay', 'Bolivia', 'Uruguay', 'Colombia', 'Venezuela',  'Ecuador', 'Guayana Francesa', 'Mexico')
     poblacion <- data.frame( c('Argentina', 'Bolivia', 'Brazil', 'Chile', 'Colombia', 'Ecuador',  'Paraguay',	'Peru',	'Surinam', 'Uruguay',  'Venezuela'), c(44938712, 11383094,	210147125,19107216,	50372424,	17300000,	 7152703, 33105273,524000, 3529014, 28067000)) 
     names(poblacion) <- c('pais', 'poblacion')
    

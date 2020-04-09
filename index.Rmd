@@ -450,19 +450,20 @@ Se puede observar que casi todos los países siguen un camino muy similar de cre
 	avance <- sudamerica %>% group_by(pais) %>% filter(dia != max(dia))
 
 	dinamico <- ggplot(avance) +
-	  geom_line(aes(casos, semanal, group=pais, color=pais), size=1.1)
+	  geom_line(aes(casos, semanal, group=pais, color=pais), size=1.1)+ scale_y_log10() + scale_x_log10() 
 
 	dinamico <- dinamico + transition_reveal(casos)
 	animate(dinamico, renderer = ffmpeg_renderer(format = "webm"))
 ```
 
 ##### Por país
-```{r grafTray, echo=FALSE, message=FALSE, warning=TRUE, paged.print=FALSE, out.width='100%', fig.align='center'}
+```{r grafTray, echo=FALSE, message=FALSE, warning=FALSE, paged.print=FALSE, out.width='100%', fig.align='center'}
  
   sudamerica %>% 
     group_by(pais) %>% 
     ggplot(aes(x=casos, y=semanal, color=pais))+
     geom_line(show.legend=FALSE) +
+    scale_y_log10() + scale_x_log10() +
     labs(title="", x='Total de Casos',
          y="Trayectoria de COVID-19 en SudAmérica", caption="Datos: Universidad Johns Hopkins") + 
     facet_wrap(~pais,  ncol=5)

@@ -45,19 +45,64 @@ output:
       covid19_m <- read_csv("https://github.com/CSSEGISandData/COVID-19/raw/master/csse_covid_19_data/csse_covid_19_time_series/time_series_covid19_deaths_global.csv")
       covid19_m <- covid19_m[-1]
     }  
-  
-  paises_ameria <- read_csv("data/latinoamerica.csv")
-  
+ 
+      ## Mapas
+      argentina <- fromJSON(file = "data/ar-all.geo.json")
+      sud <- fromJSON(file="data/south-america.geo.json")
+      world <- fromJSON(file="data/world.geo.json")
+ 
     # Paises América
-    paises_sa <- c('Brazil', 'Argentina', 'Chile', 'Peru', 'Paraguay', 'Bolivia', 'Uruguay', 'Colombia', 'Venezuela',  'Ecuador', 'Guayana Francesa', 'Mexico')
-    poblacion <- data.frame( c('Argentina', 'Bolivia', 'Brazil', 'Chile', 'Colombia', 'Ecuador',  'Paraguay',	'Peru',	'Surinam', 'Uruguay',  'Venezuela'), c(44938712, 11383094,	210147125,19107216,	50372424,	17300000,	 7152703, 33105273,524000, 3529014, 28067000)) 
-    names(poblacion) <- c('pais', 'poblacion')
-   
-    #Paises mas afectados 
-    mayores <- c('China', 'France', 'US', 'Spain', 'Italy',  'Germany', 'Argentina') #, 'Korea, South')
+      paises_sa <- c('Brazil', 'Argentina', 'Chile', 'Peru', 'Paraguay', 'Bolivia', 'Uruguay', 'Colombia', 'Venezuela',  'Ecuador', 'Guayana Francesa', 'Mexico')
+      poblacion <- data.frame( c('Argentina', 'Bolivia', 'Brazil', 'Chile', 'Colombia', 'Ecuador',  'Paraguay',	'Peru',	'Surinam', 'Uruguay',  'Venezuela'), c(44938712, 11383094,	210147125,19107216,	50372424,	17300000,	 7152703, 33105273,524000, 3529014, 28067000)) 
+      names(poblacion) <- c('pais', 'poblacion')
+
+    ###Mundial
+    {
+      mundial <- covid19[,-c(2,3)]
+      mundial <- mundial %>% gather(fecha, casos, 2:max(col(mundial)), -`Country/Region`) 
+      names(mundial) <- c('pais', 'fecha', 'confirmados')
+      mundial$pais <- if_else(mundial$pais==	'US', 'United States of America', mundial$pais)
+      
+      mundial <- mundial %>% group_by(pais, fecha) %>% 
+        mutate(casos =sum(confirmados)) %>% select(pais, fecha, casos) %>% unique()
+      
+      mundial$fecha <-paste0(mundial$fecha,'20')
+      mundial$fecha <-as.Date(mundial$fecha ,"%m/%d/%Y")
+      
+      mundial<-mundial %>%
+        filter(casos > 0) %>% 
+        group_by(pais) %>% 
+        arrange(pais,fecha) %>% 
+        mutate(dia= 1:n())
+      
+      mundial_m <- covid19_m[,-c(2,3)]
+         
+      mundial_m <- mundial_m %>% gather(fecha, casos, 2:max(col(mundial_m)), -`Country/Region`) 
+      names(mundial_m) <- c('pais', 'fecha', 'muertes')
+      mundial_m$pais <- if_else(mundial_m$pais==	'US', 'United States of America', mundial_m$pais)
+      
+      mundial_m <- mundial_m %>% group_by(pais, fecha) %>% 
+        mutate(muertes =sum(muertes)) %>% select(pais, fecha, muertes) %>% unique()
+      
+      mundial_m$fecha <-paste0(mundial_m$fecha,'20')
+      mundial_m$fecha <-as.Date(mundial_m$fecha ,"%m/%d/%Y")
+      
+      mundial_m<-mundial_m %>%
+        filter(muertes > 0) %>% 
+        group_by(pais) %>% 
+        arrange(pais,fecha) %>% 
+        mutate(dia= 1:n())
+      
+      mundial_ambos <- mundial %>% 
+      left_join(mundial_m, by=c('pais', 'fecha')) %>%  select(pais, fecha, dia.x, casos, muertes)
+      mundial_ambos$muertes <- if_else(is.na(mundial_ambos$muertes), 0, mundial_ambos$muertes)
+
+      }
     
     ### Paises mas afectados
-    { masAfectados <- covid19 %>% 
+    { mayores <- c('China', 'France', 'US', 'Spain', 'Italy',  'Germany', 'Argentina') #, 'Korea, South')
+      
+      masAfectados <- covid19 %>% 
         filter(`Country/Region` %in% mayores) 
       
       masAfectados <- masAfectados[,-c(2,3)]
@@ -98,7 +143,8 @@ output:
         filter(`Country/Region` %in% mayores) 
       
       masAfectados_m <- masAfectados_m[,-c(2,3)]
-      masAfectados_m <- masAfectados_m %>% gather(fecha, casos, 2:max(col(masAfectados_m)), -`Country/Region`) 
+      masAfectados_m <- masAfectados_m %>%
+        gather(fecha, casos, 2:max(col(masAfectados_m)), -`Country/Region`) 
       names(masAfectados_m) <- c('pais', 'fecha', 'fallecidos')
       
       masAfectados_m <- masAfectados_m %>% group_by(pais, fecha) %>% 
@@ -127,7 +173,7 @@ output:
     }
     
     ### Sudamérica
-   {   sudamerica <- covid19 %>% 
+    {   sudamerica <- covid19 %>% 
         filter(`Country/Region` %in% paises_sa) 
      
       sudamerica <- sudamerica[,-c(2:38)]
@@ -183,12 +229,8 @@ output:
   
   }
     
-  ## Mapas
-    argentina <- fromJSON(file = "data/ar-all.geo.json")
-    sud <- fromJSON(file="data/south-america.geo.json")
-    
-  ## Argentina
-  {  ### Totales generales
+    ## Argentina
+    {  ### Totales generales
       argCov <- read_delim("data/argentina.csv", ";", 
                            escape_double = FALSE, trim_ws = TRUE, locale = locale(encoding = "ISO-8859-1"))
       
@@ -220,8 +262,74 @@ La cifra de contagios confirmados del nuevo coronavirus SARS-CoV-2 superó la ba
 
 Las muertes por la pandemia alcanzan las **`r   as.integer(sum(covid19_m[,ncol(covid19_m)])) `**, de acuerdo con los datos de la universidad estadounidense Johns Hopkins, uno de las fuentes más consultadas del mundo.
 
+####  {.tabset  .tabset-fade .tabset-pills}
+##### Detectados
+```{r mapaMundoCasos, echo=FALSE, message=FALSE, warning=FALSE, paged.print=FALSE}
 
-En el siguiente gráfico se puede analizar la velocidad y magnitud que ha tenido la propagación del Covid-19 en diferentes países hasta la fecha indicada. El hecho de que la visión de éste sea logarítmica permite analizar en una escala más adecuada cómo ha sido la evolución de la pandemia. 
+      mundialHoy <- mundial %>% 
+        group_by(pais) %>%  
+        filter(dia==max(dia))
+      
+      highchart() %>% 
+         hc_title(text = "<i>Casos Acumulados COVID-19</i>",
+                  margin = 20, align = "center", style = list(color = "#08338F", useHTML = TRUE)) %>%
+         hc_tooltip(followPointer =  FALSE) %>%
+         hc_add_series_map(world, mundialHoy, name = "Casos", value = "casos", joinBy = c("name", "pais"),
+                      dataLabels = list(enabled = TRUE, format = '{point.properties.woe-name}')) %>%
+         hc_colorAxis(minColor = "#B7D4EB", maxColor = "#08338F")  %>%
+         hc_legend(align = "center", x = 0, y = -10) %>%
+         hc_mapNavigation(enabled = TRUE) %>%
+         hc_add_theme(hc_theme_ffx()) %>%
+         hc_add_annotation(xValue = 0, yValue = 0, title = list(text = 'Fuente: Johns Hopkins. <p> Elaborado por: GIBD UTN')) %>%
+         hc_chart(borderColor = "#08338F", borderRadius = 10, borderWidth = 2)
+```
+
+##### Fallecidos
+```{r mapaMundoMuertes, echo=FALSE, message=FALSE, warning=FALSE, paged.print=FALSE}
+
+      mundialMHoy <- mundial_m %>% 
+        group_by(pais) %>%  
+        filter(dia==max(dia))
+      
+      highchart() %>% 
+         hc_title(text = "<i>Fallecidos COVID-19</i>",
+                  margin = 20, align = "center", style = list(color = "#780000", useHTML = TRUE)) %>%
+         hc_tooltip(followPointer =  FALSE) %>%
+         hc_add_series_map(world, mundialMHoy, name = "Muertes", value = "muertes", joinBy = c("name", "pais"),
+                      dataLabels = list(enabled = TRUE, format = '{point.properties.woe-name}')) %>%
+         hc_colorAxis(minColor = "#FFAAAA", maxColor = "#780000")  %>%
+         hc_legend(align = "center", x = 0, y = -10) %>%
+         hc_mapNavigation(enabled = TRUE) %>%
+         hc_add_theme(hc_theme_ffx()) %>%
+         hc_add_annotation(xValue = 0, yValue = 0, title = list(text = 'Fuente: Johns Hopkins. <p> Elaborado por: GIBD UTN')) %>%
+         hc_chart(borderColor = "#780000", borderRadius = 10, borderWidth = 2)
+       
+```
+
+##### Letalidad
+```{r letalidadMundo, echo=FALSE, message=FALSE, warning=FALSE, paged.print=FALSE}
+
+      letalHoy <- mundial_ambos %>% 
+        group_by(pais) %>% 
+        filter(dia.x==max(dia.x)) %>%
+        mutate(letalidad = round(muertes/casos * 100, 2)) %>% unique() %>% arrange(desc(letalidad))
+      
+      letalHoy %>% select(pais, fecha, casos, muertes, letalidad) %>% filter(letalidad >0) %>% 
+          kable( col.names =  c("País", "Fecha", "Casos",  "Fallecidos", "Tasa Letalidad"),
+            align =  c('l', 'c', 'c', 'c', 'c') ) %>%    kable_styling()
+       
+```
+
+
+
+
+### Evolución por fecha
+En el siguiente gráfico se puede analizar la velocidad y magnitud que ha tenido la propagación del Covid-19 en los países más afectados hasta la fecha indicada y Argentina. 
+
+
+####  {.tabset  .tabset-fade .tabset-pills}
+##### Logarítmica
+El hecho de que la visión de éste sea logarítmica permite analizar en una escala más adecuada cómo ha sido la evolución de la pandemia, debido a la amplia gama de valores. 
 ```{r logar, echo=FALSE, out.width='100%', fig.align='center'}
 
   p <- afectados %>% select(pais, fecha, casos)
@@ -231,8 +339,8 @@ En el siguiente gráfico se puede analizar la velocidad y magnitud que ha tenido
   
 ```
 
-<!-- ## Argentina vs Países más afectados -->
-Las curvas de evolución de casos detectados de COVID-19 en Argentina y en los países mas afectados a nivel mundial son:
+##### Lineal
+Las curvas de evolución a escala lineal de casos detectados de COVID-19 en Argentina y en los países mas afectados a nivel mundial son:
 
 ```{r mundo, echo=FALSE, out.width='95%', fig.align='center'}
   p <- afectados %>% select(dia.x, fecha, casos)
@@ -241,7 +349,10 @@ Las curvas de evolución de casos detectados de COVID-19 en Argentina y en los p
   fig
 ```
 
-Si se excluye China y se comparan estos paises en los primeros `r max(afectados$dia.x[afectados$pais=="Argentina"]) ` días, que son los transcurridos desde el primer caso detectado en Argentina, se obtienen las siguientes curvas: 
+
+
+### Evolución en días
+Excluyendo China y comparando la evolución de los casos detectados en estos paises en los primeros `r max(afectados$dia.x[afectados$pais=="Argentina"]) ` días, que son los transcurridos desde el primer caso detectado en Argentina, se obtienen las siguientes curvas: 
 
 
 ```{r mundo20, echo=FALSE, out.width='95%', fig.align='center'}
@@ -254,6 +365,7 @@ Si se excluye China y se comparan estos paises en los primeros `r max(afectados$
 ```
 
 
+### Evolución luego de 100 casos
 Para poner en contexto la situación, en el siguiente gráfico puede verse cómo fue evolucionando la cantidad de personas infectadas en estos países en el período siguiente al de haber llegado a los 100 casos confirmados.
 
 ```{r dia100mundo, echo=FALSE, out.width='95%', fig.align='center'}
@@ -265,6 +377,7 @@ Para poner en contexto la situación, en el siguiente gráfico puede verse cómo
   fig
   
 ```
+
 
 
 
@@ -452,7 +565,7 @@ Se puede observar que casi todos los países siguen un camino muy similar de cre
 	avance <- sudamerica %>% group_by(pais) %>% filter(dia != max(dia))
 
 	dinamico <- ggplot(avance) +
-	  geom_line(aes(casos, semanal, group=pais, color=pais), size=1.1)+ scale_y_log10() + scale_x_log10() 
+	  geom_line(aes(casos, semanal, group=pais, color=pais), size=1)+ scale_y_log10() + scale_x_log10() 
 
 	dinamico <- dinamico + transition_reveal(casos)
 	animate(dinamico, renderer = ffmpeg_renderer(format = "webm"))

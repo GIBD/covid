@@ -641,7 +641,7 @@ El Ministerio diariamente informa la cantidad de casos por provincia pudiendo re
 
 
 ####  {.tabset  .tabset-fade .tabset-pills}
-##### Mapa
+##### Casos
 ```{r mapas, echo=FALSE, message=FALSE, warning=FALSE, fig.align='center'}
   covidArg_hoy <- covidArg %>% 
     group_by(PROVINCIA) %>% 
@@ -661,11 +661,40 @@ El Ministerio diariamente informa la cantidad de casos por provincia pudiendo re
                             dataLabels = list(enabled = TRUE,
                                               format = '{point.properties.woe-name}')) %>%
           hc_colorAxis(minColor = "#B7D4EB", maxColor = "#08338F")  %>%
-          hc_legend(align = "center", x = 0, y = -70) %>%
+          hc_legend(align = "center", x = 0, y = -10) %>%
           hc_mapNavigation(enabled = TRUE) %>%
           hc_add_theme(hc_theme_ffx()) %>% 
           hc_add_annotation(xValue = 0, yValue = 0, title = list(text = 'Fuente: Datos Propios')) %>% 
           hc_chart(borderColor = "#08338F",
+             borderRadius = 10,
+             borderWidth = 2)
+```
+
+##### Fallecidos
+```{r mapasFallArg, echo=FALSE, message=FALSE, warning=FALSE, fig.align='center'}
+  muertosArg_hoy <- muertosArg %>% 
+    group_by(Provincia) %>% 
+    mutate(total=n()) %>% select(Provincia, total) %>% unique()
+
+
+  highchart() %>%
+          hc_title(text = "<i>Mapa dinámico de COVID-19 en Argentina</i> - <b>Fallecidos</b>",
+             margin = 5, align = "center",
+             style = list(color = "#780000", useHTML = TRUE)) %>% 
+          hc_subtitle(text = "Casos detectados por provincia",
+                align = "center",
+                style = list(color = "#780000", fontWeight = "bold")) %>% 
+          hc_tooltip(followPointer =  FALSE) %>%
+          hc_add_series_map(argentina, muertosArg_hoy, name = "Total",
+                            value = "total", joinBy = c("name", "Provincia"),
+                            dataLabels = list(enabled = TRUE,
+                                              format = '{point.properties.woe-name}')) %>%
+          hc_colorAxis(minColor = "#FFAAAA", maxColor = "#780000")  %>%
+          hc_legend(align = "center", x = 0, y = -10) %>%
+          hc_mapNavigation(enabled = TRUE) %>%
+          hc_add_theme(hc_theme_ffx()) %>% 
+          hc_add_annotation(xValue = 0, yValue = 0, title = list(text = 'Fuente: Datos Propios')) %>% 
+          hc_chart(borderColor = "#780000",
              borderRadius = 10,
              borderWidth = 2)
 ```
@@ -762,11 +791,12 @@ La evolución y distribución de los casos según el tipo en Argentina es:
     geom_bar(stat = "identity", color="white") +
     geom_text(aes(label = paste0(round(porc*100,0),"%")), position = position_stack(vjust = 0.5),
               color="black", size=2) +
-    scale_y_continuous("Porcentaje", labels=scales::percent)
+    scale_y_continuous("Porcentaje", labels=scales::percent) + 
+    theme(legend.position="bottom")
 
 ```
 
-### Cantidad de Casos /Cantidad de Test
+### Tasa de Positividad
 
 Desde el día 16/03/2020 el Ministerio de Salud comenzó a informar la cantidad de casos descartados de COVID-19.
 A continuación se visualiará la evolución en la proporción de los casos detectados sobre casos estudiados 

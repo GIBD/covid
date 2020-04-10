@@ -14,8 +14,8 @@ fecha;genero;edad;Provincia;Antecedentes;obs
 27/3/2020;Hombre;70;Ciudad de Buenos Aires;;
 27/3/2020;Hombre;81;Mendoza;"diabetese; cardiopatía";
 27/3/2020;Hombre;59;Río Negro;;
-27/3/2020;Hombre;73;;comorbilidades;
-27/3/2020;Mujer;72;;comorbilidades;
+27/3/2020;Hombre;73;Ciudad de Buenos Aires;comorbilidades;
+27/3/2020;Mujer;72;Ciudad de Buenos Aires;comorbilidades;
 28/3/2020;Hombre;51;Buenos Aires;no tenía;
 28/3/2020;Mujer;84;Ciudad de Buenos Aires;no tenía;
 29/3/2020;Hombre;58;Buenos Aires;EPOC;

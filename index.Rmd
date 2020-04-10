@@ -233,7 +233,10 @@ output:
     {  ### Totales generales
       argCov <- read_delim("data/argentina.csv", ";", 
                            escape_double = FALSE, trim_ws = TRUE, locale = locale(encoding = "ISO-8859-1"))
-      
+       poblacionArg <- read_delim("data/poblacionArg.csv", ";", escape_double = FALSE, 
+                            locale = locale(decimal_mark = ",", grouping_mark = ".",
+                                            encoding = "ISO-8859-1"), trim_ws = TRUE)
+       
     ### Detalle por provincias
       covidArg <-read_delim("data/COVID_Arg.csv", ";", 
                             escape_double = FALSE, trim_ws = TRUE, locale = locale(encoding = "ISO-8859-1"))
@@ -610,17 +613,17 @@ Los datos con los que se trabajarán son de procesamiento propio en base a los i
    select(dia, Confirmados, Fallecidos, Recuperados) %>% 
    gather(tipo, cantidad, c(Confirmados, Fallecidos, Recuperados), -dia) 
  
- ggplot(evolArg,
+  ggplot(evolArg,
        aes(x = dia,
            y = cantidad,
            group = tipo,
            fill = tipo)) +
-     geom_area() +
-    labs(title="Evolución COVID-19 en Argentina", 
-         caption="Fuente: Ministerio de Salud", 
-         y="Cantidad de Casos", 
+     geom_area()  +
+    labs(title="Evolución COVID-19 en Argentina",
+         caption="Fuente: Ministerio de Salud",
+         y="Cantidad de Casos",
          x="día")
-   
+  
 ```
 
 ##### Tabla
@@ -742,9 +745,9 @@ En la provincia de Buenos Aires y Ciudad de Buenos Aires el día 29/03/2020 se o
 
 
 
-### Mortalidad en Argentina
+### Letalidad en Argentina
 
-En la actualidad (`r max(totalesArg$dia)`) en Argentina, la **tasa de mortalidad particular** es de `r round(totalesArg$Fallecidos[totalesArg$dia==max(totalesArg$dia)]/totalesArg$Detectados[totalesArg$dia==max(totalesArg$dia)] * 100, 2)`%, mientras que el **porcentaje pacientes recuperados** es del `r round(totalesArg$Recuperados[totalesArg$dia==max(totalesArg$dia)]/totalesArg$Detectados[totalesArg$dia==max(totalesArg$dia)] * 100, 2)`%.
+En la actualidad (`r max(totalesArg$dia)`) en Argentina, la **tasa de mortalidad particular o letalidad** es de `r round(totalesArg$Fallecidos[totalesArg$dia==max(totalesArg$dia)]/totalesArg$Detectados[totalesArg$dia==max(totalesArg$dia)] * 100, 2)`%, mientras que el **porcentaje pacientes recuperados** es del `r round(totalesArg$Recuperados[totalesArg$dia==max(totalesArg$dia)]/totalesArg$Detectados[totalesArg$dia==max(totalesArg$dia)] * 100, 2)`%.
 
 La edad media de los pacientes fallecidos es de `r round(mean(muertosArg$edad), 0)` años, y en particular la edad media de los Hombres fallecidos es de `r round(mean(muertosArg$edad[muertosArg$genero=="Hombre"]), 0)` años y en la Mujeres de `r round(mean(muertosArg$edad[muertosArg$genero=="Mujer"]), 0)` años.
 
@@ -827,8 +830,7 @@ Al día de la fecha las incidencias acumuladas por cada 100.000 habitantes en la
 ####  {.tabset  .tabset-fade .tabset-pills}
 ##### Mapa
 ```{r mapIAArg, echo=FALSE, message=FALSE, warning=FALSE, paged.print=FALSE}
-  poblacionArg <- read_delim("data/poblacionArg.csv", ";", escape_double = FALSE, 
-                            locale = locale(decimal_mark = ",", grouping_mark = ".", encoding = "ISO-8859-1"), trim_ws = TRUE)
+ 
   ia_prov <- tabla_prov %>%
     filter(tipo == "acum") %>%
     group_by(provincia) %>%
@@ -853,12 +855,36 @@ Al día de la fecha las incidencias acumuladas por cada 100.000 habitantes en la
 
 ```
 
-##### Tabla Datos
-Como se observa, la provincia con la mayor Incidencia Acumulada al día de hoy es **`r ia_prov[1,1] `** y le siguen **`r ia_prov[2,1] `** y **`r ia_prov[3,1] `**.
-```{r tablaIAArg, echo=FALSE, message=FALSE, warning=FALSE, paged.print=FALSE, out.width='100%'}
-  ia_prov  %>% kable( col.names =  c("Provincia", "Casos", "Población", "IA"),
-            align =  c('l', 'c', 'c', 'c', 'c') ) %>% 
-      kable_styling()
+<!-- ##### Tabla Datos -->
+<!-- Como se observa, la provincia con la mayor Incidencia Acumulada al día de hoy es **`r ia_prov[1,1] `** y le siguen **`r ia_prov[2,1] `** y **`r ia_prov[3,1] `**. -->
+<!-- ```{r tablaIAArg, echo=FALSE, message=FALSE, warning=FALSE, paged.print=FALSE, out.width='100%'} -->
+<!--   ia_prov  %>% kable( col.names =  c("Provincia", "Casos", "Población", "IA"), -->
+<!--             align =  c('l', 'c', 'c', 'c', 'c') ) %>%  -->
+<!--       kable_styling() -->
 
-```
+<!-- ``` -->
 
+<!-- ```{r casosSup} -->
+<!--  superficie <- tabla_prov %>% group_by(provincia) %>%  -->
+<!--   filter(fecha == max(fecha) & tipo=="acum") %>% -->
+<!--   left_join(poblacionArg) %>%  -->
+<!--   mutate(sup = as.double(cant/(superficie)))%>%  -->
+<!--   select(provincia, cant, poblacion, superficie, sup) %>%  -->
+<!--   arrange(desc(sup)) -->
+
+<!--   superficie %>% select(provincia, cant, poblacion, superficie, sup) %>% arrange(desc(sup)) %>%  -->
+<!--     kable( col.names =  c("Provincia", "Casos", "Población","Superficie", "Casos por Km^2"), -->
+<!--               align =  c('l', 'c', 'c', 'c','c', 'c') ) %>%  -->
+<!--         kable_styling() -->
+
+<!--   highchart() %>% -->
+<!--     hc_title(text = "<i>Incidencia Acumulada COVID-19 en Argentina</i> ", -->
+<!--              margin = 20, align = "center", style = list(color = "#780000", useHTML = TRUE)) %>% -->
+<!--     # hc_tooltip(followPointer =  FALSE) %>% -->
+<!--     hc_add_series_map(... = ) -->
+<!--     hc_add_event_point(argentina, superficie, name = "IA", value = "sup", joinBy = c("name", "provincia"), dataLabels = list(enabled = TRUE, format = '{point.properties.woe-name}')) -->
+
+<!--     hc_add_series_map(argentina, superficie, name = "IA", value = "sup", joinBy = c("name", "provincia"), -->
+<!--                       dataLabels = list(enabled = TRUE, format = '{point.properties.woe-name}')) -->
+
+<!-- ``` -->

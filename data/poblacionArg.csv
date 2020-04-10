@@ -1,25 +1,25 @@
-provincia;poblacion
-Tierra del Fuego;127.205
-Ciudad de Buenos Aires;2.890.151
-Chaco;1.055.259
-Santa Cruz;273.964
-Neuquén;551.266
-Santa Fe;3.194.537
-Córdoba;3.308.876
-Río Negro;638.645
-Buenos Aires;15.625.084
-La Rioja;333.642
-San Luis;432.310
-Corrientes;992.595
-Mendoza;1.738.929
-Entre Ríos;1.235.994
-Tucumán;1.448.188
-La Pampa;318.951
-Jujuy;673.307
-Santiago del Estero;874.006
-Misiones;1.101.593
-Salta;1.214.441
-San Juan;681.055
-Catamarca;367.828
-Chubut;509.108
-Formosa;530.162
+provincia;poblacion;superficie
+Buenos Aires;15.625.084;307571
+Catamarca;367.828;102602
+Chaco;1.055.259;99633
+Chubut;509.108;224686
+Ciudad de Buenos Aires;2.890.151;200
+Córdoba;3.308.876;165321
+Corrientes;992.595;88199
+Entre Ríos;1.235.994;78781
+Formosa;530.162;72066
+Jujuy;673.307;53219
+La Pampa;318.951;143440
+La Rioja;333.642;89680
+Mendoza;1.738.929;148827
+Misiones;1.101.593;29801
+Neuquén;551.266;94078
+Río Negro;638.645;203013
+Salta;1.214.441;155488
+San Juan;681.055;89651
+San Luis;432.310;76748
+Santa Cruz;273.964;243943
+Santa Fe;3.194.537;133007
+Santiago del Estero;874.006;136351
+Tierra del Fuego;127.205;21571
+Tucumán;1.448.188;22524

@@ -232,7 +232,8 @@ output:
     ## Argentina
     {  ### Totales generales
       argCov <- read_delim("data/argentina.csv", ";", 
-                           escape_double = FALSE, trim_ws = TRUE, locale = locale(encoding = "ISO-8859-1"))
+                           escape_double = FALSE, trim_ws = TRUE, 
+                           locale = locale(encoding = "ISO-8859-1"))
        poblacionArg <- read_delim("data/poblacionArg.csv", ";", escape_double = FALSE, 
                             locale = locale(decimal_mark = ",", grouping_mark = ".",
                                             encoding = "ISO-8859-1"), trim_ws = TRUE)
@@ -609,20 +610,29 @@ Los datos con los que se trabajarán son de procesamiento propio en base a los i
  argCov$Recuperados <- if_else(is.na(argCov$Recuperados), 0, argCov$Recuperados)
  evolArg <- argCov %>%
    select(dia, Detectados, Fallecidos, Recuperados) %>% 
-   mutate(Confirmados =Detectados - Fallecidos - Recuperados) %>% 
-   select(dia, Confirmados, Fallecidos, Recuperados) %>% 
-   gather(tipo, cantidad, c(Confirmados, Fallecidos, Recuperados), -dia) 
+   mutate(Activos = Detectados - Fallecidos - Recuperados) %>% 
+   select(dia, Detectados, Activos, Fallecidos, Recuperados) %>% 
+   gather(tipo, cantidad, c(Detectados, Activos, Fallecidos, Recuperados), -dia) 
  
-  ggplot(evolArg,
-       aes(x = dia,
-           y = cantidad,
-           group = tipo,
-           fill = tipo)) +
-     geom_area()  +
-    labs(title="Evolución COVID-19 en Argentina",
-         caption="Fuente: Ministerio de Salud",
-         y="Cantidad de Casos",
-         x="día")
+  # ggplot(evolArg,
+  #      aes(x = dia,
+  #          y = cantidad,
+  #          group = tipo,
+  #          fill = tipo)) +
+  #    geom_area()  +
+  #   labs(title="Evolución COVID-19 en Argentina",
+  #        caption="Fuente: Ministerio de Salud",
+  #        y="Cantidad de Casos",
+  #        x="día")
+
+ pal <- c( '#8DA0CB', '#9BD92F','#FF8080',  '#66C2A5') 
+
+  plot_ly(evolArg, x =~dia, y=~cantidad, split = ~tipo, color=~tipo,
+         colors=pal,
+         alpha = 0.1,
+         type='scatter', mode='lines', fill='tozeroy')
+  
+  
   
 ```
 

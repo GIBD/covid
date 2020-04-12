@@ -855,6 +855,8 @@ Al día de la fecha las incidencias acumuladas por cada 100.000 habitantes en la
 
 ```
 
+
+  
 <!-- ##### Tabla Datos -->
 <!-- Como se observa, la provincia con la mayor Incidencia Acumulada al día de hoy es **`r ia_prov[1,1] `** y le siguen **`r ia_prov[2,1] `** y **`r ia_prov[3,1] `**. -->
 <!-- ```{r tablaIAArg, echo=FALSE, message=FALSE, warning=FALSE, paged.print=FALSE, out.width='100%'} -->

@@ -605,7 +605,7 @@ Los datos con los que se trabajarán son de procesamiento propio en base a los i
 ##### Evolución en Argentina
 ```{r evolArg, echo=FALSE, message=FALSE, warning=FALSE, fig.align='center'}
 
- names(argCov) <- c("dia", "casosD", "Detectados", "muertesD", "Fallecidos", "Recuperados", "UTI", "Descartados", "Mujeres", "Hombres", "Importados", "Estrecho", "Comunitaria", "Investigacion")
+ names(argCov) <- c("dia", "casosD", "Detectados", "muertesD", "Fallecidos", "Recuperados", "UTI","MuestraD","TotalPruebas", "Descartados", "Mujeres", "Hombres", "Importados", "Estrecho", "Comunitaria", "Investigacion")
  argCov$dia <- as.Date(argCov$dia, '%d/%m/%Y')
  argCov$Recuperados <- if_else(is.na(argCov$Recuperados), 0, argCov$Recuperados)
  evolArg <- argCov %>%
@@ -759,11 +759,16 @@ En la provincia de Buenos Aires y Ciudad de Buenos Aires el día 29/03/2020 se o
 
 En la actualidad (`r max(totalesArg$dia)`) en Argentina, la **tasa de mortalidad particular o letalidad** es de `r round(totalesArg$Fallecidos[totalesArg$dia==max(totalesArg$dia)]/totalesArg$Detectados[totalesArg$dia==max(totalesArg$dia)] * 100, 2)`%, mientras que el **porcentaje pacientes recuperados** es del `r round(totalesArg$Recuperados[totalesArg$dia==max(totalesArg$dia)]/totalesArg$Detectados[totalesArg$dia==max(totalesArg$dia)] * 100, 2)`%.
 
+
+El `r round(nrow(muertosArg[muertosArg$genero=="Hombre", ])/nrow(muertosArg) * 100, 1)` % de los fallecidos son Hombres, mientras que el `r round(nrow(muertosArg[muertosArg$genero=="Mujer", ])/nrow(muertosArg) * 100, 1)` % restante corresponde a Mujeres.
+
+
 La edad media de los pacientes fallecidos es de `r round(mean(muertosArg$edad), 0)` años, y en particular la edad media de los Hombres fallecidos es de `r round(mean(muertosArg$edad[muertosArg$genero=="Hombre"]), 0)` años y en la Mujeres de `r round(mean(muertosArg$edad[muertosArg$genero=="Mujer"]), 0)` años.
 
 En el siguiente gráfico se observa la distribución de los pacientes fallecidos por sexo y edad.
 
 ```{r fallArg, echo=FALSE, fig.align='center', message=FALSE, warning=FALSE, out.width='100%'}
+
 
   ggplot(muertosArg, aes(x=genero, y=edad, fill= genero) )+
       geom_violin(alpha=0.6) +

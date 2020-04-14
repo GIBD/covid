@@ -878,6 +878,49 @@ En el siguiente gráfico se observa la distribución de los pacientes fallecidos
 
 
 
+### Letalidad por Provincias
+En base a las provincias de residencia de los fallecidos, informadas por el Ministerio de Salud Nacional, y considerando las cantidades actualizadas de casos en cada provincia se obtienen las siguientes tasas de letalidad
+
+
+####  {.tabset  .tabset-fade .tabset-pills}
+##### Mapa
+```{r mapLEtArg, echo=FALSE, message=FALSE, warning=FALSE,  fig.align='center', paged.print=FALSE}
+
+  let_prov <- muertosArg %>% group_by(Provincia) %>% 
+    mutate(cantidad = n()) %>% 
+    select(Provincia, cantidad) %>% unique() %>% 
+    left_join(ia_prov, by=c("Provincia"="provincia")) %>% 
+    select("Provincia", "cantidad", "cant") %>% 
+  mutate(letalidad = round(cantidad/cant * 100, 1))
+
+
+  highchart() %>%
+    hc_title(text = "<i>Letalidad por COVID-19 en Argentina</i> ",
+             margin = 20, align = "center", style = list(color = "#780000", useHTML = TRUE)) %>%
+    hc_tooltip(followPointer =  FALSE) %>%
+    hc_add_series_map(argentina, let_prov, name = "Let", value = "letalidad", 
+                      joinBy = c("name", "Provincia"), 
+                      dataLabels = list(enabled = TRUE, format = '{point.properties.woe-name}')) %>%
+    hc_colorAxis(minColor = "#FFAAAA", maxColor = "#780000")  %>%
+    hc_legend(align = "center", x = 0, y = -10) %>%
+    hc_mapNavigation(enabled = TRUE) %>%
+    hc_add_theme(hc_theme_ffx()) %>% 
+    # hc_annotations( list(labels=let_prov$letalidad) ) %>% 
+    hc_add_annotation(xValue = 0, yValue = 0, title = list(text = 'Fuente: Ministerio Salud')) %>% 
+    hc_chart(borderColor = "#780000", borderRadius = 10, borderWidth = 2)
+
+```
+
+
+
+##### Datos
+```{r datLetProv, echo=FALSE,message=FALSE, warning=FALSE}
+ let_prov  %>% kable( col.names =  c("Provincia", "Muertes", "Casos Acumulados", "Tasa Letalidad"),
+            align =  c('l', 'c', 'c', 'c') ) %>%  kable_styling()
+```
+
+
+
 ### Distribución de Casos por Tipo
 Los tipos de Casos confirmados se clasifican en:
 *Importados* (cuando se registra trasmisión relacionada viajes al exterior del país)

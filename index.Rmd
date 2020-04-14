@@ -32,37 +32,43 @@ output:
   library(gganimate)
   library(gifski)
   library(timevis)
-  library(htmltools)
+  # library(htmltools)
+
   #################
   # Carga de Datos
   #################
   
   ## Datos mundiales
-    { # Confirmados
+  { # Confirmados
       covid19 <- read_csv("https://github.com/CSSEGISandData/COVID-19/raw/master/csse_covid_19_data/csse_covid_19_time_series/time_series_covid19_confirmed_global.csv")
       covid19 <- covid19[-1]
       
       # Fallecidos
       covid19_m <- read_csv("https://github.com/CSSEGISandData/COVID-19/raw/master/csse_covid_19_data/csse_covid_19_time_series/time_series_covid19_deaths_global.csv")
       covid19_m <- covid19_m[-1]
+      
+       # Recuperados
+      covid_19_r <- read_csv("https://github.com/CSSEGISandData/COVID-19/raw/master/csse_covid_19_data/csse_covid_19_time_series/time_series_covid19_recovered_global.csv")
+    covid_19_r <- covid_19_r[-1]
     }  
 
-    covid_19_r <- read_csv("https://github.com/CSSEGISandData/COVID-19/raw/master/csse_covid_19_data/csse_covid_19_time_series/time_series_covid19_recovered_global.csv")
-    covid_19_r <- covid_19_r[-1]
-    
-      ## Mapas
-      argentina <- fromJSON(file = "data/ar-all.geo.json")
-      sud <- fromJSON(file="data/south-america.geo.json")
-      world <- fromJSON(file="data/world.geo.json")
+  ## Mapas y Poblaciones
+  {
+    argentina <- fromJSON(file = "data/ar-all.geo.json")
+    sud <- fromJSON(file="data/south-america.geo.json")
+    world <- fromJSON(file="data/world.geo.json")
  
     # Paises América
-      poblacion <- data.frame( c('Argentina', 'Bolivia', 'Brazil', 'Chile', 'Colombia', 'Ecuador',  'Paraguay',	'Peru',	'Surinam', 'Uruguay',  'Venezuela'), c(44938712, 11383094,	210147125,19107216,	50372424,	17300000,	 7152703, 33105273,524000, 3529014, 28067000)) 
-      names(poblacion) <- c('pais', 'poblacion')
+    poblacion <- data.frame( c('Argentina', 'Bolivia', 'Brazil', 'Chile', 'Colombia', 'Ecuador',  
+                               'Paraguay',	'Peru',	'Surinam', 'Uruguay',  'Venezuela'), 
+                             c(44938712, 11383094,	210147125, 19107216, 50372424, 17300000,
+                               7152703, 33105273,524000, 3529014, 28067000)) 
+    names(poblacion) <- c('pais', 'poblacion')
 
-     poblacion_mundial <- read_delim("data/poblacion_mundial.csv", ";", escape_double = FALSE,
-                                     locale = locale(decimal_mark = ",", 
-                                                     encoding = "ISO-8859-1"), trim_ws = TRUE)
-      
+    poblacion_mundial <- read_delim("data/poblacion_mundial.csv", ";", escape_double = FALSE,
+                                     locale = locale(decimal_mark = ",", encoding = "ISO-8859-1"), trim_ws = TRUE)
+  }  
+
     ###Mundial
     {
       mundial <- covid19[,-c(2,3)]
@@ -246,14 +252,14 @@ output:
                             locale = locale(decimal_mark = ",", grouping_mark = ".",
                                             encoding = "ISO-8859-1"), trim_ws = TRUE)
        
-    ### Detalle por provincias
+      ### Detalle por provincias
       covidArg <-read_delim("data/COVID_Arg.csv", ";", 
                             escape_double = FALSE, trim_ws = TRUE, locale = locale(encoding = "ISO-8859-1"))
       covidArg$recuperados <- if_else(is.na(covidArg$recuperados), 0, covidArg$recuperados)
       covidArg$FALLECIDOS <- if_else(is.na(covidArg$FALLECIDOS), 0, covidArg$FALLECIDOS)
       covidArg$FECHA <- as.Date(covidArg$FECHA, '%d/%m/%Y')
     
-    ### Detalle fallecidos
+      ### Detalle fallecidos
       muertosArg <- read_delim("data/fallecidos.csv", ";", 
                                escape_double = FALSE, trim_ws = TRUE, locale = locale(encoding = "ISO-8859-1"))
       
@@ -432,10 +438,10 @@ A las gráficas se les ha agregado la tendencia (basada en el modelo de regresi�
 ```
 
 ##### Sudamérica
-Las curvas de evolución de los países en simultáneo:
+Las curvas de evolución de los países en simultáneo en base a la cantidad de días transcurridos desde la detección del primer infectado por COVID-19 se muestran a continuación:
 
 ```{r pressure, echo=FALSE, out.width='90%', fig.align='center'}
-  sudamerica %>%
+  sudamerica %>% 
     ggplot(aes(x=dia, y=casos, group=pais, color=pais)) + 
     geom_line(size=1.2 ) + geom_point()+
     labs(title="COVID-19 en Sudamérica", y="Cantidad de casos", caption="Datos: Universidad Johns Hopkins") + 
@@ -517,8 +523,8 @@ Al día de la fecha las cantidad de muertes acumuladas país es de:
 ```
 
 
-### Tasa de Mortalidad
-Una proporción interesante a comparar es la **tasa de mortalidad particular**, es decir la cantidad de personas que fallecieron respecto al total de casos en un período de tiempo.
+### Tasa de Letalidad
+Una proporción interesante a comparar es la **tasa de mortalidad particular o tasa de letalidad**, es decir la cantidad de personas que fallecieron respecto al total de casos en un período de tiempo.
 A continuación se muestra la evolución de la tasa de mortalidad en los distintos países considerando el primer día de detección del virus
 
 ####  {.tabset  .tabset-fade .tabset-pills}
@@ -526,7 +532,7 @@ A continuación se muestra la evolución de la tasa de mortalidad en los distint
 ```{r g_tasa_mort, echo=FALSE, message=FALSE, warning=FALSE, paged.print=FALSE, out.width='100%', fig.align='center'}
   p <- ambos %>% mutate(tasa_m = round(fallecidos/casos * 100, 1))
   fig <- plot_ly(p, x = ~dia.x, y = ~tasa_m, color = ~pais, type = "scatter", mode='lines+markers') 
-  fig <- layout(fig, xaxis = list(title = "día"), yaxis = list(title = "Tasa de Mortalidad"))
+  fig <- layout(fig, xaxis = list(title = "día"), yaxis = list(title = "Tasa de Letalidad"))
   fig
 
 ```
@@ -548,21 +554,46 @@ Los datos de la tasa de mortalidad al `r  max(ambos$fecha)` para cada país son:
 
 
 
-### Casos letales sobre Casos Totales
-En el siguiente gráfico se muestran las series de cantidades de casos y cantidades de fallecidos en cada país
+### Casos Totales y Casos letales
+En el siguiente gráfico se muestran las series de cantidades de casos y cantidades de fallecidos en cada país, en el primero se visualiza la escala fija sobre el y, en la segunda se muestra la escala libre que mejor se adapta a cada país 
 
-```{r casos_muertes, echo=FALSE, message=FALSE, warning=FALSE, paged.print=FALSE, out.width='100%'}
+####  {.tabset  .tabset-fade .tabset-pills}
+##### Escala fija
+```{r casos_muertes, echo=FALSE, message=FALSE, warning=FALSE, paged.print=FALSE, out.width='100%',out.height="100%", fig.align='center'}
   casos<- ambos %>% select(pais, dia.x, casos, fallecidos) %>% 
     gather(tipo, cant, -c(pais, dia.x))
-  ggplot(data = casos, aes(x=dia.x, y=cant, group=tipo))+
-          geom_line(aes(linetype=tipo, color=tipo))+
-          geom_point(aes(shape=tipo, color=tipo))+
-            labs(title='Cantidades de Casos y Fallecidos')+
-            labs(x = 'Año', y = expression(''))+
-            # scale_color_manual(values=c("navy", "red2"))+
-            theme(legend.position="bottom") + 
-    facet_wrap(~pais,  ncol=4) 
+
+  p <- ggplot(casos, aes(dia.x, cant, color=tipo, group=tipo, text = paste0(tipo, ": ", cant))) +
+    geom_line(aes(shape=tipo, color=tipo)) +
+    labs(x = 'día', y="") + 
+    facet_wrap(~pais, ncol=3)+   theme(legend.position = 'bottom')
+  
+  ggplotly(p, tooltip = "text" ) %>% 
+    layout(legend = list(orientation = "h", x = 0.4, y = -0.2), height = 800)
+  
+  # autosize = TRUE, height = 550)
+
 ```
+
+
+##### Escala libre
+```{r casos_muertes_libre, echo=FALSE, message=FALSE, warning=FALSE, paged.print=FALSE, out.width='100%', out.height="100%", fig.align='center'}
+ 
+  p <- ggplot(casos, aes(dia.x, cant, color=tipo, group=tipo, text = paste0(tipo, ": ", cant))) +
+    # geom_point(aes(shape=tipo, color=tipo), show.legend = F) +
+    geom_line(aes(shape=tipo, color=tipo), show.legend = F)+
+    # labs(title='Cantidades de Casos y Fallecidos')+
+    labs(x = 'día', y="") + 
+    facet_wrap(~pais, scales = "free_y", ncol=3)+
+    theme(legend.position = 'bottom')
+  
+  ggplotly(p, tooltip = "text") %>% 
+    layout(legend = list(orientation = "h", x = 0.4, y = -0.2), height = 800)
+
+```
+
+
+
 
 ### Trayectoria de Nuevos Casos
 Este gráfico (propuesto por https://aatishb.com/covidtrends/) muestra la evolución entre la cantidad total de casos de COVID-19 en una fecha frente a los nuevos casos confirmados en la semana previa a la misma. 
@@ -637,9 +668,7 @@ Los datos con los que se trabajarán son de procesamiento propio en base a los i
 Situación de los casos detectados en la actualidad. Los casos Activos aquí se discriminan con los casos que se encuentran en Unidades de Terapia Intensiva 
 
 ```{r distrArgH,echo=FALSE, message=FALSE, warning=FALSE }
-   # p2 <- argCov %>%  filter(dia==max(dia) & tipo != "Detectados") %>%
-   #   select(tipo, cantidad) %>% mutate(porc = cantidad/sum(cantidad))
-
+ 
   p2 <- argCov %>% filter(dia==max(dia)) %>% 
      select(dia, Detectados, Fallecidos, Recuperados, UTI) %>% 
      mutate(Activos = Detectados - Fallecidos - Recuperados-UTI) %>% 
@@ -880,13 +909,11 @@ La evolución y distribución de los casos según el tipo en Argentina es:
 
 
 
-
   
 ### Tasa de Positividad
 
-Desde el día 16/03/2020 el Ministerio de Salud comenzó a informar la cantidad de casos descartados de COVID-19.
-A continuación se visualiará la evolución en la proporción de los casos detectados sobre casos estudiados 
-<!-- y la tabla correspondiente a dichas cantidades. -->
+Desde el día 16/03/2020 el Ministerio de Salud comenzó a informar la cantidad de pruebas diagnósticas y casos descartados de COVID-19.
+A continuación se visualiará la evolución en la proporción de los casos detectados sobre la cantidad de pruebas analizadas. 
 
 ####  {.tabset  .tabset-fade .tabset-pills}
 ##### Tasa
@@ -907,10 +934,7 @@ A continuación se visualiará la evolución en la proporción de los casos dete
 
 ##### Cantidades
 ```{r propTestD, echo=FALSE, fig.align='center', message=FALSE, warning=FALSE, out.width='100%'}
- # testd<-test %>% gather(resultado, total, c(Detectados, DescTest), -dia)  
- # testd$resultado <- gsub("DescTest", "Test Negativos",   testd$resultado)
- # testd$resultado <- gsub("Detectados", "Test Positivos",  testd$resultado)
- # 
+
  p4 <- plot_ly(test,
               x = ~dia,
               y = ~DescTest,
@@ -921,10 +945,7 @@ A continuación se visualiará la evolución en la proporción de los casos dete
   layout(yaxis = list(title = "Acumulado de Pruebas Realizadas"),
          barmode = "stack")
  p4
- # testd <- testd %>% arrange(desc(resultado))
- # 
- # ggplot(testd, aes(x=dia, y=total, fill=resultado) ) +
- #    geom_bar(stat = "identity")
+
   
 ```
 

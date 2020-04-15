@@ -19,7 +19,11 @@ output:
   	message = FALSE,
   	warning = FALSE
   )
-  library(readr)
+```
+
+```{r importar, message=FALSE, warning=FALSE, include=FALSE}
+  
+library(readr)
   library(dplyr)
   library(tidyr)
   library(ggplot2)
@@ -255,8 +259,8 @@ output:
       ### Detalle por provincias
       covidArg <-read_delim("data/COVID_Arg.csv", ";", 
                             escape_double = FALSE, trim_ws = TRUE, locale = locale(encoding = "ISO-8859-1"))
-      covidArg$recuperados <- if_else(is.na(covidArg$recuperados), 0, covidArg$recuperados)
-      covidArg$FALLECIDOS <- if_else(is.na(covidArg$FALLECIDOS), 0, covidArg$FALLECIDOS)
+      # covidArg$recuperados <- if_else(is.na(covidArg$recuperados), 0, covidArg$recuperados)
+      # covidArg$FALLECIDOS <- if_else(is.na(covidArg$FALLECIDOS), 0, covidArg$FALLECIDOS)
       covidArg$FECHA <- as.Date(covidArg$FECHA, '%d/%m/%Y')
     
       ### Detalle fallecidos
@@ -627,6 +631,8 @@ Se puede observar que casi todos los países siguen un camino muy similar de cre
     facet_wrap(~pais,  ncol=5)
 
 ```
+
+
 
 
 

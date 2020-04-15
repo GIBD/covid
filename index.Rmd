@@ -251,10 +251,13 @@ library(readr)
       argCov <- read_delim("data/argentina.csv", ";", 
                            escape_double = FALSE, trim_ws = TRUE, 
                            locale = locale(encoding = "ISO-8859-1"))
-      
-       poblacionArg <- read_delim("data/poblacionArg.csv", ";", escape_double = FALSE, 
-                            locale = locale(decimal_mark = ",", grouping_mark = ".",
-                                            encoding = "ISO-8859-1"), trim_ws = TRUE)
+      names(argCov) <- c("dia", "casosD", "Detectados", "muertesD", "Fallecidos", "Recuperados",
+                      "UTI","MuestraD","TotalPruebas","DescEpidemiologia", "DescTest", "Descartados", 
+                      "Mujeres", "Hombres", "Importados", "Estrecho", "Comunitaria", "Investigacion")
+
+      poblacionArg <- read_delim("data/poblacionArg.csv", ";", escape_double = FALSE,
+                                 locale = locale(decimal_mark = ",", grouping_mark = ".",
+                                                 encoding = "ISO-8859-1"), trim_ws = TRUE)
        
       ### Detalle por provincias
       covidArg <-read_delim("data/COVID_Arg.csv", ";", 
@@ -649,10 +652,7 @@ Los datos con los que se trabajarán son de procesamiento propio en base a los i
 ####  {.tabset  .tabset-fade .tabset-pills}
 ##### Evolución en Argentina
 ```{r evolArg, echo=FALSE, fig.align='center', message=FALSE, warning=FALSE, paged.print=FALSE}
-   names(argCov) <- c("dia", "casosD", "Detectados", "muertesD", "Fallecidos", "Recuperados",
-                      "UTI","MuestraD","TotalPruebas","DescEpidemiologia", "DescTest", "Descartados", 
-                      "Mujeres", "Hombres", "Importados", "Estrecho", "Comunitaria", "Investigacion")
-
+   
    argCov$dia <- as.Date(argCov$dia, '%d/%m/%Y')
    argCov$Recuperados <- if_else(is.na(argCov$Recuperados), 0, argCov$Recuperados)
    
@@ -826,8 +826,9 @@ Al día de la fecha las incidencias acumuladas por cada 100.000 habitantes en la
 
 ####  {.tabset  .tabset-fade .tabset-pills}
 ##### Mapa
-```{r mapIAArg, echo=FALSE, message=FALSE, warning=FALSE, paged.print=FALSE}
 
+```{r mapIAArg, echo=FALSE, message=FALSE, warning=FALSE, paged.print=FALSE}
+  
   ia_prov <- tabla_prov %>%
     filter(tipo == "acum") %>%
     group_by(provincia) %>%
@@ -849,6 +850,17 @@ Al día de la fecha las incidencias acumuladas por cada 100.000 habitantes en la
     hc_add_theme(hc_theme_ffx()) %>% 
     hc_add_annotation(xValue = 0, yValue = 0, title = list(text = 'Fuente: Ministerio Salud - INDEC')) %>% 
     hc_chart(borderColor = "#780000", borderRadius = 10, borderWidth = 2)
+
+```
+
+
+##### Datos
+
+```{r iAProvD}
+  tabiaprov <- ia_prov %>% select(provincia, cant, ia)
+  tabiaprov %>% kable(col.names = c("Provincia", "Casos", "Tasa Incidencia"),
+            align=c('l', 'c', 'c')) %>%
+  kable_styling()
 
 ```
 
@@ -947,13 +959,18 @@ La evolución y distribución de los casos según el tipo en Argentina es:
     group_by(dia) %>% 
     mutate(porc= prop.table(cantidad))
   
-  ggplot(tipoCaso,aes(x=dia,y=porc, fill=tipo))+
+  p <- ggplot(tipoCaso,aes(x=dia,y=porc, fill=tipo))+
     geom_bar(stat = "identity", color="white") +
     geom_text(aes(label = paste0(round(porc*100,0),"%")), position = position_stack(vjust = 0.5),
               color="black", size=2) +
     scale_y_continuous("Porcentaje", labels=scales::percent) + 
     theme(legend.position="bottom")
+   
+  p
+   # ggplotly(p, tooltip = "text") 
+   # %>% layout(legend = list(orientation = "h", x = 0.4, y = -0.2), height = 800)
 
+  
 ```
 
 

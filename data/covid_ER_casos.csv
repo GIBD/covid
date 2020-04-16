@@ -1,0 +1,23 @@
+FECHA;ncaso;DEPARTAMENTO;LOCALIDAD;EDAD;SEXO;TRANSMISION;LUGAR CONTAGIO
+13/3/2020;1;Gualeguay;Gualeguay;;;;
+17/3/2020;2;Paraná;Paraná;;;;
+18/3/2020;3;Gualeguay;Gualeguay;;;;
+20/3/2020;4;Gualeguaychú;Gualeguaychú;;;;
+25/3/2020;5;Villaguay;Villaguay;;;;
+26/3/2020;10;Diamante;Libertador San Martín;;Hombre;IMPORTADO;
+26/3/2020;9;La Paz;La Paz;adulta joven;Mujer;IMPORTADO;
+25/3/2020;6;Paraná;Paraná;adulta mayor;Mujer;ESTRECHO;
+25/3/2020;7;Gualeguay;Gualeguay;;Mujer;;Chaco
+26/3/2020;8;Nogoyá;Nogoyá;;;;
+30/3/2020;12;Colón;Colón;adulto joven;Hombre;IMPORTADO;
+30/3/2020;13;Concordia;Concordia;adulto joven;Hombre;IMPORTADO;
+30/3/2020;11;Gualeguaychú;Gualeguaychú;adulto joven;Hombre;IMPORTADO;
+1/4/2020;14;Colón;Colón;;;ESTRECHO;Colón
+2/4/2020;15;Gualeguaychú;Gualeguaychú;;;;
+2/4/2020;16;Paraná;Paraná;;;;
+3/4/2020;17;Paraná;Paraná;;;;
+3/4/2020;18;Gualeguaychú;Gualeguaychú;;;;
+5/4/2020;19;Paraná;Paraná;;;;
+8/4/2020;20;Diamante;Libertador San Martín;adulta mayor;Mujer;ESTRECHO;
+9/4/2020;21;Islas del Ibicuy;Islas del Ibicuy;adulto mayor;Hombre;LOCAL;ZARATE
+15/3/2020;22;Colón;San José;;;;

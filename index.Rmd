@@ -1036,22 +1036,29 @@ A continuación se visualiará la evolución en la proporción de los casos dete
 Cantidad de Casos confirmados por departamento en la provincia de Entre Ríos
 
 ```{r mapaER}
-  
+   entrerios_loc <- fromJSON(file="data/localidadesER.geojson")
+
+ ## Detalle casos
   covid_er <- read_delim("data/covid_ER_casos.csv", ";", 
                         escape_double = FALSE, locale = locale(encoding = "ISO-8859-1"),
                         trim_ws = TRUE)
     
   covider <- covid_er %>% group_by(DEPARTAMENTO) %>%
     mutate(cantidad=n()) %>% select(DEPARTAMENTO, cantidad) %>% unique()
-  
+   
+  covider_loc <- covid_er %>% group_by(LOCALIDAD) %>%
+    mutate(cantidad=n()) %>% select(LOCALIDAD, cantidad) %>% unique()
+   
+   
   highchart() %>%
     hc_title(text = "<i>Casos de COVID-19 en Entre Ríos</i> ",
              margin = 20, align = "center", style = list(color = "#780000", useHTML = TRUE)) %>%
     hc_tooltip(followPointer =  FALSE) %>%
-    hc_add_series_map(entrerios, covider, name = "Casos", value = "cantidad", 
-                      joinBy = c("nam", "DEPARTAMENTO"), 
-                      dataLabels = list(enabled = TRUE, format = '{point.properties.nam}')) %>%
-    hc_colorAxis(minColor = "#FFAAAA", maxColor = "#780000")  %>%
+     hc_add_series_map(entrerios, covider, name = "Casos", value = "cantidad",
+                      joinBy = c("nam", "DEPARTAMENTO"),
+                      dataLabels = list(enabled = TRUE,
+                                        format = '{point.properties.nam}: {point.value}')) %>%
+       hc_colorAxis(minColor = "#FFAAAA", maxColor = "#780000")  %>%
     hc_legend(align = "center", x = 0, y = -10) %>%
     hc_mapNavigation(enabled = TRUE) %>%
     hc_add_theme(hc_theme_ffx()) %>% 

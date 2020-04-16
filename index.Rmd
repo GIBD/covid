@@ -38,6 +38,9 @@ output:
   library(timevis)
   # library(htmltools)
 
+
+  sep.miles <- function(x){format(x,big.mark=".")}
+  
   #################
   # Carga de Datos
   #################
@@ -58,23 +61,19 @@ output:
 
   ## Mapas y Poblaciones
   {
-    argentina <- fromJSON(file = "data/ar-all.geo.json")
-    sud <- fromJSON(file="data/south-america.geo.json")
-    world <- fromJSON(file="data/world.geo.json")
-    entrerios <- fromJSON(file="data/entrerios_dpto.geo.json")
+    argentina <- fromJSON(file = "data/mapas/ar-all.geo.json")
+    sud <- fromJSON(file="data/mapas/south-america.geo.json")
+    world <- fromJSON(file="data/mapas/world.geo.json")
+    entrerios <- fromJSON(file="data/mapas/entrerios_dpto.geo.json")
     
     # Paises América
     poblacion <- data.frame( c('Argentina', 'Bolivia', 'Brazil', 'Chile', 'Colombia', 'Ecuador',
                                'Paraguay',	'Peru',	'Surinam', 'Uruguay',  'Venezuela'),
                              c(44938712, 11383094,	210147125, 19107216, 50372424, 17300000,
                                7152703, 33105273,524000, 3529014, 28067000))
-       # poblacion <- data.frame( c('Argentina', 'Bolivia', 'Brazil', 'Chile', 'Colombia', 'Ecuador',  
-       #                           'Paraguay',	'Peru',	'Surinam', 'Uruguay',  'Venezuela', "Mexico"), 
-       #                         c(44938712, 11383094,	210147125, 19107216, 50372424, 17300000,
-       #                           7152703, 33105273,524000, 3529014, 28067000, 126000000)) 
     names(poblacion) <- c('pais', 'poblacion')
 
-    poblacion_mundial <- read_delim("data/poblacion_mundial.csv", ";", escape_double = FALSE,
+    poblacion_mundial <- read_delim("data/poblaciones/mundial.csv", ";", escape_double = FALSE,
                                      locale = locale(decimal_mark = ",", encoding = "ISO-8859-1"), trim_ws = TRUE)
   }  
 
@@ -86,7 +85,8 @@ output:
       mundial$pais <- if_else(mundial$pais==	'US', 'United States of America', mundial$pais)
       
       mundial <- mundial %>% group_by(pais, fecha) %>% 
-        mutate(casos =sum(confirmados)) %>% select(pais, fecha, casos) %>% unique()
+        mutate(casos =  sum(confirmados)) %>% 
+        select(pais, fecha, casos) %>% unique()
       
       mundial$fecha <-paste0(mundial$fecha,'20')
       mundial$fecha <-as.Date(mundial$fecha ,"%m/%d/%Y")
@@ -262,30 +262,37 @@ output:
     
     ## Argentina
     {  ### Totales generales
-      argCov <- read_delim("data/argentina.csv", ";", 
+      argCov <- read_delim("data/argentina_gral.csv", ";", 
                            escape_double = FALSE, trim_ws = TRUE, 
                            locale = locale(encoding = "ISO-8859-1"))
       names(argCov) <- c("dia", "casosD", "Detectados", "muertesD", "Fallecidos", "Recuperados",
                       "UTI","MuestraD","TotalPruebas","DescEpidemiologia", "DescTest", "Descartados", 
                       "Mujeres", "Hombres", "Importados", "Estrecho", "Comunitaria", "Investigacion")
 
-      poblacionArg <- read_delim("data/poblacionArg.csv", ";", escape_double = FALSE,
+      poblacionArg <- read_delim("data/poblaciones/prov_argentina.csv", ";", escape_double = FALSE,
                                  locale = locale(decimal_mark = ",", grouping_mark = ".",
                                                  encoding = "ISO-8859-1"), trim_ws = TRUE)
        
       ### Detalle por provincias
-      covidArg <-read_delim("data/COVID_Arg.csv", ";", 
+      covidArg <-read_delim("data/argentina_casos.csv", ";", 
                             escape_double = FALSE, trim_ws = TRUE, locale = locale(encoding = "ISO-8859-1"))
       # covidArg$recuperados <- if_else(is.na(covidArg$recuperados), 0, covidArg$recuperados)
       # covidArg$FALLECIDOS <- if_else(is.na(covidArg$FALLECIDOS), 0, covidArg$FALLECIDOS)
       covidArg$FECHA <- as.Date(covidArg$FECHA, '%d/%m/%Y')
     
       ### Detalle fallecidos
-      muertosArg <- read_delim("data/fallecidos.csv", ";", 
+      muertosArg <- read_delim("data/argentina_fallecidos.csv", ";", 
                                escape_double = FALSE, trim_ws = TRUE, locale = locale(encoding = "ISO-8859-1"))
       
     }
   
+  ##PROVINCIAS
+    {
+      ## Detalle casos Loc/Dpto ENTRE RIOS
+      covid_er <- read_delim("data/entre_rios_casos.csv", ";", 
+                        escape_double = FALSE, locale = locale(encoding = "ISO-8859-1"),
+                        trim_ws = TRUE)
+    }
 ```
 
 > Análisis realizado por el Grupo de Investigación en Bases de Datos - UTN - FRCU 
@@ -297,9 +304,9 @@ output:
 
 El 30 de enero, la Organización Mundial de la Salud declaró la emergencia de salud pública internacional por el brote epidémico de coronavirus. 
 
-La cifra de contagios confirmados del nuevo coronavirus SARS-CoV-2 superó la barrera del millón, siendo en la actualidad **`r  as.integer(sum(covid19[,ncol(covid19)])) `** los casos confirmados.
+La cifra de contagios confirmados del nuevo coronavirus SARS-CoV-2 superó la barrera del millón, siendo en la actualidad **`r  sep.miles(as.integer(sum(covid19[,ncol(covid19)]))) `** los casos confirmados.
 
-Las muertes por la pandemia alcanzan las **`r   as.integer(sum(covid19_m[,ncol(covid19_m)])) `**, de acuerdo con los datos de la universidad estadounidense Johns Hopkins, uno de las fuentes más consultadas del mundo.
+Las muertes por la pandemia alcanzan las **`r   sep.miles(as.integer(sum(covid19_m[,ncol(covid19_m)]))) `**, de acuerdo con los datos de la universidad estadounidense Johns Hopkins, uno de las fuentes más consultadas del mundo.
 
 ####  {.tabset  .tabset-fade .tabset-pills}
 ##### Detectados
@@ -474,7 +481,7 @@ Las curvas de evolución de los países en simultáneo en base a la cantidad de 
 ### Incidencia Acumulada
 La incidencia acumulada (IA) proporciona una estimación de la probabilidad o el riesgo de que un individuo libre de una determinada enfermedad la desarrolle durante un período especificado de tiempo.
 
-Al día de la fecha las incidencias acumuladas por cada 100000 habitantes de los países de Sud América es: 
+Al día de la fecha las incidencias acumuladas por cada 100.000 habitantes de los países de Sud América es: 
 
 ####  {.tabset  .tabset-fade .tabset-pills}
 ##### Mapa
@@ -1036,29 +1043,20 @@ A continuación se visualiará la evolución en la proporción de los casos dete
 Cantidad de Casos confirmados por departamento en la provincia de Entre Ríos
 
 ```{r mapaER}
-   entrerios_loc <- fromJSON(file="data/localidadesER.geojson")
 
- ## Detalle casos
-  covid_er <- read_delim("data/covid_ER_casos.csv", ";", 
-                        escape_double = FALSE, locale = locale(encoding = "ISO-8859-1"),
-                        trim_ws = TRUE)
-    
   covider <- covid_er %>% group_by(DEPARTAMENTO) %>%
     mutate(cantidad=n()) %>% select(DEPARTAMENTO, cantidad) %>% unique()
-   
-  covider_loc <- covid_er %>% group_by(LOCALIDAD) %>%
-    mutate(cantidad=n()) %>% select(LOCALIDAD, cantidad) %>% unique()
-   
-   
+
+
   highchart() %>%
     hc_title(text = "<i>Casos de COVID-19 en Entre Ríos</i> ",
              margin = 20, align = "center", style = list(color = "#780000", useHTML = TRUE)) %>%
     hc_tooltip(followPointer =  FALSE) %>%
-     hc_add_series_map(entrerios, covider, name = "Casos", value = "cantidad",
+    hc_add_series_map(entrerios, covider, name = "Casos", value = "cantidad",
                       joinBy = c("nam", "DEPARTAMENTO"),
                       dataLabels = list(enabled = TRUE,
                                         format = '{point.properties.nam}: {point.value}')) %>%
-       hc_colorAxis(minColor = "#FFAAAA", maxColor = "#780000")  %>%
+    hc_colorAxis(minColor = "#FFAAAA", maxColor = "#780000")  %>%
     hc_legend(align = "center", x = 0, y = -10) %>%
     hc_mapNavigation(enabled = TRUE) %>%
     hc_add_theme(hc_theme_ffx()) %>% 

@@ -15,6 +15,7 @@ output:
 
 ```{r setup, include=FALSE}
   knitr::opts_chunk$set(
+    cache = TRUE,
   	echo = FALSE,
   	message = FALSE,
   	warning = FALSE
@@ -36,8 +37,12 @@ output:
   library(gganimate)
   library(gifski)
   library(timevis)
-  # library(htmltools)
-
+  library(stringr)
+  library(leaflet)
+  library(leaflet.extras)
+  # library(tidyverse)
+  library(sf)
+  library(tmap)
 
   sep.miles <- function(x){format(x,big.mark=".")}
   
@@ -46,7 +51,7 @@ output:
   #################
   
   ## Datos mundiales
-  { # Confirmados
+   { # Confirmados
       covid19 <- read_csv("https://github.com/CSSEGISandData/COVID-19/raw/master/csse_covid_19_data/csse_covid_19_time_series/time_series_covid19_confirmed_global.csv")
       covid19 <- covid19[-1]
       
@@ -60,7 +65,7 @@ output:
     }  
 
   ## Mapas y Poblaciones
-  {
+    {
     argentina <- fromJSON(file = "data/mapas/ar-all.geo.json")
     sud <- fromJSON(file="data/mapas/south-america.geo.json")
     world <- fromJSON(file="data/mapas/world.geo.json")
@@ -74,10 +79,16 @@ output:
     names(poblacion) <- c('pais', 'poblacion')
 
     poblacion_mundial <- read_delim("data/poblaciones/mundial.csv", ";", escape_double = FALSE,
-                                     locale = locale(decimal_mark = ",", encoding = "ISO-8859-1"), trim_ws = TRUE)
+                                     locale = locale(decimal_mark = ",", encoding = "ISO-8859-1"), 
+                                    trim_ws = TRUE)
+    
+    deptos <- st_read(dsn ="data/mapas/deptosARG.shp") 
+    
+    localidades <- read_csv("data/mapas/localidades.csv", 
+                            locale = locale(encoding = "ISO-8859-1"))
   }  
 
-    ###Mundial
+  ## Dataset Mundial
     {
       mundial <- covid19[,-c(2,3)]
       mundial <- mundial %>% gather(fecha, casos, 2:max(col(mundial)), -`Country/Region`) 
@@ -121,8 +132,7 @@ output:
 
       }
     
-    ### Paises mas afectados
-    # { mayores <- c('China', 'France', 'US', 'Spain', 'Italy',  'Germany', 'Argentina', 'Mexico')
+  ## Dataset Paises mas afectados y Arg
     {  mayores <- c('China', 'France', 'US', 'Spain', 'Italy',  'Germany', 'Argentina')#, 'Korea, South')
       
       masAfectados <- covid19 %>% 
@@ -200,7 +210,7 @@ output:
     }
     }
 
-    ### Sudamérica
+  ## Dataset Sudamérica
     {   sudamerica <- covid19 %>% 
         filter(`Country/Region` %in% poblacion$pais) 
      
@@ -260,8 +270,9 @@ output:
   
   }
     
-    ## Argentina
-    {  ### Totales generales
+  ## Dataset Argentina
+    {  
+      ### Totales generales
       argCov <- read_delim("data/argentina_gral.csv", ";", 
                            escape_double = FALSE, trim_ws = TRUE, 
                            locale = locale(encoding = "ISO-8859-1"))
@@ -276,23 +287,88 @@ output:
       ### Detalle por provincias
       covidArg <-read_delim("data/argentina_casos.csv", ";", 
                             escape_double = FALSE, trim_ws = TRUE, locale = locale(encoding = "ISO-8859-1"))
-      # covidArg$recuperados <- if_else(is.na(covidArg$recuperados), 0, covidArg$recuperados)
-      # covidArg$FALLECIDOS <- if_else(is.na(covidArg$FALLECIDOS), 0, covidArg$FALLECIDOS)
       covidArg$FECHA <- as.Date(covidArg$FECHA, '%d/%m/%Y')
     
       ### Detalle fallecidos
       muertosArg <- read_delim("data/argentina_fallecidos.csv", ";", 
                                escape_double = FALSE, trim_ws = TRUE, locale = locale(encoding = "ISO-8859-1"))
+   }
+  
+  ## Dataset Provincias Argentinas
+    {
+      ### ENTRE RIOS
+      {
+        covid_er <- read_delim("data/entre_rios_casos.csv", ";", 
+                          escape_double = FALSE, locale = locale(encoding = "ISO-8859-1"),
+                          trim_ws = TRUE)
+        
+        # entre_rios_c <-covid_er read_delim("covid/data/entre_rios_casos.csv", ";", escape_double = FALSE, 
+        #                      locale = locale(encoding = "ISO-8859-1"), trim_ws = TRUE)
+        entre_rios_c <- covid_er %>% group_by(LOCALIDAD) %>% 
+          mutate(cantidad = n()) %>% select(LOCALIDAD, cantidad)
+        names(entre_rios_c) <- c("localidad", "cantidad")
+        entre_rios_c$provincia <- "Entre Ríos"
+      }
       
+      ### RIO NEGRO
+      {
+        rio_negro_c <- read_csv("https://docs.google.com/spreadsheets/d/16-bnsDdmmgtSxdWbVMboIHo5FRuz76DBxsz_BbsEVWA/export?format=csv&id=16-bnsDdmmgtSxdWbVMboIHo5FRuz76DBxsz_BbsEVWA&gid=971636305")
+        rio_negro_c <- rio_negro_c %>% select(City, `Casos Confirmados`)
+        names(rio_negro_c) <- c("localidad", "cantidad")
+        rio_negro_c$provincia <- "Río Negro"
+        rio_negro_c$localidad <- gsub("Bariloche", "San Carlos de Bariloche", rio_negro_c$localidad)
+      }
+      
+      ### CABA
+      {
+        caba_c <- read_csv("https://docs.google.com/spreadsheets/d/16-bnsDdmmgtSxdWbVMboIHo5FRuz76DBxsz_BbsEVWA/export?format=csv&id=16-bnsDdmmgtSxdWbVMboIHo5FRuz76DBxsz_BbsEVWA&gid=1718330171")
+        caba_c <- caba_c %>% select(comunas, `casos confirmados`)
+        names(caba_c) <- c("localidad", "cantidad")
+        caba_c$localidad <- paste0("Comuna ", caba_c$localidad)
+        caba_c$provincia <- "Ciudad Autónoma de Buenos Aires"
+      }
+      
+      ### BUENOS AIRES
+      {
+        bsas_c <- read_csv("https://docs.google.com/spreadsheets/d/16-bnsDdmmgtSxdWbVMboIHo5FRuz76DBxsz_BbsEVWA/export?format=csv&id=16-bnsDdmmgtSxdWbVMboIHo5FRuz76DBxsz_BbsEVWA&gid=606357729")
+        bsas_c <-bsas_c %>%   select(Municipio, Casos)
+        names(bsas_c) <- c("localidad", "cantidad")
+        bsas_c$provincia <- "Buenos Aires"
+      }
+      
+      ### SANTA FE
+      {
+        stafe_c <- read_csv("https://docs.google.com/spreadsheets/d/16-bnsDdmmgtSxdWbVMboIHo5FRuz76DBxsz_BbsEVWA/export?format=csv&id=16-bnsDdmmgtSxdWbVMboIHo5FRuz76DBxsz_BbsEVWA&gid=1214016401", skip = 3)
+        stafe_c <- stafe_c %>% gather(fecha, casos, 7:max(col(stafe_c)), -X6) 
+        stafe_c <- stafe_c %>% filter(!(is.na(casos)) & casos >0 ) %>% 
+                       group_by(X6) %>% filter(fecha == max(fecha)) %>% 
+                       mutate(cantidad = as.integer(casos)) %>% ungroup() %>% 
+                       select(X6, cantidad) %>% unique()
+        names(stafe_c) <- c("localidad", "cantidad")
+        stafe_c$localidad <- str_to_title(stafe_c$localidad )
+        stafe_c$provincia <-"Santa Fe"
+  
+        stafe_c$localidad <- gsub("Roldan", "Roldán", stafe_c$localidad)
+        stafe_c$localidad <- gsub("Chabás", "Chabas", stafe_c$localidad)
+        stafe_c$localidad <- gsub("Cañada De Gomez", "Cañada de Gómez", stafe_c$localidad)
+        stafe_c$localidad <- gsub("San Jose Del Rincón", "San José del Rincón", stafe_c$localidad)
+      }
+      
+      casos_pronvinciales <- rbind.data.frame(entre_rios_c, rio_negro_c, caba_c, bsas_c, stafe_c)
+      rm(entre_rios_c, rio_negro_c, caba_c, bsas_c, stafe_c)
+
     }
   
-  ##PROVINCIAS
-    {
-      ## Detalle casos Loc/Dpto ENTRE RIOS
-      covid_er <- read_delim("data/entre_rios_casos.csv", ";", 
-                        escape_double = FALSE, locale = locale(encoding = "ISO-8859-1"),
-                        trim_ws = TRUE)
-    }
+  color <- function(d){
+       c <- if_else(d < 10, '#ffffb2',
+            if_else(d < 20, '#fecc5c',
+            if_else(d < 50, '#fd8d3c',
+            if_else(d < 100, '#f03b20',
+            if_else(d < 500, '#bd0026',
+            if_else(d < 1000, '#FEB24C',
+            if_else(d < 10000, '#FED976','#FFEDA0')))))))
+      return(c)}
+  
 ```
 
 > Análisis realizado por el Grupo de Investigación en Bases de Datos - UTN - FRCU 
@@ -798,6 +874,46 @@ El Ministerio diariamente informa la cantidad de casos por provincia pudiendo re
   covidArg_hoy  %>% kable( col.names =  c("Provincia", "Casos Totales"),
             align =  c('l', 'c') ) %>%  kable_styling()
 ```
+
+
+
+
+### Distribución por Departamentos
+Gracias al aporte de @infomapache, @ClariCardozoCas se muestra la distribución de casos a nivel departamental de las provincias: Buenos Aires, Ciudad Autónoma de Buenos Aires, Santa Fe, Río Negro y Entre Ríos en base a datos propios.
+
+```{r dptoArg,echo=FALSE, message=FALSE, warning=FALSE }
+  casos_pronvinciales <- casos_pronvinciales %>% 
+    left_join(localidades, by=c("localidad"="nombre", "provincia"="provincia")) %>% unique()
+  casos_pronvinciales$departamen <- if_else(is.na(casos_pronvinciales$departamen)&
+                                              casos_pronvinciales$provincia=="Buenos Aires",
+                                              casos_pronvinciales$localidad, casos_pronvinciales$departamen)
+  
+  casos_pronvinciales <- casos_pronvinciales %>%
+      ungroup() %>% 
+      group_by(provincia, departamen) %>% 
+      mutate(casos = sum(cantidad))%>% unique() %>% 
+      select(provincia, departamen, casos)
+  names(casos_pronvinciales) <- c("provincia", "departamento", "casos")
+  
+  deptos_covid <- deptos %>%  
+      left_join(casos_pronvinciales, by=c("departamen" = "departamento", "provincia"="provincia")) %>% 
+      filter(!is.na(casos)) %>% unique()
+  
+  leaflet(data = deptos_covid) %>% addTiles() %>%
+    addProviderTiles(providers$OpenStreetMap) %>% 
+    addPolygons( color = "#444444", weight = 1,
+               fillColor = color(deptos_covid$casos), fillOpacity = 0.6,
+               label = paste(deptos_covid$provincia, ", ",
+                             deptos_covid$departamen, ": ", 
+                             deptos_covid$casos),
+               popup = paste(deptos_covid$provincia, "<br/>",
+                             deptos_covid$departamen, ": ", 
+                             deptos_covid$casos),
+               highlightOptions = highlightOptions(color = "white", weight = 2,
+                                                   bringToFront = TRUE) ) 
+
+```
+
 
 
 ### Evolución por Provincia

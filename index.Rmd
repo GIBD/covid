@@ -15,7 +15,7 @@ output:
 
 ```{r setup, include=FALSE}
   knitr::opts_chunk$set(
-    cache = TRUE,
+    # cache = TRUE,
   	echo = FALSE,
   	message = FALSE,
   	warning = FALSE
@@ -354,8 +354,17 @@ output:
         stafe_c$localidad <- gsub("San Jose Del Rincón", "San José del Rincón", stafe_c$localidad)
       }
       
-      casos_pronvinciales <- rbind.data.frame(entre_rios_c, rio_negro_c, caba_c, bsas_c, stafe_c)
-      rm(entre_rios_c, rio_negro_c, caba_c, bsas_c, stafe_c)
+      
+      ### NEUQUÉN
+      
+      neuquen_c <- read_delim("data/neuquen_casos.csv", ";", escape_double = FALSE, 
+                              locale = locale(encoding = "ISO-8859-1"),  trim_ws = TRUE)
+      neuquen_c <- neuquen_c %>% select(provincia, ciudad, casos)
+      names(neuquen_c) <- c("provincia", "localidad", "cantidad")
+      
+      casos_pronvinciales <- rbind.data.frame(entre_rios_c, rio_negro_c, caba_c, bsas_c, stafe_c, neuquen_c)
+      # casos_pronvinciales <- rbind.data.frame(entre_rios_c, rio_negro_c, caba_c, bsas_c, stafe_c)
+      rm(entre_rios_c, rio_negro_c, caba_c, bsas_c, stafe_c, neuquen_c)
 
     }
   
@@ -499,8 +508,6 @@ Para poner en contexto la situación, en el siguiente gráfico puede verse cómo
   fig
   
 ```
-
-
 
 
 
@@ -879,7 +886,7 @@ El Ministerio diariamente informa la cantidad de casos por provincia pudiendo re
 
 
 ### Distribución por Departamentos
-Gracias al aporte de @infomapache, @ClariCardozoCas se muestra la distribución de casos a nivel departamental de las provincias: Buenos Aires, Ciudad Autónoma de Buenos Aires, Santa Fe, Río Negro y Entre Ríos en base a datos propios.
+Gracias al aporte de reunir y disponibilizar los datos de [Sistemas Mapache](https://github.com/SistemasMapache/Covid19arData) y al aporte de muchos usuarios como [ClariCardozoCas](https://twitter.com/ClariCardozoCas) se muestra la distribución de casos a nivel departamental de las provincias: Buenos Aires, Ciudad Autónoma de Buenos Aires, Santa Fe, Río Negro, Neuquén y Entre Ríos en base a datos propios.
 
 ```{r dptoArg,echo=FALSE, message=FALSE, warning=FALSE }
   casos_pronvinciales <- casos_pronvinciales %>% 

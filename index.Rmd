@@ -35,21 +35,27 @@ output:
   library(rjson)
   library(plotly)
   library(gganimate)
-  library(gifski)
-  library(timevis)
+  library(gifski) #ver
+  library(timevis) #ver
   library(stringr)
   library(leaflet)
-  library(leaflet.extras)
-  # library(tidyverse)
+  library(leaflet.extras) #ver
   library(sf)
   library(tmap)
-
+  library(googlesheets4)
+  # library(googleAuthR)
+  
   sep.miles <- function(x){format(x,big.mark=".")}
   
   #################
   # Carga de Datos
   #################
   
+  # starts auth process with defaults
+  # gar_auth()
+
+
+
   ## Datos mundiales
    { # Confirmados
       covid19 <- read_csv("https://github.com/CSSEGISandData/COVID-19/raw/master/csse_covid_19_data/csse_covid_19_time_series/time_series_covid19_confirmed_global.csv")
@@ -313,10 +319,11 @@ output:
       ### RIO NEGRO
       {
         rio_negro_c <- read_csv("https://docs.google.com/spreadsheets/d/16-bnsDdmmgtSxdWbVMboIHo5FRuz76DBxsz_BbsEVWA/export?format=csv&id=16-bnsDdmmgtSxdWbVMboIHo5FRuz76DBxsz_BbsEVWA&gid=971636305")
-        rio_negro_c <- rio_negro_c %>% select(City, `Casos Confirmados`)
+        rio_negro_c <- rio_negro_c %>% select(Localidad, casos)
         names(rio_negro_c) <- c("localidad", "cantidad")
         rio_negro_c$provincia <- "Río Negro"
         rio_negro_c$localidad <- gsub("Bariloche", "San Carlos de Bariloche", rio_negro_c$localidad)
+        rio_negro_c$localidad <- gsub("Viedma, Río Negro, Argentina", "Viedma", rio_negro_c$localidad)
       }
       
       ### CABA
@@ -356,16 +363,35 @@ output:
       
       
       ### NEUQUÉN
+      {## Hoja de Planilla Excel compartida por Mapache
+    
+        neuquen_c <- read_sheet("https://docs.google.com/spreadsheets/d/16-bnsDdmmgtSxdWbVMboIHo5FRuz76DBxsz_BbsEVWA/edit#gid=1711452704", sheet = 5)
+        neuquen_c$Localidad <- gsub("Ã©", "é", neuquen_c$Localidad)
+        neuquen_c <- neuquen_c %>% select(Localidad, casos, Prov)
+        neuquen_c$Prov <- "Neuquén"
+        names(neuquen_c) <- c( "localidad", "cantidad", "provincia")
+        neuquen_c$localidad <- gsub("Cutral Co", "Cutral Có", 	neuquen_c$localidad)
+        neuquen_c$localidad <- gsub("San Martin de los Andes", "San Martín de los Andes", 	neuquen_c$localidad)
+        neuquen_c$localidad <- gsub("Vista Alegre", "Vista Alegre Norte", 	neuquen_c$localidad)
+      }
       
-      neuquen_c <- read_delim("data/neuquen_casos.csv", ";", escape_double = FALSE, 
-                              locale = locale(encoding = "ISO-8859-1"),  trim_ws = TRUE)
-      neuquen_c <- neuquen_c %>% select(provincia, ciudad, casos)
-      names(neuquen_c) <- c("provincia", "localidad", "cantidad")
+      ### CÓRDOBA
+      {
+        cordoba_c <- read_delim("data/cordoba_gral.csv", ";", 
+                          escape_double = FALSE, locale = locale(encoding = "ISO-8859-1"),
+                          trim_ws = TRUE)
+        cordoba_c <- cordoba_c %>% select(Localidad, casos)
+        cordoba_c$provincia <- "Córdoba"
+        names(cordoba_c) <- c( "localidad", "cantidad", "provincia")
+        cordoba_c$localidad <- gsub("Cerro Azul", "Villa Cerro Azul", cordoba_c$localidad)
+        cordoba_c$localidad <- gsub("San Marcos Sud", "San Marcos", cordoba_c$localidad)
+        cordoba_c$localidad <- gsub("Villa Gral Belgrano", "Villa General Belgrano", cordoba_c$localidad)
+      }
       
-      casos_pronvinciales <- rbind.data.frame(entre_rios_c, rio_negro_c, caba_c, bsas_c, stafe_c, neuquen_c)
-      # casos_pronvinciales <- rbind.data.frame(entre_rios_c, rio_negro_c, caba_c, bsas_c, stafe_c)
-      rm(entre_rios_c, rio_negro_c, caba_c, bsas_c, stafe_c, neuquen_c)
-
+      casos_pronvinciales <- rbind.data.frame(entre_rios_c, rio_negro_c, 
+                                              caba_c, bsas_c, stafe_c, 
+                                              neuquen_c, cordoba_c)
+      rm(entre_rios_c, rio_negro_c,caba_c, bsas_c, stafe_c,neuquen_c, cordoba_c)
     }
   
   color <- function(d){
@@ -894,7 +920,7 @@ Gracias al aporte de reunir y disponibilizar los datos de [Sistemas Mapache](htt
   casos_pronvinciales$departamen <- if_else(is.na(casos_pronvinciales$departamen)&
                                               casos_pronvinciales$provincia=="Buenos Aires",
                                               casos_pronvinciales$localidad, casos_pronvinciales$departamen)
-  
+  # vacios <- casos_pronvinciales %>% filter(is.na(departamen))
   casos_pronvinciales <- casos_pronvinciales %>%
       ungroup() %>% 
       group_by(provincia, departamen) %>% 
@@ -1067,7 +1093,6 @@ En base a las provincias de residencia de los fallecidos, informadas por el Mini
     hc_legend(align = "center", x = 0, y = -10) %>%
     hc_mapNavigation(enabled = TRUE) %>%
     hc_add_theme(hc_theme_ffx()) %>% 
-    # hc_annotations( list(labels=let_prov$letalidad) ) %>% 
     hc_add_annotation(xValue = 0, yValue = 0, title = list(text = 'Fuente: Ministerio Salud')) %>% 
     hc_chart(borderColor = "#780000", borderRadius = 10, borderWidth = 2)
 
@@ -1131,7 +1156,7 @@ A continuación se visualiará la evolución en la proporción de los casos dete
 
   test <- argCov %>% select(dia, DescTest, Detectados) %>%
       mutate(total = DescTest + Detectados)
-  test <- test %>% filter(DescTest >= 0) %>%  mutate(prop=Detectados/total * 100)
+  test <- test %>% filter(DescTest >= 0) %>%  mutate(prop= round(Detectados/total * 100, 2)) %>% arrange(dia)
  
   
   ggplot(test,aes(x=dia,y=prop,  label = round(prop, 1)))+

@@ -806,7 +806,6 @@ Mendiolaza,Mendiolaza,Colón,Córdoba
 Mi Granja,Mi Granja,Colón,Córdoba
 Pajas Blancas,Río Ceballos,Colón,Córdoba
 Río Ceballos,Río Ceballos,Colón,Córdoba
-Saldán,Saldán,Capital,Córdoba
 Salsipuedes,Salsipuedes,Colón,Córdoba
 Santa Elena,Colonia Tirolesa,Colón,Córdoba
 Tinoco,Tinoco,Colón,Córdoba
@@ -1159,7 +1158,7 @@ Villa del Tránsito,Tránsito,San Justo,Córdoba
 Villa San Esteban,Villa San Esteban,San Justo,Córdoba
 Alta Gracia,Alta Gracia,Santa María,Córdoba
 Anisacate,Anisacate,Santa María,Córdoba
-Barrio Gilbert (1ñ de Mayo) - Tejas Tres,Malagueño,Santa María,Córdoba
+Barrio Gilbert (1° de Mayo) - Tejas Tres,Malagueño,Santa María,Córdoba
 Bouwer,Bower,Santa María,Córdoba
 Campos del Virrey,Villa Parque Santa Ana,Santa María,Córdoba
 Caseros Centro,Bower,Santa María,Córdoba
@@ -1658,7 +1657,7 @@ Concepción del Uruguay,Concepción del Uruguay,Uruguay,Entre Ríos
 Herrera,Herrera,Uruguay,Entre Ríos
 Las Moscas,Las Moscas,Uruguay,Entre Ríos
 Líbaros,Estación Líbaros,Uruguay,Entre Ríos
-1ñ de Mayo,1ñ de Mayo,Uruguay,Entre Ríos
+1° de Mayo,1° de Mayo,Uruguay,Entre Ríos
 Pronunciamiento,Pronunciamiento,Uruguay,Entre Ríos
 Rocamora,Rocamora,Uruguay,Entre Ríos
 Santa Anita,Santa Anita,Uruguay,Entre Ríos
@@ -1703,8 +1702,8 @@ Colonia Sarmiento,Colonia Sarmiento,Patiño,Formosa
 Comandante Fontana,Comandante Fontana,Patiño,Formosa
 El Recreo,El Recreo,Patiño,Formosa
 Estanislao del Campo,Estanislao del Campo,Patiño,Formosa
-Fortín Cabo 1ñ Lugones,Fortín Cabo 1° Lugones,Patiño,Formosa
-Fortín Sargento 1ñ Leyes,Fortín Sargento 1ñ Leyes,Patiño,Formosa
+Fortín Cabo 1° Lugones,Fortín Cabo 1° Lugones,Patiño,Formosa
+Fortín Sargento 1° Leyes,Fortín Sargento 1° Leyes,Patiño,Formosa
 Ibarreta,Ibarreta,Patiño,Formosa
 Juan G. Bazán,Juan G. Bazán,Patiño,Formosa
 Las Lomitas,Las Lomitas,Patiño,Formosa
@@ -2213,7 +2212,7 @@ Apóstoles,Apóstoles,Apóstoles,Misiones
 Aristóbulo del Valle,Aristóbulo del Valle,Cainguás,Misiones
 Campo Grande,Campo Grande,Cainguás,Misiones
 Dos de Mayo Nucleo III (Bñ Bernardino Rivadavia),Dos de Mayo,Cainguás,Misiones
-1ñ de Mayo,Campo Grande,Cainguás,Misiones
+1° de Mayo,Campo Grande,Cainguás,Misiones
 Pueblo Illia,Dos de Mayo,Cainguás,Misiones
 Salto Encantado,Aristóbulo del Valle,Cainguás,Misiones
 Kilómetro 17,Campo Grande,Cainguás,Misiones
@@ -3525,18 +3524,21 @@ Río Grande,Río Grande,Río Grande,"Tierra del Fuego, Antártida e Islas del Atlánt
 Tolhuin,Tolhuin,Tolhuin,"Tierra del Fuego, Antártida e Islas del Atlántico Sur"
 Ushuaia,Ushuaia,Ushuaia,"Tierra del Fuego, Antártida e Islas del Atlántico Sur"
 Laguna Escondida,sin gobierno local,Ushuaia,"Tierra del Fuego, Antártida e Islas del Atlántico Sur"
-Comuna 13,Comuna 13,Comuna 13,Ciudad Autónoma de Buenos Aires
-Comuna 14,Comuna 14,Comuna 14,Ciudad Autónoma de Buenos Aires
-Comuna 12,Comuna 12,Comuna 12,Ciudad Autónoma de Buenos Aires
-Comuna 15,Comuna 15,Comuna 15,Ciudad Autónoma de Buenos Aires
-Comuna 1,Comuna 1,Comuna 1,Ciudad Autónoma de Buenos Aires
-Comuna 2,Comuna 2,Comuna 2,Ciudad Autónoma de Buenos Aires
-Comuna 3,Comuna 3,Comuna 3,Ciudad Autónoma de Buenos Aires
-Comuna 4,Comuna 4,Comuna 4,Ciudad Autónoma de Buenos Aires
-Comuna 5,Comuna 5,Comuna 5,Ciudad Autónoma de Buenos Aires
-Comuna 6,Comuna 6,Comuna 6,Ciudad Autónoma de Buenos Aires
-Comuna 7,Comuna 7,Comuna 7,Ciudad Autónoma de Buenos Aires
-Comuna 8,Comuna 8,Comuna 8,Ciudad Autónoma de Buenos Aires
-Comuna 9,Comuna 9,Comuna 9,Ciudad Autónoma de Buenos Aires
-Comuna 10,Comuna 10,Comuna 10,Ciudad Autónoma de Buenos Aires
-Comuna 11,Comuna 11,Comuna 11,Ciudad Autónoma de Buenos Aires
+Gran Buenos Aires,,Comuna 1,Ciudad Autónoma de Buenos Aires
+Ciudad de Buenos Aires,"Comuna 1,Comuna 10,Comuna 11,Comuna 12,Comuna 13,Comuna 14,Comuna 15,Comuna 2,Comuna 3,Comuna 4,Comuna 5,Comuna 6,Comuna 7,Comuna 8,Comuna 9",Comuna 1,Ciudad Autónoma de Buenos Aires
+Comuna 13,Comuna 13,Comuna 13,Ciudad de Buenos Aires
+Comuna 14,Comuna 14,Comuna 14,Ciudad de Buenos Aires
+Comuna 12,Comuna 12,Comuna 12,Ciudad de Buenos Aires
+Comuna 15,Comuna 15,Comuna 15,Ciudad de Buenos Aires
+Comuna 1,Comuna 1,Comuna 1,Ciudad de Buenos Aires
+Comuna 2,Comuna 2,Comuna 2,Ciudad de Buenos Aires
+Comuna 3,Comuna 3,Comuna 3,Ciudad de Buenos Aires
+Comuna 4,Comuna 4,Comuna 4,Ciudad de Buenos Aires
+Comuna 5,Comuna 5,Comuna 5,Ciudad de Buenos Aires
+Comuna 6,Comuna 6,Comuna 6,Ciudad de Buenos Aires
+Comuna 7,Comuna 7,Comuna 7,Ciudad de Buenos Aires
+Comuna 8,Comuna 8,Comuna 8,Ciudad de Buenos Aires
+Comuna 9,Comuna 9,Comuna 9,Ciudad de Buenos Aires
+Comuna 10,Comuna 10,Comuna 10,Ciudad de Buenos Aires
+Comuna 11,Comuna 11,Comuna 11,Ciudad de Buenos Aires
+Saldán,Saldán,Colón,Córdoba

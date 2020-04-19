@@ -328,7 +328,10 @@ output:
       
       ### CABA
       {
-        caba_c <- read_csv("https://docs.google.com/spreadsheets/d/16-bnsDdmmgtSxdWbVMboIHo5FRuz76DBxsz_BbsEVWA/export?format=csv&id=16-bnsDdmmgtSxdWbVMboIHo5FRuz76DBxsz_BbsEVWA&gid=1718330171")
+        # caba_c <- read_csv("https://docs.google.com/spreadsheets/d/16-bnsDdmmgtSxdWbVMboIHo5FRuz76DBxsz_BbsEVWA/export?format=csv&id=16-bnsDdmmgtSxdWbVMboIHo5FRuz76DBxsz_BbsEVWA&gid=1718330171")
+        caba_c <- read_delim("data/caba_gral.csv",";", 
+                          escape_double = FALSE, locale = locale(encoding = "ISO-8859-1"),
+                          trim_ws = TRUE)
         caba_c <- caba_c %>% select(comunas, `casos confirmados`)
         names(caba_c) <- c("localidad", "cantidad")
         caba_c$localidad <- paste0("Comuna ", caba_c$localidad)

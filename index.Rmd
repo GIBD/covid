@@ -40,6 +40,8 @@ output:
   library(sf)
   library(tmap)
   library(googlesheets4)
+  library(readxl)
+
   # library(gifski) #ver
   # library(timevis) #ver
   # library(leaflet.extras) #ver
@@ -391,10 +393,18 @@ output:
         cordoba_c$localidad <- gsub("Villa Gral Belgrano", "Villa General Belgrano", cordoba_c$localidad)
       }
       
+      ### TUCUMAN
+        tucuman_c <- read_excel("data/minsalud_casosdpto.xlsx", skip = 2)
+        tucuman_c <- tucuman_c[-c(nrow(tucuman_c),nrow(tucuman_c)-1),]
+        tucuman_c <- tucuman_c %>% select("Departamento", "Casos")
+        tucuman_c$provincia <- "Tucumán"
+        names(tucuman_c) <- c( "localidad", "cantidad", "provincia")
+        
       casos_pronvinciales <- rbind.data.frame(entre_rios_c, rio_negro_c, 
                                               caba_c, bsas_c, stafe_c, 
-                                              neuquen_c, cordoba_c)
-      rm(entre_rios_c, rio_negro_c,caba_c, bsas_c, stafe_c,neuquen_c, cordoba_c)
+                                              neuquen_c, cordoba_c,
+                                              tucuman_c)
+      rm(entre_rios_c, rio_negro_c,caba_c, bsas_c, stafe_c,neuquen_c, cordoba_c, tucuman_c)
     }
   
   color <- function(d){
@@ -916,12 +926,21 @@ El Ministerio diariamente informa la cantidad de casos por provincia pudiendo re
 Gracias al aporte de reunir y disponibilizar los datos de [Sistemas Mapache](https://github.com/SistemasMapache/Covid19arData) y al aporte de muchos usuarios como [ClariCardozoCas](https://twitter.com/ClariCardozoCas) se muestra la distribución de casos a nivel departamental de las provincias: Buenos Aires, Ciudad Autónoma de Buenos Aires, Santa Fe, Río Negro, Neuquén y Entre Ríos en base a datos propios.
 
 ```{r dptoArg,echo=FALSE, message=FALSE, warning=FALSE }
+
+  
   casos_pronvinciales <- casos_pronvinciales %>% 
     left_join(localidades, by=c("localidad"="nombre", "provincia"="provincia")) %>% unique()
+
+  # casos_pronvinciales$departamen <- if_else(casos_pronvinciales$departamen
   casos_pronvinciales$departamen <- if_else(is.na(casos_pronvinciales$departamen)&
                                               casos_pronvinciales$provincia=="Buenos Aires",
                                               casos_pronvinciales$localidad, casos_pronvinciales$departamen)
+  
+  casos_pronvinciales$departamen <- if_else(is.na(casos_pronvinciales$departamen)&
+                                              casos_pronvinciales$provincia=="Tucumán",
+                                              casos_pronvinciales$localidad, casos_pronvinciales$departamen)
   # vacios <- casos_pronvinciales %>% filter(is.na(departamen))
+    
   casos_pronvinciales <- casos_pronvinciales %>%
       ungroup() %>% 
       group_by(provincia, departamen) %>% 

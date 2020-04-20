@@ -35,14 +35,14 @@ output:
   library(rjson)
   library(plotly)
   library(gganimate)
-  library(gifski) #ver
-  library(timevis) #ver
   library(stringr)
   library(leaflet)
-  library(leaflet.extras) #ver
   library(sf)
   library(tmap)
   library(googlesheets4)
+  # library(gifski) #ver
+  # library(timevis) #ver
+  # library(leaflet.extras) #ver
   # library(googleAuthR)
   
   sep.miles <- function(x){format(x,big.mark=".")}
@@ -57,7 +57,7 @@ output:
 
 
   ## Datos mundiales
-   { # Confirmados
+    { # Confirmados
       covid19 <- read_csv("https://github.com/CSSEGISandData/COVID-19/raw/master/csse_covid_19_data/csse_covid_19_time_series/time_series_covid19_confirmed_global.csv")
       covid19 <- covid19[-1]
       
@@ -66,8 +66,8 @@ output:
       covid19_m <- covid19_m[-1]
       
        # Recuperados
-      covid_19_r <- read_csv("https://github.com/CSSEGISandData/COVID-19/raw/master/csse_covid_19_data/csse_covid_19_time_series/time_series_covid19_recovered_global.csv")
-    covid_19_r <- covid_19_r[-1]
+    #   covid_19_r <- read_csv("https://github.com/CSSEGISandData/COVID-19/raw/master/csse_covid_19_data/csse_covid_19_time_series/time_series_covid19_recovered_global.csv")
+    # covid_19_r <- covid_19_r[-1]
     }  
 
   ## Mapas y Poblaciones
@@ -88,8 +88,8 @@ output:
                                      locale = locale(decimal_mark = ",", encoding = "ISO-8859-1"), 
                                     trim_ws = TRUE)
     
-    deptos <- st_read(dsn ="data/mapas/deptosARG.shp") 
-    
+    # deptos <- st_read(dsn ="data/mapas/deptosARG.shp") 
+    deptos <- st_read(dsn ="data/mapas/departamentos.shp") 
     localidades <- read_csv("data/mapas/localidades.csv", 
                             locale = locale(encoding = "ISO-8859-1"))
   }  
@@ -711,8 +711,6 @@ En el siguiente gráfico se muestran las series de cantidades de casos y cantida
   ggplotly(p, tooltip = "text" ) %>% 
     layout(legend = list(orientation = "h", x = 0.4, y = -0.2), height = 800)
   
-  # autosize = TRUE, height = 550)
-
 ```
 
 
@@ -971,8 +969,22 @@ Actualizado al `r max(covidArg$FECHA)`. El total de casos acumulados en el país
   tabla_prov <- tabla_prov %>%  
     gather(casos, acum, -c(PROVINCIA, FECHA)) 
   names(tabla_prov) <- c("provincia", "fecha", "tipo", "cant")
+  # rm(h, m, p)
+
+  # h <- ggplot(tabla_prov, aes(fecha, cant, color=tipo, group=tipo, text = paste0(tipo, ": ", cant))) +
+  #   geom_line(aes(shape=tipo, color=tipo)) +
+  #   labs(x = 'día', y="") + 
+  #   facet_wrap(~provincia, ncol=3)+   theme(legend.position = 'bottom')
+  # 
+  # plot_ly(data = tabla_prov, x=~fecha, y=~cant, color = ~tipo, alpha = 0.1, type='scatter', mode='lines', fill='tozeroy')
+  # 
+  # 
+  # ggplotly(h, tooltip = "text" ) %>% 
+  #   layout(legend = list(orientation = "h", x = 0.4, y = -0.2), height = 800)
   
-  tabla_prov %>% 
+  
+  # p <- 
+    tabla_prov %>% 
     ggplot(aes(x=fecha, y=cant, group=tipo, color=tipo))+
     geom_line( show.legend=FALSE) +
     labs(title="", x='día',
@@ -981,7 +993,10 @@ Actualizado al `r max(covidArg$FECHA)`. El total de casos acumulados en el país
         axis.text.x = element_text(colour="grey20", size=7, angle=45, hjust=.5, vjust=.5),
         axis.text.y = element_text(colour="grey20", size=7),
         text=element_text(size=9, family="Arial")) + 
+  #   facet_wrap(~provincia)
+  # ggplotly(p)
     facet_wrap(~provincia,  ncol=5)
+    # plot_ly(tabla_prov, x=)
      
 ```
 En la provincia de Buenos Aires y Ciudad de Buenos Aires el día 29/03/2020 se observa una cantidad de nuevos casos detectados muy decreciente debido a la reasignación de jurisdicción informada por Ministerio ese día. Esta cifra se asignó a cada provincia el día en que fue informada debido a la falta del dato sobre el caso reasignado.
@@ -1030,7 +1045,7 @@ Al día de la fecha las incidencias acumuladas por cada 100.000 habitantes en la
 ##### Datos
 
 ```{r iAProvD}
-  tabiaprov <- ia_prov %>% select(provincia, cant, ia)
+  tabiaprov <- ia_prov %>% select(provincia, cant, ia) %>% arrange(desc(ia))
   tabiaprov %>% kable(col.names = c("Provincia", "Casos", "Tasa Incidencia"),
             align=c('l', 'c', 'c')) %>%
   kable_styling()
@@ -1105,7 +1120,7 @@ En base a las provincias de residencia de los fallecidos, informadas por el Mini
 
 ##### Datos
 ```{r datLetProv, echo=FALSE,message=FALSE, warning=FALSE}
- let_prov  %>% kable( col.names =  c("Provincia", "Muertes", "Casos Acumulados", "Tasa Letalidad"),
+ let_prov %>% arrange(desc(letalidad)) %>% kable( col.names =  c("Provincia", "Muertes", "Casos Acumulados", "Tasa Letalidad"),
             align =  c('l', 'c', 'c', 'c') ) %>%  kable_styling()
 ```
 
@@ -1119,29 +1134,60 @@ Los tipos de Casos confirmados se clasifican en:
 
 *Comunitario*: aquellos casos en los que no se puede relacionar a los casos confirmados con cadenas de trasmisión conocidas. 
 
-*Investigacion*: casos que se encuentran en estudio para definir el tipo de transmisión. En algún momento tiene que pasar a alguno de los otros 3 casos
+*Investigación*: casos que se encuentran en estudio para definir el tipo de transmisión. En algún momento tiene que pasar a alguno de los otros 3 casos
 
 La evolución y distribución de los casos según el tipo en Argentina es:
 
+
+####  {.tabset  .tabset-fade .tabset-pills}
+##### Distribución
+```{r distrCasos, echo=FALSE, fig.align='center', message=FALSE, warning=FALSE, out.width='100%'}
+
+  distCasos <- argCov %>% mutate(porImportados = Importados/Detectados,
+                                porEstrecho = Estrecho/Detectados,
+                                porComunitaria = Comunitaria/Detectados,
+                                porInvestigacion = Investigacion/Detectados) %>% 
+    select(dia, porImportados, porEstrecho, porComunitaria, porInvestigacion) %>% arrange(dia)
+  
+  distCasos$dia <- as.Date(distCasos$dia, '%d/%m/%Y')
+ 
+  plot_ly(distCasos, x = ~dia, y = ~porInvestigacion, type = "bar", name = "En Investigación", color = I("orchid3"),
+          hoverinfo = 'text',
+          text = ~paste('</br> Fecha: ', dia ,
+                        '</br> Importados: ', round(porImportados*100, 2),'%',
+                      '</br> Contactos Estrechos: ', round(porEstrecho*100, 2),'%',
+                      '</br> Circulación Comunitaria: ', round(porComunitaria*100, 2),'%',
+                      '</br> En Investigación: ', round(porInvestigacion*100, 2),'%')) %>% 
+    add_trace(y = ~porComunitaria, name = "Circulación Comunitaria", color = I("indianred3")) %>% 
+    add_trace(y = ~porEstrecho, name = "Contactos Estrechos", color = I("olivedrab3")) %>% 
+    add_trace(y = ~porImportados, name = "Importados",  color = I("steelblue3")) %>% 
+    layout(yaxis = list(title = "% según Tipo de Caso", tickformat = "%"), 
+           xaxis=list(title=""),
+           barmode = "stack",
+           legend = list(orientation = 'h', font = list(size = 10)))
+  
+```
+
+
+
+##### Cantidades
 ```{r estudioCasos, echo=FALSE, fig.align='center', message=FALSE, warning=FALSE, out.width='100%'}
 
-  tipoCaso <- argCov %>% select(dia, Importados, Estrecho, Comunitaria, Investigacion) %>%
-    gather(tipo, cantidad, c(Importados, Estrecho, Comunitaria, Investigacion), -dia) %>% 
-    select(dia, tipo, cantidad) %>% 
-    group_by(dia) %>% 
-    mutate(porc= prop.table(cantidad))
+  tipoCaso <- argCov %>% select(dia, Importados, Estrecho, Comunitaria, Investigacion)
   
-  p <- ggplot(tipoCaso,aes(x=dia,y=porc, fill=tipo))+
-    geom_bar(stat = "identity", color="white") +
-    geom_text(aes(label = paste0(round(porc*100,0),"%")), position = position_stack(vjust = 0.5),
-              color="black", size=2) +
-    scale_y_continuous("Porcentaje", labels=scales::percent) + 
-    theme(legend.position="bottom")
-   
-  p
-   # ggplotly(p, tooltip = "text") 
-   # %>% layout(legend = list(orientation = "h", x = 0.4, y = -0.2), height = 800)
-
+  tipoCaso$dia <- as.Date(tipoCaso$dia, '%d/%m/%Y')
+ 
+  plot_ly(tipoCaso, x = ~dia, y = ~Importados, type = "bar", name = "Importados",  color = I("steelblue3"),
+          hoverinfo = 'text',
+          text = ~paste('</br> Importados: ', Importados,
+                      '</br> Contactos Estrechos: ', Estrecho,
+                      '</br> Circulación Comunitaria: ', Comunitaria,
+                      '</br> En Investigación: ', Investigacion)) %>% 
+    add_trace(y = ~Estrecho, name = "Contactos Estrechos", color = I("olivedrab3")) %>% 
+    add_trace(y = ~Comunitaria, name = "Circulación Comunitaria", color = I("indianred3")) %>% 
+    add_trace(y = ~Investigacion, name = "En Investigación",  color = I("orchid3")) %>% 
+    layout(yaxis = list(title = "Tipos de casos"), barmode = "stack",
+           legend = list(x = 0.029, y = 1.038, font = list(size = 10)))
   
 ```
 
@@ -1161,27 +1207,28 @@ A continuación se visualiará la evolución en la proporción de los casos dete
       mutate(total = DescTest + Detectados)
   test <- test %>% filter(DescTest >= 0) %>%  mutate(prop= round(Detectados/total * 100, 2)) %>% arrange(dia)
  
+  test$dia <-as.Date(test$dia, "%d/%m/%Y")
   
-  ggplot(test,aes(x=dia,y=prop,  label = round(prop, 1)))+
-    geom_bar(stat = "identity", fill= "steelblue", color="steelblue") +
-    geom_text(aes(label = paste0(round(prop,1),"%")), 
-                   position = position_stack(vjust = 0.5),  color="black", size=2) +
-    scale_y_continuous("% de Positividad") 
+  plot_ly(test, x = ~dia, y = ~prop, type = "bar", name = "Tasa de Positividad",
+           texttemplate = '%{y:.3s}', textposition = 'outside') %>% 
+    layout(xaxis=list(title=""), yaxis = list(title = "Tasa de Positividad (%)"))
+  
+   
+  # ggplot(test,aes(x=dia,y=prop,  label = round(prop, 1)))+
+  #   geom_bar(stat = "identity", fill= "steelblue", color="steelblue") +
+  #   geom_text(aes(label = paste0(round(prop,1),"%")), 
+  #                  position = position_stack(vjust = 0.5),  color="black", size=2) +
+  #   scale_y_continuous("% de Positividad") 
+  
+ 
 
 ```
 
 ##### Cantidades
 ```{r propTestD, echo=FALSE, fig.align='center', message=FALSE, warning=FALSE, out.width='100%'}
-
- p4 <- plot_ly(test,
-              x = ~dia,
-              y = ~DescTest,
-              type = "bar",
-              name = "Test Negativos") %>% 
-  add_trace(y = ~Detectados,
-            name = "Test Positivos") %>% 
-  layout(yaxis = list(title = "Acumulado de Pruebas Realizadas"),
-         barmode = "stack")
+  p4 <- plot_ly(test, x = ~dia, y = ~DescTest, type = "bar", name = "Test Negativos") %>% 
+            add_trace(y = ~Detectados, name = "Test Positivos") %>% 
+        layout(yaxis = list(title = "Acumulado de Pruebas Realizadas"), barmode = "stack")
  p4
 
   

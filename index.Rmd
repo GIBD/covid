@@ -966,25 +966,19 @@ Actualizado al `r max(covidArg$FECHA)`. El total de casos acumulados en el país
     }
   }
   
-  tabla_prov <- tabla_prov %>%  
-    gather(casos, acum, -c(PROVINCIA, FECHA)) 
+  tabla_prov <- tabla_prov %>%
+    gather(casos, acum, -c(PROVINCIA, FECHA)) %>% ungroup()
+  
   names(tabla_prov) <- c("provincia", "fecha", "tipo", "cant")
-  # rm(h, m, p)
+  # 
+  # p <- ggplot(tabla_prov, aes(x=fecha, y=cant, color=tipo, group=provincia)) +
+  #   geom_line()+
+  #   facet_grid(~provincia, scale = "free_y")
+  # 
+  #   fig <- ggplotly(p)
+  #   fig
 
-  # h <- ggplot(tabla_prov, aes(fecha, cant, color=tipo, group=tipo, text = paste0(tipo, ": ", cant))) +
-  #   geom_line(aes(shape=tipo, color=tipo)) +
-  #   labs(x = 'día', y="") + 
-  #   facet_wrap(~provincia, ncol=3)+   theme(legend.position = 'bottom')
-  # 
-  # plot_ly(data = tabla_prov, x=~fecha, y=~cant, color = ~tipo, alpha = 0.1, type='scatter', mode='lines', fill='tozeroy')
-  # 
-  # 
-  # ggplotly(h, tooltip = "text" ) %>% 
-  #   layout(legend = list(orientation = "h", x = 0.4, y = -0.2), height = 800)
-  
-  
-  # p <- 
-    tabla_prov %>% 
+  tabla_prov %>%
     ggplot(aes(x=fecha, y=cant, group=tipo, color=tipo))+
     geom_line( show.legend=FALSE) +
     labs(title="", x='día',
@@ -992,11 +986,9 @@ Actualizado al `r max(covidArg$FECHA)`. El total de casos acumulados en el país
       theme(
         axis.text.x = element_text(colour="grey20", size=7, angle=45, hjust=.5, vjust=.5),
         axis.text.y = element_text(colour="grey20", size=7),
-        text=element_text(size=9, family="Arial")) + 
-  #   facet_wrap(~provincia)
-  # ggplotly(p)
-    facet_wrap(~provincia,  ncol=5)
-    # plot_ly(tabla_prov, x=)
+        text=element_text(size=9, family="Arial")) +
+     facet_wrap(~provincia,  ncol=5)
+
      
 ```
 En la provincia de Buenos Aires y Ciudad de Buenos Aires el día 29/03/2020 se observa una cantidad de nuevos casos detectados muy decreciente debido a la reasignación de jurisdicción informada por Ministerio ese día. Esta cifra se asignó a cada provincia el día en que fue informada debido a la falta del dato sobre el caso reasignado.
@@ -1240,12 +1232,15 @@ A continuación se visualiará la evolución en la proporción de los casos dete
 
 Cantidad de Casos confirmados por departamento en la provincia de Entre Ríos
 
+
+####  {.tabset  .tabset-fade .tabset-pills}
+##### Departamental
 ```{r mapaER}
 
   covider <- covid_er %>% group_by(DEPARTAMENTO) %>%
     mutate(cantidad=n()) %>% select(DEPARTAMENTO, cantidad) %>% unique()
-
-
+  
+  
   highchart() %>%
     hc_title(text = "<i>Casos de COVID-19 en Entre Ríos</i> ",
              margin = 20, align = "center", style = list(color = "#780000", useHTML = TRUE)) %>%
@@ -1261,6 +1256,27 @@ Cantidad de Casos confirmados por departamento en la provincia de Entre Ríos
     hc_add_annotation(xValue = 0, yValue = 0, title = list(text = 'Fuente: Ministerio Salud ER')) %>% 
     hc_chart(borderColor = "#780000", borderRadius = 10, borderWidth = 2)
   
-  
-  
 ```
+
+
+
+##### Por Ciudad
+```{r locER, echo=FALSE, message=FALSE, warning=FALSE, paged.print=FALSE}
+  deptos_er <- st_read(dsn ="data/mapas/departamentos_entrerios.shp") 
+  
+  localidades_er <- covid_er %>% group_by(Lat, Long) %>% mutate(cant=n()) %>% 
+    select(LOCALIDAD, Lat, Long, cant) %>% unique() %>% ungroup()
+  
+  # deptos_er <- deptos_er %>% left_join(covider, by=c("departamen"="DEPARTAMENTO")) %>% 
+  #   group_by(departamen) %>% mutate(cantD=n()) %>% select(departamen, cantD, geometry) %>% unique()
+  
+    leaflet() %>% addTiles() %>% 
+      addProviderTiles(providers$OpenStreetMap) %>% 
+      addPolygons(data=deptos_er, fill=FALSE, weight = 1)  %>% 
+      addCircleMarkers(data=localidades_er,  lat = localidades_er$Lat, lng = localidades_er$Long, 
+                       radius = ~cant*3, weight = 1, color = "red", 
+                       popup = paste(localidades_er$LOCALIDAD, ": ",localidades_er$cant)) 
+    # %>%  addLayersControl()
+```
+
+

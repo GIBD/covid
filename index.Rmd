@@ -52,11 +52,6 @@ output:
   #################
   # Carga de Datos
   #################
-  
-  # starts auth process with defaults
-  # gar_auth()
-
-
 
   ## Datos mundiales
     { # Confirmados
@@ -74,29 +69,25 @@ output:
 
   ## Mapas y Poblaciones
     {
-    argentina <- fromJSON(file = "data/mapas/ar-all.geo.json")
-    sud <- fromJSON(file="data/mapas/south-america.geo.json")
-    world <- fromJSON(file="data/mapas/world.geo.json")
-    entrerios <- fromJSON(file="data/mapas/entrerios_dpto.geo.json")
+      argentina <- fromJSON(file = "data/mapas/ar-all.geo.json")
+      sud <- fromJSON(file="data/mapas/south-america.geo.json")
+      world <- fromJSON(file="data/mapas/world.geo.json")
+      entrerios <- fromJSON(file="data/mapas/entrerios_dpto.geo.json")
+      deptos <- st_read(dsn ="data/mapas/departamentos.shp") 
+      deptos_er <- st_read(dsn ="data/mapas/departamentos_entrerios.shp") 
     
-    # Paises América
-    poblacion <- data.frame( c('Argentina', 'Bolivia', 'Brazil', 'Chile', 'Colombia', 'Ecuador',
-                               'Paraguay',	'Peru',	'Surinam', 'Uruguay',  'Venezuela'),
-                             c(44938712, 11383094,	210147125, 19107216, 50372424, 17300000,
-                               7152703, 33105273,524000, 3529014, 28067000))
-    names(poblacion) <- c('pais', 'poblacion')
-
-    poblacion_mundial <- read_delim("data/poblaciones/mundial.csv", ";", escape_double = FALSE,
-                                     locale = locale(decimal_mark = ",", encoding = "ISO-8859-1"), 
-                                    trim_ws = TRUE)
-    
-    # deptos <- st_read(dsn ="data/mapas/deptosARG.shp") 
-    deptos <- st_read(dsn ="data/mapas/departamentos.shp") 
-   
-  
-    localidades <- read_csv("data/mapas/localidades.csv", 
-                            locale = locale(encoding = "ISO-8859-1"))
-     deptos_er <- st_read(dsn ="data/mapas/departamentos_entrerios.shp") 
+      localidades <- read_csv("data/mapas/localidades.csv", 
+                              locale = locale(encoding = "ISO-8859-1"))
+      
+      # Paises América
+      poblacion <- data.frame( c('Argentina', 'Bolivia', 'Brazil', 'Chile', 'Colombia', 'Ecuador',
+                                 'Paraguay',	'Peru',	'Surinam', 'Uruguay',  'Venezuela'),
+                               c(44938712, 11383094,	210147125, 19107216, 50372424, 17300000,
+                                 7152703, 33105273,524000, 3529014, 28067000))
+      names(poblacion) <- c('pais', 'poblacion')
+    # poblacion_mundial <- read_delim("data/poblaciones/mundial.csv", ";", escape_double = FALSE,
+    #                                  locale = locale(decimal_mark = ",", encoding = "ISO-8859-1"), 
+    #                                 trim_ws = TRUE)
   }  
 
   ## Dataset Mundial
@@ -138,79 +129,24 @@ output:
         mutate(dia= 1:n())
       
       mundial_ambos <- mundial %>% 
-      left_join(mundial_m, by=c('pais', 'fecha')) %>%  select(pais, fecha, dia.x, casos, muertes)
+        left_join(mundial_m, by=c('pais', 'fecha')) %>%  select(pais, fecha, dia.x, casos, muertes)
       mundial_ambos$muertes <- if_else(is.na(mundial_ambos$muertes), 0, mundial_ambos$muertes)
-
+      
+      names(mundial_ambos) <- c("pais", "fecha", "dia", "casos", "muertes")
+      mundial_ambos$fecha <-as.Date(mundial_ambos$fecha ,"%m/%d/%Y")
+      
+      rm(mundial_m, mundial)
       }
     
   ## Dataset Paises mas afectados y Arg
-    {  mayores <- c('China', 'France', 'US', 'Spain', 'Italy',  'Germany', 'Argentina')#, 'Korea, South')
+    { mayores <- c('China', 'France', 'US', 'Spain', 'Italy',  'Germany', 'Argentina')#, 'Korea, South')
       
-      masAfectados <- covid19 %>% 
-        filter(`Country/Region` %in% mayores) 
-      
-      masAfectados <- masAfectados[,-c(2,3)]
-      
-      masAfectados <- masAfectados %>% gather(fecha, casos, 2:max(col(masAfectados)), -`Country/Region`) 
-      names(masAfectados) <- c('pais', 'fecha', 'confirmados')
-      masAfectados <- masAfectados %>% group_by(pais, fecha) %>% 
-        mutate(casos =sum(confirmados)) %>% select(pais, fecha, casos) %>% unique()
-      
-      masAfectados$fecha <-paste0(masAfectados$fecha,'20')
-      masAfectados$fecha <-as.Date(masAfectados$fecha ,"%m/%d/%Y")
-      
-      masAfectados<-masAfectados %>%
-        filter(casos > 0) %>% 
-        group_by(pais) %>% 
-        arrange(pais,fecha) %>% 
-        mutate(dia= 1:n())
-      
-      # Creo campos para cant. semanales
-      {
-        masAfectados$nuevos <- 0
-          for(p in masAfectados$pais){
-            for(i in 3:max(masAfectados$dia[masAfectados$pais==p])-1){
-              nuevo <- (masAfectados$casos[((masAfectados[,"pais"]==p)&
-                                              (masAfectados[,"dia"]==i))] -
-                          masAfectados$casos[((masAfectados[,"pais"]==p) & 
-                                                (masAfectados[,"dia"]==(i-1) ))])
-              masAfectados$nuevos[((masAfectados[,"pais"]==p) & 
-                                     (masAfectados[,"dia"]==i))] <- if_else(nuevo >0, nuevo, 0)
-            }}
-          
-         masAfectados$semanal <- 0
-          for(p in masAfectados$pais){
-            for(i in 8:max(masAfectados$dia[masAfectados$pais==p])){
-              semanal <- sum(masAfectados$nuevos[((masAfectados[,"pais"]==p)&(masAfectados[,"dia"]<=i)&
-                                                    (masAfectados[,"dia"]>=(i-6)))])
-              masAfectados$semanal[((masAfectados[,"pais"]==p) & 
-                                      (masAfectados[,"dia"]==i))] <- if_else(semanal >0, semanal, 0)
-            }}
-          
-        
-        masAfectados_m <- covid19_m %>% 
-          filter(`Country/Region` %in% mayores) 
-        
-        masAfectados_m <- masAfectados_m[,-c(2,3)]
-        masAfectados_m <- masAfectados_m %>%
-          gather(fecha, casos, 2:max(col(masAfectados_m)), -`Country/Region`) 
-        names(masAfectados_m) <- c('pais', 'fecha', 'fallecidos')
-        
-        masAfectados_m <- masAfectados_m %>% group_by(pais, fecha) %>% 
-          mutate(muertes =sum(fallecidos)) %>% select(pais, fecha, muertes) %>% unique()
-         
-        masAfectados_m$fecha <-paste0(masAfectados_m$fecha,'20')
-        masAfectados_m$fecha <- as.Date(masAfectados_m$fecha ,"%m/%d/%Y")
-        
-        masAfectados_m<-masAfectados_m %>%
-          filter(muertes > 0) %>% 
-          group_by(pais) %>% 
-          arrange(pais,fecha) %>% 
-          mutate(dia= 1:n())
-         
-        afectados <- masAfectados %>%  left_join(masAfectados_m, by=c('pais', 'fecha'))
+      afectados <- mundial_ambos %>% 
+        filter(pais %in% mayores) %>% 
+        select(pais, fecha, casos, muertes,  dia) %>% 
+        arrange(pais,fecha) 
+  
         afectados$muertes <- if_else(is.na(afectados$muertes), 0, afectados$muertes)
-        afectados <- afectados[-8]
         
         afectados$pais <- gsub("US", "EEUU", afectados$pais)
         afectados$pais <- gsub("Spain", "España", afectados$pais)
@@ -218,43 +154,15 @@ output:
         afectados$pais <- gsub("Italy", "Italia", afectados$pais)
         afectados$pais <- gsub("Germany", "Alemania", afectados$pais)
         afectados$pais <- gsub("France", "Francia", afectados$pais)
+        
+        rm(masAfectados, masAfectados_m)
     }
-    }
+    
 
   ## Dataset Sudamérica
-    {   sudamerica <- covid19 %>% 
-        filter(`Country/Region` %in% poblacion$pais) 
-     
-      sudamerica <- sudamerica[,-c(2:38)]
-      sudamerica <- sudamerica %>% 
-        gather(fecha, casos, 2:max(col(sudamerica)), -`Country/Region`) 
-      
-      names(sudamerica) <- c('pais', 'fecha', 'casos')
-      sudamerica$fecha <-paste0(sudamerica$fecha,'20')
-      sudamerica$fecha <- as.Date(sudamerica$fecha ,"%m/%d/%Y")
-      
-      sudamerica<-sudamerica %>%
-        filter(casos > 0) %>% 
-        group_by(pais) %>% 
-        arrange(pais,fecha) %>% 
-        mutate(dia= 1:n())
-      
-      sudamerica_m <- covid19_m %>% 
-        filter(`Country/Region` %in% poblacion$pais) 
-      sudamerica_m <- sudamerica_m[,-c(2:38)]
-      sudamerica_m <- sudamerica_m %>% 
-        gather(fecha, casos, 2:max(col(sudamerica_m)), -`Country/Region`) 
-      
-      names(sudamerica_m) <- c('pais', 'fecha', 'fallecidos')
-      sudamerica_m$fecha <- paste0(sudamerica_m$fecha,'20')
-      sudamerica_m$fecha <- as.Date(sudamerica_m$fecha ,"%m/%d/%Y")
-      
-      sudamerica_m<-sudamerica_m %>%
-        filter(fallecidos > 0) %>% 
-        group_by(pais) %>% 
-        arrange(pais,fecha) %>% 
-        mutate(dia= 1:n())
-     
+    { sudamerica <- mundial_ambos %>% 
+        filter(pais %in% poblacion$pais) 
+   
       sudamerica$nuevos <- 0
         for(p in sudamerica$pais){
           for(i in 3:max(sudamerica$dia[sudamerica$pais==p])-1){
@@ -272,13 +180,8 @@ output:
             sudamerica$semanal[((sudamerica[,"pais"]==p) & 
                                   (sudamerica[,"dia"]==i))] <- if_else(semanal >0, semanal, 0)
           }}
-  
-    ambos <- sudamerica %>% 
-      left_join(sudamerica_m, by=c('pais', 'fecha'))
-  
-    ambos$fallecidos <- if_else(is.na(ambos$fallecidos), 0, ambos$fallecidos)
-    ambos <- ambos[-6]
-  
+
+    sudamerica$muertes <- if_else(is.na(sudamerica$muertes), 0, sudamerica$muertes)
   }
     
   ## Dataset Argentina
@@ -313,8 +216,6 @@ output:
                           escape_double = FALSE, locale = locale(encoding = "ISO-8859-1"),
                           trim_ws = TRUE)
         
-        # entre_rios_c <-covid_er read_delim("covid/data/entre_rios_casos.csv", ";", escape_double = FALSE, 
-        #                      locale = locale(encoding = "ISO-8859-1"), trim_ws = TRUE)
         entre_rios_c <- covid_er %>% group_by(LOCALIDAD) %>% 
           mutate(cantidad = n()) %>% select(LOCALIDAD, cantidad)
         names(entre_rios_c) <- c("localidad", "cantidad")
@@ -324,7 +225,7 @@ output:
       ### RIO NEGRO
       {
         rio_negro_c <- read_csv("https://docs.google.com/spreadsheets/d/16-bnsDdmmgtSxdWbVMboIHo5FRuz76DBxsz_BbsEVWA/export?format=csv&id=16-bnsDdmmgtSxdWbVMboIHo5FRuz76DBxsz_BbsEVWA&gid=971636305")
-        rio_negro_c <- rio_negro_c %>% select(Localidad, casos)
+        rio_negro_c <- rio_negro_c %>% select(localidad, casos_acumulados)
         names(rio_negro_c) <- c("localidad", "cantidad")
         rio_negro_c$provincia <- "Río Negro"
         rio_negro_c$localidad <- gsub("Bariloche", "San Carlos de Bariloche", rio_negro_c$localidad)
@@ -439,9 +340,13 @@ Las muertes por la pandemia alcanzan las **`r   sep.miles(as.integer(sum(covid19
 ##### Detectados
 ```{r mapaMundoCasos, echo=FALSE, message=FALSE, warning=FALSE, paged.print=FALSE}
 
-      mundialHoy <- mundial %>% 
+      # mundialHoy <- mundial %>% 
+      #   group_by(pais) %>%  
+      #   filter(dia==max(dia))
+
+      mundialHoy <- mundial_ambos %>% 
         group_by(pais) %>%  
-        filter(dia==max(dia))
+        filter(dia==max(dia)) %>% select(pais, dia, fecha, casos)
       
       highchart() %>% 
          hc_title(text = "<i>Casos Acumulados COVID-19</i>",
@@ -460,9 +365,14 @@ Las muertes por la pandemia alcanzan las **`r   sep.miles(as.integer(sum(covid19
 ##### Fallecidos
 ```{r mapaMundoMuertes, echo=FALSE, message=FALSE, warning=FALSE, paged.print=FALSE}
 
-      mundialMHoy <- mundial_m %>% 
+      mundialMHoy <- mundial_ambos %>% 
         group_by(pais) %>%  
-        filter(dia==max(dia))
+        filter(dia==max(dia)) %>% 
+        select(pais, dia, fecha, muertes) 
+
+      # mundialMHoy <- mundial_m %>% 
+      #   group_by(pais) %>%  
+      #   filter(dia==max(dia)) 
       
       highchart() %>% 
          hc_title(text = "<i>Fallecidos COVID-19</i>",
@@ -484,12 +394,13 @@ Las muertes por la pandemia alcanzan las **`r   sep.miles(as.integer(sum(covid19
 
       letalHoy <- mundial_ambos %>% 
         group_by(pais) %>% 
-        filter(dia.x==max(dia.x)) %>%
+        filter(dia==max(dia)) %>%
         mutate(letalidad = round(muertes/casos * 100, 2)) %>% unique() %>% arrange(desc(letalidad))
       
       letalHoy %>% select(pais, fecha, casos, muertes, letalidad) %>% filter(letalidad >0) %>% 
           kable( col.names =  c("País", "Fecha", "Casos",  "Fallecidos", "Tasa Letalidad"),
-            align =  c('l', 'c', 'c', 'c', 'c') ) %>%    kable_styling()
+            align =  c('l', 'c', 'c', 'c', 'c')  , format.args = list( big.mark=".", decimal.mark = ",")) %>%    
+        kable_styling()
        
 ```
 
@@ -516,8 +427,8 @@ El hecho de que la visión de éste sea logarítmica permite analizar en una esc
 Las curvas de evolución a escala lineal de casos detectados de COVID-19 en Argentina y en los países mas afectados a nivel mundial son:
 
 ```{r mundo, echo=FALSE, out.width='95%', fig.align='center'}
-  p <- afectados %>% select(dia.x, fecha, casos)
-  fig <- plot_ly(p, x = ~dia.x, y = ~casos, color = ~pais, type = "scatter", mode='lines+markers') 
+  p <- afectados %>% select(dia, fecha, casos)
+  fig <- plot_ly(p, x = ~dia, y = ~casos, color = ~pais, type = "scatter", mode='lines+markers') 
   fig <- layout(fig, xaxis = list(title = "día"), yaxis = list(title = "casos"))
   fig
 ```
@@ -529,10 +440,11 @@ Excluyendo China y comparando la evolución de los casos detectados en estos pai
 
 
 ```{r mundo20, echo=FALSE, out.width='95%', fig.align='center'}
-  diasArg <- max(afectados$dia.x[afectados$pais=="Argentina"])
-   p <- afectados %>%
-    filter(dia.x <= diasArg & pais != "China") 
-  fig <- plot_ly(p, x = ~dia.x, y = ~casos, color = ~pais, type = "scatter", mode='lines+markers') 
+  diasArg <- max(afectados$dia[afectados$pais=="Argentina"])
+  
+  p <- afectados %>%
+    filter(dia <= diasArg & pais != "China") 
+  fig <- plot_ly(p, x = ~dia, y = ~casos, color = ~pais, type = "scatter", mode='lines+markers') 
   fig <- layout(fig, xaxis = list(title = "día"), yaxis = list(title = "casos"))
   fig
 ```
@@ -545,7 +457,7 @@ Para poner en contexto la situación, en el siguiente gráfico puede verse cómo
   p <- afectados %>%
     filter(casos>100 & pais != "China") %>% 
     group_by(pais) %>% arrange(fecha) %>% mutate(dia100 = row_number()) 
-  fig <- plot_ly(p, x = ~dia.x, y = ~casos, color = ~pais, type = "scatter", mode='lines+markers') 
+  fig <- plot_ly(p, x = ~dia, y = ~casos, color = ~pais, type = "scatter", mode='lines+markers') 
   fig <- layout(fig, xaxis = list(title = "día"), yaxis = list(title = "casos"))
   fig
   
@@ -637,8 +549,7 @@ Al día de la fecha las incidencias acumuladas por cada 100.000 habitantes de lo
 ##### Tabla Datos
 Como se observa, el país con la mayor Incidencia Acumulada al día de hoy es **`r ia[1,1] `**, que lleva *`r ia[1,2] ` días* desde la detección del primer caso.
 ```{r ia, echo=FALSE, message=FALSE, warning=FALSE, paged.print=FALSE, out.width='100%'}
-  ia  %>% kable( col.names =  c("País", "Días", "Población","# Casos", "IA"),
-            align =  c('l', 'c', 'c', 'c', 'c') ) %>% 
+  ia  %>% kable( col.names =  c("País", "Días", "Población","# Casos", "IA"),format.args = list( big.mark=".", decimal.mark = ","), align =  c('l', 'c', 'c', 'c', 'c') ) %>% 
       kable_styling()
 ```
 
@@ -650,9 +561,9 @@ A continuación se grafica la evolución de las cantidades de fallecimientos des
 ####  {.tabset  .tabset-fade .tabset-pills}
 ##### Gráfico
 ```{r muertesg, echo=FALSE, message=FALSE, warning=FALSE, paged.print=FALSE, out.width='100%'}
-  sudamerica_m %>% 
+  sudamerica %>% 
     group_by(pais) %>% 
-    ggplot(aes(x=dia, y=fallecidos, color=pais))+
+    ggplot(aes(x=dia, y=muertes, color=pais))+
     geom_line( show.legend=FALSE) +
     geom_smooth(se=F, show.legend = F) +                  
     labs(title="", x='día',
@@ -666,13 +577,15 @@ Al día de la fecha las cantidad de muertes acumuladas país es de:
 
 ```{r muertest, echo=FALSE, message=FALSE, warning=FALSE, paged.print=FALSE, out.width='100%'}
 
-   muertes <- sudamerica_m %>% 
+   # muertes <- 
+  sudamerica %>% 
     group_by(pais) %>% 
     filter(dia==max(dia)) %>% 
-    select(pais, fallecidos) %>% arrange(desc(fallecidos))
-
-   muertes %>% kable( col.names =  c("País", "# Fallecidos"),
-            align =  c('l', 'c') ) %>%    kable_styling()
+    select(pais, muertes) %>% arrange(desc(muertes)) %>%  
+   # muertes %>% 
+    kable( col.names =  c("País", "# Fallecidos"),
+           format.args = list( big.mark=".", decimal.mark = ","),
+            align =  c('l', 'c') ) %>%  kable_styling()
 ```
 
 
@@ -683,22 +596,24 @@ A continuación se muestra la evolución de la tasa de letalidad en los distinto
 ####  {.tabset  .tabset-fade .tabset-pills}
 ##### Gráfica
 ```{r g_tasa_mort, echo=FALSE, message=FALSE, warning=FALSE, paged.print=FALSE, out.width='100%', fig.align='center'}
-  p <- ambos %>% mutate(tasa_m = round(fallecidos/casos * 100, 1))
-  fig <- plot_ly(p, x = ~dia.x, y = ~tasa_m, color = ~pais, type = "scatter", mode='lines+markers') 
+  # p <- ambos %>% mutate(tasa_m = round(fallecidos/casos * 100, 1))
+  p <- sudamerica %>% mutate(tasa_m = round(muertes/casos * 100, 1))
+  fig <- plot_ly(p, x = ~dia, y = ~tasa_m, color = ~pais, type = "scatter", mode='lines+markers') 
   fig <- layout(fig, xaxis = list(title = "día"), yaxis = list(title = "Tasa de Letalidad"))
   fig
 
 ```
 
 ##### Datos
-Los datos de la tasa de letalidad al `r  max(ambos$fecha)` para cada país son:
+Los datos de la tasa de letalidad al `r  max(sudamerica$fecha)` para cada país son:
 ```{r d_tasa_mort, echo=FALSE, message=FALSE, warning=FALSE, paged.print=FALSE, out.width='100%', fig.align='center'}
 
-  ambos %>% group_by(pais) %>% 
-    filter(fecha == max(fecha)) %>%   mutate(tasa_m = round(fallecidos/casos * 100, 2))%>%
-    select(pais, casos, fallecidos, tasa_m) %>% 
+  sudamerica %>% group_by(pais) %>% 
+    filter(fecha == max(fecha)) %>%   mutate(tasa_m = round(muertes/casos * 100, 2))%>%
+    select(pais, casos, muertes, tasa_m) %>% 
     arrange(desc(tasa_m)) %>% 
     kable( col.names =  c("País", "# Casos", "# Fallecidos", "Tasa de Letalidad(%)"),
+           format.args = list( big.mark=".", decimal.mark = ","),
             align =  c('l', 'c', 'c','c') ) %>%    
     kable_styling()
 
@@ -713,10 +628,10 @@ En el siguiente gráfico se muestran las series de cantidades de casos y cantida
 ####  {.tabset  .tabset-fade .tabset-pills}
 ##### Escala fija
 ```{r casos_muertes, echo=FALSE, message=FALSE, warning=FALSE, paged.print=FALSE, out.width='100%',out.height="100%", fig.align='center'}
-  casos<- ambos %>% select(pais, dia.x, casos, fallecidos) %>% 
-    gather(tipo, cant, -c(pais, dia.x))
+  casos<- sudamerica %>% select(pais, dia, casos, muertes) %>% 
+    gather(tipo, cant, -c(pais, dia))
 
-  p <- ggplot(casos, aes(dia.x, cant, color=tipo, group=tipo, text = paste0(tipo, ": ", cant))) +
+  p <- ggplot(casos, aes(dia, cant, color=tipo, group=tipo, text = paste0(tipo, ": ", cant))) +
     geom_line(aes(shape=tipo, color=tipo)) +
     labs(x = 'día', y="") + 
     facet_wrap(~pais, ncol=3)+   theme(legend.position = 'bottom')
@@ -730,10 +645,8 @@ En el siguiente gráfico se muestran las series de cantidades de casos y cantida
 ##### Escala libre
 ```{r casos_muertes_libre, echo=FALSE, message=FALSE, warning=FALSE, paged.print=FALSE, out.width='100%', out.height="100%", fig.align='center'}
  
-  p <- ggplot(casos, aes(dia.x, cant, color=tipo, group=tipo, text = paste0(tipo, ": ", cant))) +
-    # geom_point(aes(shape=tipo, color=tipo), show.legend = F) +
+  p <- ggplot(casos, aes(dia, cant, color=tipo, group=tipo, text = paste0(tipo, ": ", cant))) +
     geom_line(aes(shape=tipo, color=tipo), show.legend = F)+
-    # labs(title='Cantidades de Casos y Fallecidos')+
     labs(x = 'día', y="") + 
     facet_wrap(~pais, scales = "free_y", ncol=3)+
     theme(legend.position = 'bottom')
@@ -845,6 +758,7 @@ Situación de los casos detectados en la actualidad. Los casos Activos aquí se 
  totalesArg <- argCov %>%
    select(dia, Detectados, Fallecidos, Recuperados) 
  totalesArg %>% kable( col.names =  c("Fecha", "Casos Detectados", "Fallecidos", "Recuperados"),
+                       format.args = list( big.mark=".", decimal.mark = ","),
             align =  c('l', 'c', 'c', 'c') ) %>%  kable_styling()
 ```
 
@@ -919,6 +833,7 @@ El Ministerio diariamente informa la cantidad de casos por provincia pudiendo re
 ##### Tabla
 ```{r tabProv, echo=FALSE, message=FALSE, warning=FALSE}
   covidArg_hoy  %>% kable( col.names =  c("Provincia", "Casos Totales"),
+                           format.args = list( big.mark=".", decimal.mark = ","),
             align =  c('l', 'c') ) %>%  kable_styling()
 ```
 
@@ -992,14 +907,7 @@ Actualizado al `r max(covidArg$FECHA)`. El total de casos acumulados en el país
     gather(casos, acum, -c(PROVINCIA, FECHA)) %>% ungroup()
   
   names(tabla_prov) <- c("provincia", "fecha", "tipo", "cant")
-  # 
-  # p <- ggplot(tabla_prov, aes(x=fecha, y=cant, color=tipo, group=provincia)) +
-  #   geom_line()+
-  #   facet_grid(~provincia, scale = "free_y")
-  # 
-  #   fig <- ggplotly(p)
-  #   fig
-
+ 
   tabla_prov %>%
     ggplot(aes(x=fecha, y=cant, group=tipo, color=tipo))+
     geom_line( show.legend=FALSE) +
@@ -1061,6 +969,7 @@ Al día de la fecha las incidencias acumuladas por cada 100.000 habitantes en la
 ```{r iAProvD}
   tabiaprov <- ia_prov %>% select(provincia, cant, ia) %>% arrange(desc(ia))
   tabiaprov %>% kable(col.names = c("Provincia", "Casos", "Tasa Incidencia"),
+                      format.args = list( big.mark=".", decimal.mark = ","),
             align=c('l', 'c', 'c')) %>%
   kable_styling()
 
@@ -1134,7 +1043,7 @@ En base a las provincias de residencia de los fallecidos, informadas por el Mini
 
 ##### Datos
 ```{r datLetProv, echo=FALSE,message=FALSE, warning=FALSE}
- let_prov %>% arrange(desc(letalidad)) %>% kable( col.names =  c("Provincia", "Muertes", "Casos Acumulados", "Tasa Letalidad"),
+ let_prov %>% arrange(desc(letalidad)) %>% kable( col.names =  c("Provincia", "Muertes", "Casos Acumulados", "Tasa Letalidad"),format.args = list( big.mark=".", decimal.mark = ","),
             align =  c('l', 'c', 'c', 'c') ) %>%  kable_styling()
 ```
 
@@ -1288,16 +1197,13 @@ Cantidad de Casos confirmados por departamento en la provincia de Entre Ríos
   localidades_er <- covid_er %>% group_by(Lat, Long) %>% mutate(cant=n()) %>% 
     select(LOCALIDAD, Lat, Long, cant) %>% unique() %>% ungroup()
   
-  # deptos_er <- deptos_er %>% left_join(covider, by=c("departamen"="DEPARTAMENTO")) %>% 
-  #   group_by(departamen) %>% mutate(cantD=n()) %>% select(departamen, cantD, geometry) %>% unique()
-  
-    leaflet() %>% addTiles() %>% 
+  leaflet() %>% addTiles() %>% 
       addProviderTiles(providers$OpenStreetMap) %>% 
-      addPolygons(data=deptos_er, fill=FALSE, weight = 1)  %>% 
+      addPolygons(data=deptos_er, fill=FALSE, weight = 1, color = "#000")  %>% 
       addCircleMarkers(data=localidades_er,  lat = localidades_er$Lat, lng = localidades_er$Long, 
                        radius = ~cant*3, weight = 1, color = "red", 
                        popup = paste(localidades_er$LOCALIDAD, ": ",localidades_er$cant)) 
-    # %>%  addLayersControl()
+    
 ```
 
 

@@ -92,8 +92,11 @@ output:
     
     # deptos <- st_read(dsn ="data/mapas/deptosARG.shp") 
     deptos <- st_read(dsn ="data/mapas/departamentos.shp") 
+   
+  
     localidades <- read_csv("data/mapas/localidades.csv", 
                             locale = locale(encoding = "ISO-8859-1"))
+     deptos_er <- st_read(dsn ="data/mapas/departamentos_entrerios.shp") 
   }  
 
   ## Dataset Mundial
@@ -1281,8 +1284,7 @@ Cantidad de Casos confirmados por departamento en la provincia de Entre Ríos
 
 ##### Por Ciudad
 ```{r locER, echo=FALSE, message=FALSE, warning=FALSE, paged.print=FALSE}
-  deptos_er <- st_read(dsn ="data/mapas/departamentos_entrerios.shp") 
-  
+ 
   localidades_er <- covid_er %>% group_by(Lat, Long) %>% mutate(cant=n()) %>% 
     select(LOCALIDAD, Lat, Long, cant) %>% unique() %>% ungroup()
   

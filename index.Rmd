@@ -277,11 +277,13 @@ output:
       ### NEUQUÉN
       {## Hoja de Planilla Excel compartida por Mapache
     
-        neuquen_c <- read_sheet("https://docs.google.com/spreadsheets/d/16-bnsDdmmgtSxdWbVMboIHo5FRuz76DBxsz_BbsEVWA/edit#gid=1711452704", sheet = 5)
+        neuquen_c <- read_sheet("https://docs.google.com/spreadsheets/d/16-bnsDdmmgtSxdWbVMboIHo5FRuz76DBxsz_BbsEVWA/edit#gid=1711452704", sheet = 4)
         # neuquen_c$Municipio <- 
-        neuquen_c$Municipio <- gsub("Ã©", "é", neuquen_c$Municipio)
-        
-        neuquen_c <- neuquen_c %>% select(Municipio, Casos) #, Prov)
+        neuquen_c$Localidad <- gsub("Ã©", "é", neuquen_c$Localidad)
+        neuquen_c$Localidad <- gsub("Ã¡", "á", neuquen_c$Localidad)
+        neuquen_c$Localidad <- gsub("Ã³", "ó", neuquen_c$Localidad)
+        neuquen_c$Localidad <- gsub("Ã","í", neuquen_c$Localidad)
+        neuquen_c <- neuquen_c %>% select(Localidad, casos) #, Prov)
         
         neuquen_c$Prov <- "Neuquén"
         

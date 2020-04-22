@@ -261,13 +261,13 @@ output:
         names(stafe_c) <- c("localidad", "cantidad")
         stafe_c$localidad <- str_to_title(stafe_c$localidad )
         stafe_c$provincia <-"Santa Fe"
-  
+        stafe_c$localidad <- gsub("GáLvez", "Gálvez", stafe_c$localidad)
         stafe_c$localidad <- gsub("Roldan", "Roldán", stafe_c$localidad)
-        stafe_c$localidad <- gsub("Chabás", "Chabas", stafe_c$localidad)
+        stafe_c$localidad <- gsub("ChabáS", "Chabas", stafe_c$localidad)
         stafe_c$localidad <- gsub("Cañada De Gomez", "Cañada de Gómez", stafe_c$localidad)
         stafe_c$localidad <- gsub("San Jose Del Rincón", "San José del Rincón", stafe_c$localidad)
       }
-      
+     
       
       ### NEUQUÉN
       {## Hoja de Planilla Excel compartida por Mapache
@@ -307,9 +307,22 @@ output:
         tucuman_c <- tucuman_c[-c(nrow(tucuman_c),nrow(tucuman_c)-1),]
         tucuman_c <- tucuman_c %>% select("Departamento", "Casos")
         tucuman_c$provincia <- "Tucumán"
-        # neuquen_c
-        # names(neuquen_c) <- c( "localidad", "cantidad", "provincia")
         names(tucuman_c) <- c( "localidad", "cantidad", "provincia")
+        
+        
+        
+        chaco_c <- read_delim("data/chaco_gral.csv", ";", 
+                          escape_double = FALSE, locale = locale(encoding = "ISO-8859-1"),
+                          trim_ws = TRUE)
+        chaco_c <- chaco_c %>% select(Localidad, casos)
+        chaco_c$provincia <- "Chaco"
+        names(chaco_c) <- c( "localidad", "cantidad", "provincia")
+        chaco_c$localidad <- gsub( "Puerto Bermejo", "Puerto Bermejo Nuevo", chaco_c$localidad)
+        chaco_c$localidad <- gsub( "Villa Ángela", "Villa Ángela", chaco_c$localidad)
+        # cordoba_c$localidad <- gsub("Cerro Azul", "Villa Cerro Azul", cordoba_c$localidad)
+        # cordoba_c$localidad <- gsub("San Marcos Sud", "San Marcos", cordoba_c$localidad)
+        # cordoba_c$localidad <- gsub("Villa Gral Belgrano", "Villa General Belgrano", cordoba_c$localidad)
+        
         #  names(entre_rios_c) <- c( "localidad", "cantidad", "provincia")
         #  names(caba_c) <- c( "localidad", "cantidad", "provincia")
         #  names(bsas_c) <- c( "localidad", "cantidad", "provincia")
@@ -320,7 +333,7 @@ output:
       casos_pronvinciales <- rbind.data.frame(entre_rios_c, rio_negro_c, 
                                               caba_c, bsas_c, stafe_c, 
                                               neuquen_c, cordoba_c,
-                                              tucuman_c)
+                                              tucuman_c, chaco_c)
       rm(entre_rios_c, rio_negro_c,caba_c, bsas_c, stafe_c,neuquen_c, cordoba_c, tucuman_c)
     }
   

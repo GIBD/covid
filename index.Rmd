@@ -62,7 +62,7 @@ output:
       covid19_m <- read_csv("https://github.com/CSSEGISandData/COVID-19/raw/master/csse_covid_19_data/csse_covid_19_time_series/time_series_covid19_deaths_global.csv")
       covid19_m <- covid19_m[-1]
       
-       # Recuperados
+     # Recuperados
     #   covid_19_r <- read_csv("https://github.com/CSSEGISandData/COVID-19/raw/master/csse_covid_19_data/csse_covid_19_time_series/time_series_covid19_recovered_global.csv")
     # covid_19_r <- covid_19_r[-1]
     }  
@@ -160,19 +160,14 @@ output:
     
 
   ## Dataset Sudamérica
-    { sudamerica <- mundial_ambos %>% 
+    { 
+      sudamerica <- mundial_ambos %>% 
         filter(pais %in% poblacion$pais) 
-   
-      sudamerica$nuevos <- 0
-        for(p in sudamerica$pais){
-          for(i in 3:max(sudamerica$dia[sudamerica$pais==p])-1){
-            nuevo <- (sudamerica$casos[((sudamerica[,"pais"]==p)&(sudamerica[,"dia"]==i))]-
-                        sudamerica$casos[((sudamerica[,"pais"]==p) & (sudamerica[,"dia"]==(i-1) ))])
-            sudamerica$nuevos[((sudamerica[,"pais"]==p) & 
-                                 (sudamerica[,"dia"]==i))] <- if_else(nuevo >0, nuevo, 0)
-          }}
-        
-       sudamerica$semanal <- 0
+      
+      sudamerica <- sudamerica %>% group_by(pais) %>% mutate(nuevos = casos-lag(casos))
+      sudamerica$nuevos <- if_else(is.na(sudamerica$nuevos)&sudamerica$dia==1, sudamerica$casos, sudamerica$nuevos)
+      
+      sudamerica$semanal <- 0
         for(p in sudamerica$pais){
           for(i in 8:max(sudamerica$dia[sudamerica$pais==p])){
             semanal <- sum(sudamerica$nuevos[((sudamerica[,"pais"]==p)&
@@ -775,6 +770,7 @@ Situación de los casos detectados en la actualidad. Los casos Activos aquí se 
 ```{r datoEvolArg, echo=FALSE, message=FALSE, warning=FALSE}
  totalesArg <- argCov %>%
    select(dia, Detectados, Fallecidos, Recuperados) 
+
  totalesArg %>% kable( col.names =  c("Fecha", "Casos Detectados", "Fallecidos", "Recuperados"),
                        format.args = list( big.mark=".", decimal.mark = ","),
             align =  c('l', 'c', 'c', 'c') ) %>%  kable_styling()
@@ -795,7 +791,6 @@ El Ministerio diariamente informa la cantidad de casos por provincia pudiendo re
   covidArg_hoy <- covidArg %>% 
     group_by(PROVINCIA) %>% 
     mutate(total=sum(CASOS)) %>% select(PROVINCIA, total) %>% unique()
-
 
   highchart() %>%
           hc_title(text = "<i>Mapa dinámico de COVID-19 en Argentina</i> - <b>GIBD</b>",
@@ -908,31 +903,32 @@ Gracias al aporte de reunir y disponibilizar los datos de [Sistemas Mapache](htt
 
 
 
+
 ### Evolución por Provincia
 A continuación se muestra la evolución de nuevos casos detectados por día para cada una de las provincias argentinas y la cantidad de casos acumulados.
-Actualizado al `r max(covidArg$FECHA)`. El total de casos acumulados en el país es de `r sum(covidArg$CASOS)`.
+<!-- Actualizado al `r max(covidArg$FECHA)`. El total de casos acumulados en el país es de `r sum(covidArg$CASOS)`. -->
 
 ```{r ev_prov, echo=FALSE, fig.align='center', message=FALSE, warning=FALSE, out.width='100%'}
-  tabla_prov<- covidArg %>% 
-    group_by(PROVINCIA, FECHA) %>% mutate(casos=sum(CASOS)) %>% select(PROVINCIA, FECHA, casos) %>% unique()
+
+ tabla_prov<- covidArg %>% 
+    group_by(PROVINCIA, FECHA) %>% mutate(casos=sum(CASOS)) %>% select(PROVINCIA, FECHA, casos) %>% unique() 
+
+    tabla_prov$acumulados <-0
+    tabla_prov$FECHA <- as.Date(tabla_prov$FECHA , "%d/%m/%Y")
   
-  tabla_prov$acum <- 0
-  for(prov in tabla_prov$PROVINCIA){
-    for(dia in tabla_prov$FECHA){
-      total = sum(tabla_prov$casos[tabla_prov$PROVINCIA==prov & tabla_prov$FECHA<= dia])
-      tabla_prov$acum[tabla_prov$PROVINCIA==prov & tabla_prov$FECHA == dia] = total
-    }
-  }
+  tabla_prov <- tabla_prov %>% ungroup() %>% group_by(PROVINCIA) %>% 
+    arrange(PROVINCIA, FECHA) %>% 
+    mutate(acumulados =cumsum(casos))
   
   tabla_prov <- tabla_prov %>%
-    gather(casos, acum, -c(PROVINCIA, FECHA)) %>% ungroup()
+    gather(casos, acum, -c(PROVINCIA, FECHA))# %>% ungroup()
   
   names(tabla_prov) <- c("provincia", "fecha", "tipo", "cant")
  
   tabla_prov %>%
     ggplot(aes(x=fecha, y=cant, group=tipo, color=tipo))+
     geom_line( show.legend=FALSE) +
-    labs(title="", x='día',
+    labs(title="", # x='día',
          y="Cantidad de casos", caption="Datos: Min. Salud Arg.") +
       theme(
         axis.text.x = element_text(colour="grey20", size=7, angle=45, hjust=.5, vjust=.5),
@@ -940,9 +936,10 @@ Actualizado al `r max(covidArg$FECHA)`. El total de casos acumulados en el país
         text=element_text(size=9, family="Arial")) +
      facet_wrap(~provincia,  ncol=5)
 
-     
 ```
-En la provincia de Buenos Aires y Ciudad de Buenos Aires el día 29/03/2020 se observa una cantidad de nuevos casos detectados muy decreciente debido a la reasignación de jurisdicción informada por Ministerio ese día. Esta cifra se asignó a cada provincia el día en que fue informada debido a la falta del dato sobre el caso reasignado.
+
+
+
 
 
 
@@ -950,8 +947,7 @@ En la provincia de Buenos Aires y Ciudad de Buenos Aires el día 29/03/2020 se o
 
 La incidencia acumulada (IA) proporciona una estimación de la probabilidad o el riesgo de que un individuo, libre de una determinada enfermedad, la desarrolle durante un período específico de tiempo.
 
-En Argentina, considerando una población de 45.376.763 (Proyección estimada por INDEC), la tasa de incidencia acumulada nacional es de `r round(max(totalesArg$Detectados[dia==max(dia)])/45376763 * 100000, 2)` cada 100 mil habitantes.
-
+En Argentina, considerando una población de 45.376.763 (Proyección estimada por INDEC), la tasa de incidencia acumulada nacional es de `r round(sum(argCov$casosD)/45376763 * 100000, 2)` cada 100 mil habitantes.
 
 Al día de la fecha las incidencias acumuladas por cada 100.000 habitantes en la provincias de Argentina son: 
 
@@ -959,9 +955,10 @@ Al día de la fecha las incidencias acumuladas por cada 100.000 habitantes en la
 ##### Mapa
 
 ```{r mapIAArg, echo=FALSE, message=FALSE, warning=FALSE, paged.print=FALSE}
-  
+ # round(sum(tabla_prov$cant[tipo=='casos'])/45376763 * 100000, 2)
+
   ia_prov <- tabla_prov %>%
-    filter(tipo == "acum") %>%
+    filter(tipo == "acumulados") %>%
     group_by(provincia) %>%
     filter(fecha == max(fecha)) %>%
     select(provincia, cant) %>%
@@ -1011,7 +1008,6 @@ La edad media de los pacientes fallecidos es de `r round(mean(muertosArg$edad), 
 En el siguiente gráfico se observa la distribución de los pacientes fallecidos por sexo y edad.
 
 ```{r fallArg, echo=FALSE, fig.align='center', message=FALSE, warning=FALSE, out.width='100%'}
-
 
   ggplot(muertosArg, aes(x=genero, y=edad, fill= genero) )+
       geom_violin(alpha=0.6) +

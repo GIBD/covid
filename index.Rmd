@@ -254,8 +254,11 @@ output:
       
       ### SANTA FE
       {
-        stafe_c <- read_csv("https://docs.google.com/spreadsheets/d/16-bnsDdmmgtSxdWbVMboIHo5FRuz76DBxsz_BbsEVWA/export?format=csv&id=16-bnsDdmmgtSxdWbVMboIHo5FRuz76DBxsz_BbsEVWA&gid=1214016401", skip = 3)
-        stafe_c <- stafe_c %>% gather(fecha, casos, 7:max(col(stafe_c)), -X6) 
+        stafe_c <- read_delim("data/santafe_gral.csv",  ";", #skip=3,
+                          escape_double = FALSE, locale = locale(encoding = "ISO-8859-1"),
+                          trim_ws = TRUE)
+        # "https://docs.google.com/spreadsheets/d/16-bnsDdmmgtSxdWbVMboIHo5FRuz76DBxsz_BbsEVWA/export?format=csv&id=16-bnsDdmmgtSxdWbVMboIHo5FRuz76DBxsz_BbsEVWA&gid=1214016401", skip = 3)
+        stafe_c <- stafe_c %>% gather(fecha, casos, 7:max(col(stafe_c)), -X6)
         stafe_c <- stafe_c %>% filter(!(is.na(casos)) & casos >0 ) %>% 
                        group_by(X6) %>% filter(fecha == max(fecha)) %>% 
                        mutate(cantidad = as.integer(casos)) %>% ungroup() %>% 
@@ -275,10 +278,15 @@ output:
       {## Hoja de Planilla Excel compartida por Mapache
     
         neuquen_c <- read_sheet("https://docs.google.com/spreadsheets/d/16-bnsDdmmgtSxdWbVMboIHo5FRuz76DBxsz_BbsEVWA/edit#gid=1711452704", sheet = 5)
-        neuquen_c$Localidad <- gsub("Ã©", "é", neuquen_c$Localidad)
-        neuquen_c <- neuquen_c %>% select(Localidad, casos, Prov)
+        # neuquen_c$Municipio <- 
+        neuquen_c$Municipio <- gsub("Ã©", "é", neuquen_c$Municipio)
+        
+        neuquen_c <- neuquen_c %>% select(Municipio, Casos) #, Prov)
+        
         neuquen_c$Prov <- "Neuquén"
+        
         names(neuquen_c) <- c( "localidad", "cantidad", "provincia")
+        
         neuquen_c$localidad <- gsub("Cutral Co", "Cutral Có", 	neuquen_c$localidad)
         neuquen_c$localidad <- gsub("San Martin de los Andes", "San Martín de los Andes", 	neuquen_c$localidad)
         neuquen_c$localidad <- gsub("Vista Alegre", "Vista Alegre Norte", 	neuquen_c$localidad)
@@ -302,8 +310,16 @@ output:
         tucuman_c <- tucuman_c[-c(nrow(tucuman_c),nrow(tucuman_c)-1),]
         tucuman_c <- tucuman_c %>% select("Departamento", "Casos")
         tucuman_c$provincia <- "Tucumán"
+        # neuquen_c
+        # names(neuquen_c) <- c( "localidad", "cantidad", "provincia")
         names(tucuman_c) <- c( "localidad", "cantidad", "provincia")
-        
+        #  names(entre_rios_c) <- c( "localidad", "cantidad", "provincia")
+        #  names(caba_c) <- c( "localidad", "cantidad", "provincia")
+        #  names(bsas_c) <- c( "localidad", "cantidad", "provincia")
+        #  names(stafe_c) <- c( "localidad", "cantidad", "provincia")
+        #  names(rio_negro_c) <- c( "localidad", "cantidad", "provincia")
+        #  names(cordoba_c) <- c( "localidad", "cantidad", "provincia")
+         
       casos_pronvinciales <- rbind.data.frame(entre_rios_c, rio_negro_c, 
                                               caba_c, bsas_c, stafe_c, 
                                               neuquen_c, cordoba_c,

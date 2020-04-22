@@ -871,10 +871,13 @@ Gracias al aporte de reunir y disponibilizar los datos de [Sistemas Mapache](htt
   casos_pronvinciales$departamen <- if_else(is.na(casos_pronvinciales$departamen)&
                                               casos_pronvinciales$provincia=="Buenos Aires",
                                               casos_pronvinciales$localidad, casos_pronvinciales$departamen)
-  
+  casos_pronvinciales$departamen <- if_else(is.na(casos_pronvinciales$departamen)&
+                                              casos_pronvinciales$provincia=="Ciudad Autónoma de Buenos Aires",
+                                              casos_pronvinciales$localidad, casos_pronvinciales$departamen)
   casos_pronvinciales$departamen <- if_else(is.na(casos_pronvinciales$departamen)&
                                               casos_pronvinciales$provincia=="Tucumán",
                                               casos_pronvinciales$localidad, casos_pronvinciales$departamen)
+  
   # vacios <- casos_pronvinciales %>% filter(is.na(departamen))
     
   casos_pronvinciales <- casos_pronvinciales %>%

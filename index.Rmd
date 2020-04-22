@@ -906,8 +906,6 @@ Gracias al aporte de reunir y disponibilizar los datos de [Sistemas Mapache](htt
 
 ### Evolución por Provincia
 A continuación se muestra la evolución de nuevos casos detectados por día para cada una de las provincias argentinas y la cantidad de casos acumulados.
-<!-- Actualizado al `r max(covidArg$FECHA)`. El total de casos acumulados en el país es de `r sum(covidArg$CASOS)`. -->
-
 ```{r ev_prov, echo=FALSE, fig.align='center', message=FALSE, warning=FALSE, out.width='100%'}
 
  tabla_prov<- covidArg %>% 
@@ -999,9 +997,22 @@ Al día de la fecha las incidencias acumuladas por cada 100.000 habitantes en la
 
 En la actualidad (`r max(totalesArg$dia)`) en Argentina, la **tasa de mortalidad particular o letalidad** es de `r round(totalesArg$Fallecidos[totalesArg$dia==max(totalesArg$dia)]/totalesArg$Detectados[totalesArg$dia==max(totalesArg$dia)] * 100, 2)`%, mientras que el **porcentaje pacientes recuperados** es del `r round(totalesArg$Recuperados[totalesArg$dia==max(totalesArg$dia)]/totalesArg$Detectados[totalesArg$dia==max(totalesArg$dia)] * 100, 2)`%.
 
+La tasa de Letalidad a nivel nacional a evolucionado como lo muestra la siguiente gráfica.
+
+```{r evolLetalArg, echo=FALSE, fig.align='center', message=FALSE, warning=FALSE, out.width='100%' }
+    evolLet <- argCov %>% mutate(let = round(Fallecidos/Detectados * 100, 1) ) %>% 
+      select(dia, Detectados, Fallecidos, let) %>% arrange(dia)
+    evolLet$dia <- as.Date(evolLet$dia, "%d/%m/%Y")
+    plot_ly(evolLet, x = ~dia, y = ~let, type = "bar", name = "Letalidad en Argentina",
+           texttemplate = '%{y:.2s}', textposition = 'outside') %>% 
+          layout(xaxis=list(title=""), yaxis = list(title = "Letalidad en Argentina"))
+  
+
+
+```
+
 
 El `r round(nrow(muertosArg[muertosArg$genero=="Hombre", ])/nrow(muertosArg) * 100, 1)` % de los fallecidos son Hombres, mientras que el `r round(nrow(muertosArg[muertosArg$genero=="Mujer", ])/nrow(muertosArg) * 100, 1)` % restante corresponde a Mujeres.
-
 
 La edad media de los pacientes fallecidos es de `r round(mean(muertosArg$edad), 0)` años, y en particular la edad media de los Hombres fallecidos es de `r round(mean(muertosArg$edad[muertosArg$genero=="Hombre"]), 0)` años y en la Mujeres de `r round(mean(muertosArg$edad[muertosArg$genero=="Mujer"]), 0)` años.
 
@@ -1024,8 +1035,9 @@ En el siguiente gráfico se observa la distribución de los pacientes fallecidos
 
 
 
+
 ### Letalidad por Provincias
-En base a las provincias de residencia de los fallecidos, informadas por el Ministerio de Salud Nacional, y considerando las cantidades actualizadas de casos en cada provincia se obtienen las siguientes tasas de letalidad
+En base a las provincias de residencia de los fallecidos, informadas por el Ministerio de Salud Nacional, y considerando las cantidades actualizadas de casos en cada provincia se obtienen las siguientes tasas de letalidad a nivel provincial
 
 
 ####  {.tabset  .tabset-fade .tabset-pills}

@@ -993,6 +993,7 @@ Al día de la fecha las incidencias acumuladas por cada 100.000 habitantes en la
 
 
 
+
 ### Letalidad en Argentina
 
 En la actualidad (`r max(totalesArg$dia)`) en Argentina, la **tasa de mortalidad particular o letalidad** es de `r round(totalesArg$Fallecidos[totalesArg$dia==max(totalesArg$dia)]/totalesArg$Detectados[totalesArg$dia==max(totalesArg$dia)] * 100, 2)`%, mientras que el **porcentaje pacientes recuperados** es del `r round(totalesArg$Recuperados[totalesArg$dia==max(totalesArg$dia)]/totalesArg$Detectados[totalesArg$dia==max(totalesArg$dia)] * 100, 2)`%.
@@ -1003,6 +1004,7 @@ La tasa de Letalidad a nivel nacional a evolucionado como lo muestra la siguient
     evolLet <- argCov %>% mutate(let = round(Fallecidos/Detectados * 100, 1) ) %>% 
       select(dia, Detectados, Fallecidos, let) %>% arrange(dia)
     evolLet$dia <- as.Date(evolLet$dia, "%d/%m/%Y")
+    
     plot_ly(evolLet, x = ~dia, y = ~let, type = "bar", name = "Letalidad en Argentina",
            texttemplate = '%{y:.2s}', textposition = 'outside') %>% 
           layout(xaxis=list(title=""), yaxis = list(title = "Letalidad en Argentina"))
@@ -1143,7 +1145,7 @@ La evolución y distribución de los casos según el tipo en Argentina es:
   
 ```
 
-
+## Test
 
   
 ### Tasa de Positividad
@@ -1163,16 +1165,8 @@ A continuación se visualiará la evolución en la proporción de los casos dete
   
   plot_ly(test, x = ~dia, y = ~prop, type = "bar", name = "Tasa de Positividad",
            texttemplate = '%{y:.3s}', textposition = 'outside') %>% 
-    layout(xaxis=list(title=""), yaxis = list(title = "Tasa de Positividad (%)"))
+    layout(title="Tasa de Positividad", xaxis=list(title=""), yaxis = list(title = "Tasa de Positividad (%)"))
   
-   
-  # ggplot(test,aes(x=dia,y=prop,  label = round(prop, 1)))+
-  #   geom_bar(stat = "identity", fill= "steelblue", color="steelblue") +
-  #   geom_text(aes(label = paste0(round(prop,1),"%")), 
-  #                  position = position_stack(vjust = 0.5),  color="black", size=2) +
-  #   scale_y_continuous("% de Positividad") 
-  
- 
 
 ```
 
@@ -1180,11 +1174,26 @@ A continuación se visualiará la evolución en la proporción de los casos dete
 ```{r propTestD, echo=FALSE, fig.align='center', message=FALSE, warning=FALSE, out.width='100%'}
   p4 <- plot_ly(test, x = ~dia, y = ~DescTest, type = "bar", name = "Test Negativos") %>% 
             add_trace(y = ~Detectados, name = "Test Positivos") %>% 
-        layout(yaxis = list(title = "Acumulado de Pruebas Realizadas"), barmode = "stack")
+        layout(title="Cantidad de Test Realizados", yaxis = list(title = "Acumulado de Pruebas Realizadas"), barmode = "stack")
  p4
 
   
 ```
+
+
+##### Test por Habitantes
+```{r tesHab}
+   testHab <- argCov %>%
+      mutate(porHab = round(TotalPruebas/45376763*1000000, 1)) %>% select(dia, porHab) 
+  
+    testHab$dia <- as.Date(testHab$dia, "%d/%m/%Y")
+    plot_ly(testHab, x = ~dia, y = ~(porHab), type = "bar", name = "Tasa de Positividad",
+           texttemplate = '%{y:.4s}', 
+         textposition = 'outside') %>% 
+    layout(title="Test x Millón de Habitantes", xaxis=list(title=""), yaxis = list(title = "Test x millón de Habitantes"))
+
+```
+
 
 
 

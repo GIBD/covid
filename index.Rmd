@@ -346,16 +346,17 @@ output:
 >
 > gibd@frcu.utn.edu.ar
 
-## Situación Mundial
-
+# Situación Mundial
+## Casos actuales
 El 30 de enero, la Organización Mundial de la Salud declaró la emergencia de salud pública internacional por el brote epidémico de coronavirus. 
 
 La cifra de contagios confirmados del nuevo coronavirus SARS-CoV-2 superó la barrera del millón, siendo en la actualidad **`r  sep.miles(as.integer(sum(covid19[,ncol(covid19)]))) `** los casos confirmados.
 
 Las muertes por la pandemia alcanzan las **`r   sep.miles(as.integer(sum(covid19_m[,ncol(covid19_m)]))) `**, de acuerdo con los datos de la universidad estadounidense Johns Hopkins, uno de las fuentes más consultadas del mundo.
 
-####  {.tabset  .tabset-fade .tabset-pills}
-##### Detectados
+
+###  {.tabset  .tabset-fade .tabset-pills}
+#### Detectados
 ```{r mapaMundoCasos, echo=FALSE, message=FALSE, warning=FALSE, paged.print=FALSE}
 
       # mundialHoy <- mundial %>% 
@@ -380,7 +381,7 @@ Las muertes por la pandemia alcanzan las **`r   sep.miles(as.integer(sum(covid19
          hc_chart(borderColor = "#08338F", borderRadius = 10, borderWidth = 2)
 ```
 
-##### Fallecidos
+#### Fallecidos
 ```{r mapaMundoMuertes, echo=FALSE, message=FALSE, warning=FALSE, paged.print=FALSE}
 
       mundialMHoy <- mundial_ambos %>% 
@@ -407,7 +408,7 @@ Las muertes por la pandemia alcanzan las **`r   sep.miles(as.integer(sum(covid19
        
 ```
 
-##### Letalidad
+#### Letalidad
 ```{r letalidadMundo, echo=FALSE, message=FALSE, warning=FALSE, paged.print=FALSE}
 
       letalHoy <- mundial_ambos %>% 
@@ -422,15 +423,11 @@ Las muertes por la pandemia alcanzan las **`r   sep.miles(as.integer(sum(covid19
        
 ```
 
-
-
-
-### Evolución por fecha
+## Evolución por fecha
 En el siguiente gráfico se puede analizar la velocidad y magnitud que ha tenido la propagación del Covid-19 en los países más afectados hasta la fecha indicada y Argentina. 
 
-
-####  {.tabset  .tabset-fade .tabset-pills}
-##### Logarítmica
+###  {.tabset  .tabset-fade .tabset-pills}
+#### Logarítmica
 El hecho de que la visión de éste sea logarítmica permite analizar en una escala más adecuada cómo ha sido la evolución de la pandemia, debido a la amplia gama de valores. 
 ```{r logar, echo=FALSE, out.width='100%', fig.align='center'}
 
@@ -441,7 +438,7 @@ El hecho de que la visión de éste sea logarítmica permite analizar en una esc
   
 ```
 
-##### Lineal
+#### Lineal
 Las curvas de evolución a escala lineal de casos detectados de COVID-19 en Argentina y en los países mas afectados a nivel mundial son:
 
 ```{r mundo, echo=FALSE, out.width='95%', fig.align='center'}
@@ -451,11 +448,8 @@ Las curvas de evolución a escala lineal de casos detectados de COVID-19 en Arge
   fig
 ```
 
-
-
-### Evolución en días
+## Evolución en días
 Excluyendo China y comparando la evolución de los casos detectados en estos paises en los primeros `r max(afectados$dia.x[afectados$pais=="Argentina"]) ` días, que son los transcurridos desde el primer caso detectado en Argentina, se obtienen las siguientes curvas: 
-
 
 ```{r mundo20, echo=FALSE, out.width='95%', fig.align='center'}
   diasArg <- max(afectados$dia[afectados$pais=="Argentina"])
@@ -467,8 +461,7 @@ Excluyendo China y comparando la evolución de los casos detectados en estos pai
   fig
 ```
 
-
-### Evolución luego de 100 casos
+## Evolución luego de 100 casos
 Para poner en contexto la situación, en el siguiente gráfico puede verse cómo fue evolucionando la cantidad de personas infectadas en estos países en el período siguiente al de haber llegado a los 100 casos confirmados.
 
 ```{r dia100mundo, echo=FALSE, out.width='95%', fig.align='center'}
@@ -482,12 +475,12 @@ Para poner en contexto la situación, en el siguiente gráfico puede verse cómo
 ```
 
 
+# Sudamérica
 
-## Sudamérica
-
+## Inicios
 En Sud América el primer caso detectado de COVID-19 se informa el día `r day(min(sudamerica$fecha))` de `r format(min(sudamerica$fecha), "%b")` del 2020 en `r sudamerica %>% filter(fecha==min(sudamerica$fecha)) %>% select(pais)`. 
-
 A continuación se muestran las fechas en que se detectó por primera vez un infectado en cada país:
+
 ```{r tablaFechas, echo=FALSE, fig.align='center', message=FALSE, warning=FALSE, out.width='100%', out.height='70%', paged.print=FALSE}
   fechas <- sudamerica %>%
     group_by(pais) %>%  arrange( fecha ) %>%
@@ -501,13 +494,13 @@ A continuación se muestran las fechas en que se detectó por primera vez un inf
   timevis::timevis(fechas, zoomFactor = 0.8)
 ```
 
-### Evolución de nuevos casos
+## Evolución de nuevos casos
 La evolución de casos acumulados por país se muestra desde el día en que se detectó por primera vez un infectado.
 
 A las gráficas se les ha agregado la tendencia (basada en el modelo de regresión local)
 
-####  {.tabset  .tabset-fade .tabset-pills}
-##### Por país
+###  {.tabset  .tabset-fade .tabset-pills}
+#### Por país
 ```{r casospais, echo=FALSE, message=FALSE, warning=FALSE, paged.print=FALSE, out.width='100%'}
   sudamerica %>% 
     group_by(pais) %>% 
@@ -520,7 +513,7 @@ A las gráficas se les ha agregado la tendencia (basada en el modelo de regresi�
 
 ```
 
-##### Sudamérica
+#### Sudamérica
 Las curvas de evolución de los países en simultáneo en base a la cantidad de días transcurridos desde la detección del primer infectado por COVID-19 se muestran a continuación:
 
 ```{r pressure, echo=FALSE, out.width='90%', fig.align='center'}
@@ -531,15 +524,13 @@ Las curvas de evolución de los países en simultáneo en base a la cantidad de 
     theme_minimal() + labs(color='Países') 
 ```
 
-
-
-### Incidencia Acumulada
+## Incidencia Acumulada
 La incidencia acumulada (IA) proporciona una estimación de la probabilidad o el riesgo de que un individuo libre de una determinada enfermedad la desarrolle durante un período especificado de tiempo.
 
 Al día de la fecha las incidencias acumuladas por cada 100.000 habitantes de los países de Sud América es: 
 
-####  {.tabset  .tabset-fade .tabset-pills}
-##### Mapa
+###  {.tabset  .tabset-fade .tabset-pills}
+#### Mapa
 ```{r mapSud, echo=FALSE, message=FALSE, warning=FALSE, paged.print=FALSE}
   ia <- sudamerica %>% 
     group_by(pais) %>% 
@@ -564,7 +555,7 @@ Al día de la fecha las incidencias acumuladas por cada 100.000 habitantes de lo
 
 ```
 
-##### Tabla Datos
+#### Tabla Datos
 Como se observa, el país con la mayor Incidencia Acumulada al día de hoy es **`r ia[1,1] `**, que lleva *`r ia[1,2] ` días* desde la detección del primer caso.
 ```{r ia, echo=FALSE, message=FALSE, warning=FALSE, paged.print=FALSE, out.width='100%'}
   ia  %>% kable( col.names =  c("País", "Días", "Población","# Casos", "IA"),format.args = list( big.mark=".", decimal.mark = ","), align =  c('l', 'c', 'c', 'c', 'c') ) %>% 
@@ -573,11 +564,12 @@ Como se observa, el país con la mayor Incidencia Acumulada al día de hoy es **
 
 
 
-### Fallecimientos
+
+## Fallecimientos
 A continuación se grafica la evolución de las cantidades de fallecimientos desde la detección del virus en cada país, y la tabla correspondiente a la cantidad acumulada al día de la fecha.
 
-####  {.tabset  .tabset-fade .tabset-pills}
-##### Gráfico
+###  {.tabset  .tabset-fade .tabset-pills}
+#### Gráfico
 ```{r muertesg, echo=FALSE, message=FALSE, warning=FALSE, paged.print=FALSE, out.width='100%'}
   sudamerica %>% 
     group_by(pais) %>% 
@@ -589,10 +581,8 @@ A continuación se grafica la evolución de las cantidades de fallecimientos des
     facet_wrap(~pais,  ncol=4)
 ```
 
-##### Tabla
-
+#### Tabla
 Al día de la fecha las cantidad de muertes acumuladas país es de: 
-
 ```{r muertest, echo=FALSE, message=FALSE, warning=FALSE, paged.print=FALSE, out.width='100%'}
 
    # muertes <- 
@@ -606,13 +596,12 @@ Al día de la fecha las cantidad de muertes acumuladas país es de:
             align =  c('l', 'c') ) %>%  kable_styling()
 ```
 
-
-### Tasa de Letalidad
+## Tasa de Letalidad
 Una proporción interesante a comparar es la **tasa de mortalidad particular o tasa de letalidad**, es decir la cantidad de personas que fallecieron respecto al total de casos en un período de tiempo.
 A continuación se muestra la evolución de la tasa de letalidad en los distintos países considerando el primer día de detección del virus
 
-####  {.tabset  .tabset-fade .tabset-pills}
-##### Gráfica
+###  {.tabset  .tabset-fade .tabset-pills}
+#### Gráfica
 ```{r g_tasa_mort, echo=FALSE, message=FALSE, warning=FALSE, paged.print=FALSE, out.width='100%', fig.align='center'}
   # p <- ambos %>% mutate(tasa_m = round(fallecidos/casos * 100, 1))
   p <- sudamerica %>% mutate(tasa_m = round(muertes/casos * 100, 1))
@@ -622,7 +611,7 @@ A continuación se muestra la evolución de la tasa de letalidad en los distinto
 
 ```
 
-##### Datos
+#### Datos
 Los datos de la tasa de letalidad al `r  max(sudamerica$fecha)` para cada país son:
 ```{r d_tasa_mort, echo=FALSE, message=FALSE, warning=FALSE, paged.print=FALSE, out.width='100%', fig.align='center'}
 
@@ -640,11 +629,12 @@ Los datos de la tasa de letalidad al `r  max(sudamerica$fecha)` para cada país 
 
 
 
-### Casos Totales y Casos letales
+
+## Casos Totales y Casos letales
 En el siguiente gráfico se muestran las series de cantidades de casos y cantidades de fallecidos en cada país, en el primero se visualiza la escala fija sobre el y, en la segunda se muestra la escala libre que mejor se adapta a cada país 
 
-####  {.tabset  .tabset-fade .tabset-pills}
-##### Escala fija
+###  {.tabset  .tabset-fade .tabset-pills}
+#### Escala fija
 ```{r casos_muertes, echo=FALSE, message=FALSE, warning=FALSE, paged.print=FALSE, out.width='100%',out.height="100%", fig.align='center'}
   casos<- sudamerica %>% select(pais, dia, casos, muertes) %>% 
     gather(tipo, cant, -c(pais, dia))
@@ -660,7 +650,7 @@ En el siguiente gráfico se muestran las series de cantidades de casos y cantida
 ```
 
 
-##### Escala libre
+#### Escala libre
 ```{r casos_muertes_libre, echo=FALSE, message=FALSE, warning=FALSE, paged.print=FALSE, out.width='100%', out.height="100%", fig.align='center'}
  
   p <- ggplot(casos, aes(dia, cant, color=tipo, group=tipo, text = paste0(tipo, ": ", cant))) +
@@ -676,15 +666,14 @@ En el siguiente gráfico se muestran las series de cantidades de casos y cantida
 
 
 
-
-### Trayectoria de Nuevos Casos
+## Trayectoria de Nuevos Casos
 Este gráfico (propuesto por https://aatishb.com/covidtrends/) muestra la evolución entre la cantidad total de casos de COVID-19 en una fecha frente a los nuevos casos confirmados en la semana previa a la misma. 
 
 Cuando se traza de esta manera, el crecimiento exponencial se representaría como una línea recta creciente. 
 Se puede observar que casi todos los países siguen un camino muy similar de crecimiento exponencial.
 
-####  {.tabset  .tabset-fade .tabset-pills}
-##### Sudamérica
+###  {.tabset  .tabset-fade .tabset-pills}
+#### Sudamérica
 ```{r dinamico, echo=FALSE, fig.align='center', fig.show='animate', message=FALSE, warning=FALSE, paged.print=FALSE}
 
 	avance <- sudamerica %>% group_by(pais) %>% filter(dia != max(dia))
@@ -696,7 +685,7 @@ Se puede observar que casi todos los países siguen un camino muy similar de cre
 	animate(dinamico, renderer = ffmpeg_renderer(format = "webm"))
 ```
 
-##### Por país
+#### Por país
 ```{r grafTray, echo=FALSE, message=FALSE, warning=FALSE, paged.print=FALSE, out.width='100%', fig.align='center'}
  
   sudamerica %>% 
@@ -716,16 +705,16 @@ Se puede observar que casi todos los países siguen un camino muy similar de cre
 
 
 
-## Argentina
+# Argentina
 
-### Cantidad de Casos Actuales
+## Cantidad de Casos Actuales
 En Argentina los datos son informados diariamente por el Ministerio de Salud de la Nación. Estos datos se informan de manera desestructurada y diariamente se modifica la cantidad de datos brindados.
 
 Los datos con los que se trabajarán son de procesamiento propio en base a los informes mencionados y se encuentran actualizados al `r max(covidArg$FECHA) `.
 
 
-####  {.tabset  .tabset-fade .tabset-pills}
-##### Evolución en Argentina
+###  {.tabset  .tabset-fade .tabset-pills}
+#### Evolución en Argentina
 ```{r evolArg, echo=FALSE, fig.align='center', message=FALSE, warning=FALSE, paged.print=FALSE}
    
    argCov$dia <- as.Date(argCov$dia, '%d/%m/%Y')
@@ -745,7 +734,7 @@ Los datos con los que se trabajarán son de procesamiento propio en base a los i
 ```
 
 
-##### Distribución Actual
+#### Distribución Actual
 Situación de los casos detectados en la actualidad. Los casos Activos aquí se discriminan con los casos que se encuentran en Unidades de Terapia Intensiva 
 
 ```{r distrArgH,echo=FALSE, message=FALSE, warning=FALSE }
@@ -771,7 +760,7 @@ Situación de los casos detectados en la actualidad. Los casos Activos aquí se 
 ```
 
 
-##### Tabla
+#### Tabla
 ```{r datoEvolArg, echo=FALSE, message=FALSE, warning=FALSE}
  totalesArg <- argCov %>%
    select(dia, Detectados, Fallecidos, Recuperados) 
@@ -784,14 +773,14 @@ Situación de los casos detectados en la actualidad. Los casos Activos aquí se 
 
 
 
-### Casos actuales por Provincia
+## Casos actuales por Provincia
 
 La notificación de los casos por jurisdicción se realiza teniendo en cuenta la residencia según el Registro Nacional de las Personas, pudiendo variar en función de la investigación de la jurisdicción.
 El Ministerio diariamente informa la cantidad de casos por provincia pudiendo rectificar luego cantidades de casos reasignados. 
 
 
-#####  {.tabset  .tabset-fade .tabset-pills}
-###### Casos
+####  {.tabset  .tabset-fade .tabset-pills}
+##### Casos
 ```{r mapas, echo=FALSE, message=FALSE, warning=FALSE, fig.align='center'}
   covidArg_hoy <- covidArg %>% 
     group_by(PROVINCIA) %>% 
@@ -819,7 +808,7 @@ El Ministerio diariamente informa la cantidad de casos por provincia pudiendo re
              borderWidth = 2)
 ```
 
-###### Fallecidos
+##### Fallecidos
 ```{r mapasFallArg, echo=FALSE, message=FALSE, warning=FALSE, fig.align='center'}
   muertosArg_hoy <- muertosArg %>% 
     group_by(Provincia) %>% 
@@ -848,7 +837,7 @@ El Ministerio diariamente informa la cantidad de casos por provincia pudiendo re
              borderWidth = 2)
 ```
 
-###### Tabla
+##### Tabla
 ```{r tabProv, echo=FALSE, message=FALSE, warning=FALSE}
   covidArg_hoy  %>% kable( col.names =  c("Provincia", "Casos Totales"),
                            format.args = list( big.mark=".", decimal.mark = ","),
@@ -860,7 +849,8 @@ El Ministerio diariamente informa la cantidad de casos por provincia pudiendo re
 
 
 
-#### Distribución por Departamentos
+
+### Distribución por Departamentos
 Gracias al aporte de reunir y disponibilizar los datos de [Sistemas Mapache](https://github.com/SistemasMapache/Covid19arData) y al aporte de muchos usuarios como [ClariCardozoCas](https://twitter.com/ClariCardozoCas) se muestra la distribución de casos a nivel departamental de las provincias: Buenos Aires, Ciudad Autónoma de Buenos Aires, Santa Fe, Río Negro, Neuquén, Tucumán y Entre Ríos en base a datos propios.
 
 ```{r dptoArg,echo=FALSE, message=FALSE, warning=FALSE }
@@ -912,13 +902,14 @@ Gracias al aporte de reunir y disponibilizar los datos de [Sistemas Mapache](htt
 
 
 
-### Evolución por Provincia
+
+## Evolución por Provincia
 A continuación se muestra la evolución de casos detectados y fallecidos por día para cada una de las provincias argentinas.
 <!-- y la cantidad de casos acumulados. -->
 
 
-####  {.tabset  .tabset-fade .tabset-pills}
-##### Casos
+###  {.tabset  .tabset-fade .tabset-pills}
+#### Casos
 ```{r ev_prov, echo=FALSE, fig.align='center', message=FALSE, warning=FALSE, out.width='100%'}
 
  tabla_prov<- covidArg %>% 
@@ -958,7 +949,7 @@ A continuación se muestra la evolución de casos detectados y fallecidos por d�
 ```
 
 
-##### Fallecidos
+#### Fallecidos
 ```{r ev_provFall, echo=FALSE, fig.align='center', message=FALSE, warning=FALSE, out.width='100%'}
 
    tabla_prov_m<- muertosArg %>% 
@@ -1005,12 +996,7 @@ A continuación se muestra la evolución de casos detectados y fallecidos por d�
 
 <!-- ``` -->
 
-
-
-
-
-
-### Incidencia Acumulada
+## Incidencia Acumulada
 
 La incidencia acumulada (IA) proporciona una estimación de la probabilidad o el riesgo de que un individuo, libre de una determinada enfermedad, la desarrolle durante un período específico de tiempo.
 
@@ -1018,8 +1004,8 @@ En Argentina, considerando una población de 45.376.763 (Proyección estimada po
 
 Al día de la fecha las incidencias acumuladas por cada 100.000 habitantes en la provincias de Argentina son: 
 
-####  {.tabset  .tabset-fade .tabset-pills}
-##### Mapa
+###  {.tabset  .tabset-fade .tabset-pills}
+#### Mapa
 
 ```{r mapIAArg, echo=FALSE, message=FALSE, warning=FALSE, paged.print=FALSE}
  # round(sum(tabla_prov$cant[tipo=='casos'])/45376763 * 100000, 2)
@@ -1049,7 +1035,7 @@ Al día de la fecha las incidencias acumuladas por cada 100.000 habitantes en la
 ```
 
 
-##### Datos
+#### Datos
 
 ```{r iAProvD}
   tabiaprov <- ia_prov %>% select(provincia, cant, ia) %>% arrange(desc(ia))
@@ -1063,7 +1049,7 @@ Al día de la fecha las incidencias acumuladas por cada 100.000 habitantes en la
 
 
 
-### Letalidad en Argentina
+## Letalidad en Argentina
 
 En la actualidad (`r max(totalesArg$dia)`) en Argentina, la **tasa de mortalidad particular o letalidad** es de `r round(totalesArg$Fallecidos[totalesArg$dia==max(totalesArg$dia)]/totalesArg$Detectados[totalesArg$dia==max(totalesArg$dia)] * 100, 2)`%, mientras que el **porcentaje pacientes recuperados** es del `r round(totalesArg$Recuperados[totalesArg$dia==max(totalesArg$dia)]/totalesArg$Detectados[totalesArg$dia==max(totalesArg$dia)] * 100, 2)`%.
 
@@ -1107,12 +1093,12 @@ En el siguiente gráfico se observa la distribución de los pacientes fallecidos
 
 
 
-### Letalidad por Provincias
+## Letalidad por Provincias
 En base a las provincias de residencia de los fallecidos, informadas por el Ministerio de Salud Nacional, y considerando las cantidades actualizadas de casos en cada provincia se obtienen las siguientes tasas de letalidad a nivel provincial
 
 
-####  {.tabset  .tabset-fade .tabset-pills}
-##### Mapa
+###  {.tabset  .tabset-fade .tabset-pills}
+#### Mapa
 ```{r mapLEtArg, echo=FALSE, message=FALSE, warning=FALSE,  fig.align='center', paged.print=FALSE}
 
   let_prov <- muertosArg %>% group_by(Provincia) %>% 
@@ -1141,7 +1127,7 @@ En base a las provincias de residencia de los fallecidos, informadas por el Mini
 
 
 
-##### Datos
+#### Datos
 ```{r datLetProv, echo=FALSE,message=FALSE, warning=FALSE}
  let_prov %>% arrange(desc(letalidad)) %>% kable( col.names =  c("Provincia", "Muertes", "Casos Acumulados", "Tasa Letalidad"),format.args = list( big.mark=".", decimal.mark = ","),
             align =  c('l', 'c', 'c', 'c') ) %>%  kable_styling()
@@ -1149,7 +1135,7 @@ En base a las provincias de residencia de los fallecidos, informadas por el Mini
 
 
 
-### Distribución de Casos por Tipo
+## Distribución de Casos por Tipo
 Los tipos de Casos confirmados se clasifican en:
 *Importados* (cuando se registra trasmisión relacionada viajes al exterior del país)
 
@@ -1162,8 +1148,8 @@ Los tipos de Casos confirmados se clasifican en:
 La evolución y distribución de los casos según el tipo en Argentina es:
 
 
-####  {.tabset  .tabset-fade .tabset-pills}
-##### Distribución
+###  {.tabset  .tabset-fade .tabset-pills}
+#### Distribución
 ```{r distrCasos, echo=FALSE, fig.align='center', message=FALSE, warning=FALSE, out.width='100%'}
 
   distCasos <- argCov %>% mutate(porImportados = Importados/Detectados,
@@ -1193,7 +1179,7 @@ La evolución y distribución de los casos según el tipo en Argentina es:
 
 
 
-##### Cantidades
+#### Cantidades
 ```{r estudioCasos, echo=FALSE, fig.align='center', message=FALSE, warning=FALSE, out.width='100%'}
 
   tipoCaso <- argCov %>% select(dia, Importados, Estrecho, Comunitaria, Investigacion)
@@ -1214,7 +1200,7 @@ La evolución y distribución de los casos según el tipo en Argentina es:
   
 ```
 
-### Test
+## Test
 
   
 <!-- #### Tasa de Positividad -->
@@ -1222,8 +1208,8 @@ La evolución y distribución de los casos según el tipo en Argentina es:
 Desde el día 16/03/2020 el Ministerio de Salud comenzó a informar la cantidad de pruebas diagnósticas y casos descartados de COVID-19.
 A continuación se visualiará la evolución en la proporción de los casos detectados sobre la cantidad de pruebas analizadas, la cantidad de test realizados hasta la fecha y la proporción de la cantidad de test por millón de habitantes
 
-#####  {.tabset  .tabset-fade .tabset-pills}
-###### Tasa de Positividad
+####  {.tabset  .tabset-fade .tabset-pills}
+##### Tasa de Positividad
 A continuación se visualiará la evolución en la proporción de los casos detectados sobre la cantidad de pruebas analizadas. 
 ```{r test, echo=FALSE, fig.align='center', message=FALSE, warning=FALSE, out.width='100%'}
 
@@ -1240,7 +1226,7 @@ A continuación se visualiará la evolución en la proporción de los casos dete
 
 ```
 
-###### Cantidades
+##### Cantidades
 ```{r propTestD, echo=FALSE, fig.align='center', message=FALSE, warning=FALSE, out.width='100%'}
   p4 <- plot_ly(test, x = ~dia, y = ~DescTest, type = "bar", name = "Test Negativos") %>% 
             add_trace(y = ~Detectados, name = "Test Positivos") %>% 
@@ -1251,7 +1237,7 @@ A continuación se visualiará la evolución en la proporción de los casos dete
 ```
 
 
-###### Test por Habitantes
+##### Test por Habitantes
 ```{r tesHab}
    testHab <- argCov %>%
       mutate(porHab = round(TotalPruebas/45376763*1000000, 1)) %>% select(dia, porHab) 
@@ -1267,13 +1253,13 @@ A continuación se visualiará la evolución en la proporción de los casos dete
 
 
 
-## Entre Ríos
+# Entre Ríos
 
 Cantidad de Casos confirmados por departamento en la provincia de Entre Ríos
 
 
-####  {.tabset  .tabset-fade .tabset-pills}
-##### Departamental
+###  {.tabset  .tabset-fade .tabset-pills}
+#### Departamental
 ```{r mapaER}
 
   covider <- covid_er %>% group_by(DEPARTAMENTO) %>%
@@ -1299,7 +1285,7 @@ Cantidad de Casos confirmados por departamento en la provincia de Entre Ríos
 
 
 
-##### Por Ciudad
+#### Por Ciudad
 ```{r locER, echo=FALSE, message=FALSE, warning=FALSE, paged.print=FALSE}
  
   localidades_er <- covid_er %>% group_by(Lat, Long) %>% mutate(cant=n()) %>% 

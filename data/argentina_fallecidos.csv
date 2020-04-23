@@ -1,10 +1,10 @@
 fecha;genero;edad;Provincia;Antecedentes;obs
-24/3/2002;Hombre;53;Chaco;;
-24/3/2002;Hombre;71;Buenos Aires;"diabetes; obesidad";
 7/3/2020;Hombre;64;Ciudad de Buenos Aires;"diabetes; hipertensión; bronquitis crónica; insuficiencia renal";
 13/3/2020;Hombre;71;Chaco;condiciones preexistentes;
 18/3/2020;Hombre;64;Ciudad de Buenos Aires;"diabetes ; hipertensión ";
 21/3/2020;Mujer;67;Buenos Aires;"obesidad; EPOC";
+24/3/2020;Hombre;53;Chaco;;
+24/3/2020;Hombre;71;Buenos Aires;"diabetes; obesidad";
 25/3/2020;Mujer;73;Chaco;"diabetes; hipertensión; obesidad";
 25/3/2020;Mujer;81;Ciudad de Buenos Aires;enfermedad neurológica crónica;
 26/3/2020;Hombre;59;Chaco;comorbilidades;

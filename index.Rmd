@@ -8,7 +8,7 @@ output:
   html_document:
     toc: true
     toc_float:
-       collapsed: false
+       collapsed: true #false
        smooth_scroll: false
   github_document: default
 ---
@@ -23,7 +23,7 @@ output:
 ```
 
 ```{r importar, message=FALSE, warning=FALSE, include=FALSE}
-  
+
   library(readr)
   library(dplyr)
   library(tidyr)
@@ -42,13 +42,8 @@ output:
   library(googlesheets4)
   library(readxl)
 
-  # library(gifski) #ver
-  # library(timevis) #ver
-  # library(leaflet.extras) #ver
-  # library(googleAuthR)
-  
   sep.miles <- function(x){format(x,big.mark=".")}
-  
+ 
   #################
   # Carga de Datos
   #################
@@ -207,16 +202,16 @@ output:
     {
       ### ENTRE RIOS
       {
-        covid_er <- read_delim("data/entre_rios_casos.csv", ";", 
+        covid_er <- read_delim("data/entre_rios_casos.csv", ";",
                           escape_double = FALSE, locale = locale(encoding = "ISO-8859-1"),
                           trim_ws = TRUE)
-        
-        entre_rios_c <- covid_er %>% group_by(LOCALIDAD) %>% 
+
+        entre_rios_c <- covid_er %>% group_by(LOCALIDAD) %>%
           mutate(cantidad = n()) %>% select(LOCALIDAD, cantidad)
         names(entre_rios_c) <- c("localidad", "cantidad")
         entre_rios_c$provincia <- "Entre Ríos"
       }
-      
+
       ### RIO NEGRO
       {
         rio_negro_c <- read_csv("https://docs.google.com/spreadsheets/d/16-bnsDdmmgtSxdWbVMboIHo5FRuz76DBxsz_BbsEVWA/export?format=csv&id=16-bnsDdmmgtSxdWbVMboIHo5FRuz76DBxsz_BbsEVWA&gid=971636305")
@@ -226,11 +221,11 @@ output:
         rio_negro_c$localidad <- gsub("Bariloche", "San Carlos de Bariloche", rio_negro_c$localidad)
         rio_negro_c$localidad <- gsub("Viedma, Río Negro, Argentina", "Viedma", rio_negro_c$localidad)
       }
-      
+
       ### CABA
       {
         # caba_c <- read_csv("https://docs.google.com/spreadsheets/d/16-bnsDdmmgtSxdWbVMboIHo5FRuz76DBxsz_BbsEVWA/export?format=csv&id=16-bnsDdmmgtSxdWbVMboIHo5FRuz76DBxsz_BbsEVWA&gid=1718330171")
-        caba_c <- read_delim("data/caba_gral.csv",";", 
+        caba_c <- read_delim("data/caba_gral.csv",";",
                           escape_double = FALSE, locale = locale(encoding = "ISO-8859-1"),
                           trim_ws = TRUE)
         caba_c <- caba_c %>% select(comunas, `casos confirmados`)
@@ -238,15 +233,17 @@ output:
         caba_c$localidad <- paste0("Comuna ", caba_c$localidad)
         caba_c$provincia <- "Ciudad Autónoma de Buenos Aires"
       }
-      
+
       ### BUENOS AIRES
       {
-        bsas_c <- read_csv("https://docs.google.com/spreadsheets/d/16-bnsDdmmgtSxdWbVMboIHo5FRuz76DBxsz_BbsEVWA/export?format=csv&id=16-bnsDdmmgtSxdWbVMboIHo5FRuz76DBxsz_BbsEVWA&gid=606357729")
+        # bsas_c <- read_csv("https://docs.google.com/spreadsheets/d/16-bnsDdmmgtSxdWbVMboIHo5FRuz76DBxsz_BbsEVWA/export?format=csv&id=16-bnsDdmmgtSxdWbVMboIHo5FRuz76DBxsz_BbsEVWA&gid=606357729")
+        bsas_c <- read_delim("data/buenosaires_gral.csv",  ";", escape_double = FALSE, 
+                             locale = locale(encoding = "ISO-8859-1"), trim_ws = TRUE)
         bsas_c <-bsas_c %>%   select(Municipio, Casos)
         names(bsas_c) <- c("localidad", "cantidad")
         bsas_c$provincia <- "Buenos Aires"
       }
-      
+
       ### SANTA FE
       {
         stafe_c <- read_delim("data/santafe_gral.csv",  ";", #skip=3,
@@ -254,9 +251,9 @@ output:
                           trim_ws = TRUE)
         # "https://docs.google.com/spreadsheets/d/16-bnsDdmmgtSxdWbVMboIHo5FRuz76DBxsz_BbsEVWA/export?format=csv&id=16-bnsDdmmgtSxdWbVMboIHo5FRuz76DBxsz_BbsEVWA&gid=1214016401", skip = 3)
         stafe_c <- stafe_c %>% gather(fecha, casos, 7:max(col(stafe_c)), -X6)
-        stafe_c <- stafe_c %>% filter(!(is.na(casos)) & casos >0 ) %>% 
-                       group_by(X6) %>% filter(fecha == max(fecha)) %>% 
-                       mutate(cantidad = as.integer(casos)) %>% ungroup() %>% 
+        stafe_c <- stafe_c %>% filter(!(is.na(casos)) & casos >0 ) %>%
+                       group_by(X6) %>% filter(fecha == max(fecha)) %>%
+                       mutate(cantidad = as.integer(casos)) %>% ungroup() %>%
                        select(X6, cantidad) %>% unique()
         names(stafe_c) <- c("localidad", "cantidad")
         stafe_c$localidad <- str_to_title(stafe_c$localidad )
@@ -267,31 +264,31 @@ output:
         stafe_c$localidad <- gsub("Cañada De Gomez", "Cañada de Gómez", stafe_c$localidad)
         stafe_c$localidad <- gsub("San Jose Del Rincón", "San José del Rincón", stafe_c$localidad)
       }
-     
-      
+
+
       ### NEUQUÉN
       {## Hoja de Planilla Excel compartida por Mapache
-    
+
         neuquen_c <- read_sheet("https://docs.google.com/spreadsheets/d/16-bnsDdmmgtSxdWbVMboIHo5FRuz76DBxsz_BbsEVWA/edit#gid=1711452704", sheet = 4)
-        # neuquen_c$Municipio <- 
+        # neuquen_c$Municipio <-
         neuquen_c$Localidad <- gsub("Ã©", "é", neuquen_c$Localidad)
         neuquen_c$Localidad <- gsub("Ã¡", "á", neuquen_c$Localidad)
         neuquen_c$Localidad <- gsub("Ã³", "ó", neuquen_c$Localidad)
         neuquen_c$Localidad <- gsub("Ã","í", neuquen_c$Localidad)
         neuquen_c <- neuquen_c %>% select(Localidad, casos) #, Prov)
-        
+
         neuquen_c$Prov <- "Neuquén"
-        
+
         names(neuquen_c) <- c( "localidad", "cantidad", "provincia")
-        
+
         neuquen_c$localidad <- gsub("Cutral Co", "Cutral Có", 	neuquen_c$localidad)
         neuquen_c$localidad <- gsub("San Martin de los Andes", "San Martín de los Andes", 	neuquen_c$localidad)
         neuquen_c$localidad <- gsub("Vista Alegre", "Vista Alegre Norte", 	neuquen_c$localidad)
       }
-      
+
       ### CÓRDOBA
       {
-        cordoba_c <- read_delim("data/cordoba_gral.csv", ";", 
+        cordoba_c <- read_delim("data/cordoba_gral.csv", ";",
                           escape_double = FALSE, locale = locale(encoding = "ISO-8859-1"),
                           trim_ws = TRUE)
         cordoba_c <- cordoba_c %>% select(Localidad, casos)
@@ -301,17 +298,18 @@ output:
         cordoba_c$localidad <- gsub("San Marcos Sud", "San Marcos", cordoba_c$localidad)
         cordoba_c$localidad <- gsub("Villa Gral Belgrano", "Villa General Belgrano", cordoba_c$localidad)
       }
-      
+
       ### TUCUMAN
-        tucuman_c <- read_excel("data/minsalud_casosdpto.xlsx", skip = 2)
+      {  tucuman_c <- read_excel("data/minsalud_casosdpto.xlsx", skip = 2)
         tucuman_c <- tucuman_c[-c(nrow(tucuman_c),nrow(tucuman_c)-1),]
         tucuman_c <- tucuman_c %>% select("Departamento", "Casos")
         tucuman_c$provincia <- "Tucumán"
         names(tucuman_c) <- c( "localidad", "cantidad", "provincia")
-        
-        
-        
-        chaco_c <- read_delim("data/chaco_gral.csv", ";", 
+      }
+      
+      ### CHACO
+      {
+        chaco_c <- read_delim("data/chaco_gral.csv", ";",
                           escape_double = FALSE, locale = locale(encoding = "ISO-8859-1"),
                           trim_ws = TRUE)
         chaco_c <- chaco_c %>% select(Localidad, casos)
@@ -319,22 +317,14 @@ output:
         names(chaco_c) <- c( "localidad", "cantidad", "provincia")
         chaco_c$localidad <- gsub( "Puerto Bermejo", "Puerto Bermejo Nuevo", chaco_c$localidad)
         chaco_c$localidad <- gsub( "Villa Ángela", "Villa Ángela", chaco_c$localidad)
-        # cordoba_c$localidad <- gsub("Cerro Azul", "Villa Cerro Azul", cordoba_c$localidad)
-        # cordoba_c$localidad <- gsub("San Marcos Sud", "San Marcos", cordoba_c$localidad)
-        # cordoba_c$localidad <- gsub("Villa Gral Belgrano", "Villa General Belgrano", cordoba_c$localidad)
-        
-        #  names(entre_rios_c) <- c( "localidad", "cantidad", "provincia")
-        #  names(caba_c) <- c( "localidad", "cantidad", "provincia")
-        #  names(bsas_c) <- c( "localidad", "cantidad", "provincia")
-        #  names(stafe_c) <- c( "localidad", "cantidad", "provincia")
-        #  names(rio_negro_c) <- c( "localidad", "cantidad", "provincia")
-        #  names(cordoba_c) <- c( "localidad", "cantidad", "provincia")
-         
-      casos_pronvinciales <- rbind.data.frame(entre_rios_c, rio_negro_c, 
-                                              caba_c, bsas_c, stafe_c, 
+      }
+
+      casos_pronvinciales <- rbind.data.frame(entre_rios_c, rio_negro_c,
+                                              caba_c, bsas_c, stafe_c,
                                               neuquen_c, cordoba_c,
                                               tucuman_c, chaco_c)
       rm(entre_rios_c, rio_negro_c,caba_c, bsas_c, stafe_c,neuquen_c, cordoba_c, tucuman_c)
+      
     }
   
   color <- function(d){
@@ -792,14 +782,14 @@ Situación de los casos detectados en la actualidad. Los casos Activos aquí se 
 
 
 
-### Distribución por Provincia
+### Casos actuales por Provincia
 
 La notificación de los casos por jurisdicción se realiza teniendo en cuenta la residencia según el Registro Nacional de las Personas, pudiendo variar en función de la investigación de la jurisdicción.
 El Ministerio diariamente informa la cantidad de casos por provincia pudiendo rectificar luego cantidades de casos reasignados. 
 
 
-####  {.tabset  .tabset-fade .tabset-pills}
-##### Casos
+#####  {.tabset  .tabset-fade .tabset-pills}
+###### Casos
 ```{r mapas, echo=FALSE, message=FALSE, warning=FALSE, fig.align='center'}
   covidArg_hoy <- covidArg %>% 
     group_by(PROVINCIA) %>% 
@@ -827,7 +817,7 @@ El Ministerio diariamente informa la cantidad de casos por provincia pudiendo re
              borderWidth = 2)
 ```
 
-##### Fallecidos
+###### Fallecidos
 ```{r mapasFallArg, echo=FALSE, message=FALSE, warning=FALSE, fig.align='center'}
   muertosArg_hoy <- muertosArg %>% 
     group_by(Provincia) %>% 
@@ -856,7 +846,7 @@ El Ministerio diariamente informa la cantidad de casos por provincia pudiendo re
              borderWidth = 2)
 ```
 
-##### Tabla
+###### Tabla
 ```{r tabProv, echo=FALSE, message=FALSE, warning=FALSE}
   covidArg_hoy  %>% kable( col.names =  c("Provincia", "Casos Totales"),
                            format.args = list( big.mark=".", decimal.mark = ","),
@@ -866,7 +856,9 @@ El Ministerio diariamente informa la cantidad de casos por provincia pudiendo re
 
 
 
-### Distribución por Departamentos
+
+
+#### Distribución por Departamentos
 Gracias al aporte de reunir y disponibilizar los datos de [Sistemas Mapache](https://github.com/SistemasMapache/Covid19arData) y al aporte de muchos usuarios como [ClariCardozoCas](https://twitter.com/ClariCardozoCas) se muestra la distribución de casos a nivel departamental de las provincias: Buenos Aires, Ciudad Autónoma de Buenos Aires, Santa Fe, Río Negro, Neuquén, Tucumán y Entre Ríos en base a datos propios.
 
 ```{r dptoArg,echo=FALSE, message=FALSE, warning=FALSE }
@@ -917,8 +909,14 @@ Gracias al aporte de reunir y disponibilizar los datos de [Sistemas Mapache](htt
 
 
 
+
 ### Evolución por Provincia
-A continuación se muestra la evolución de nuevos casos detectados por día para cada una de las provincias argentinas y la cantidad de casos acumulados.
+A continuación se muestra la evolución de casos detectados y fallecidos por día para cada una de las provincias argentinas.
+<!-- y la cantidad de casos acumulados. -->
+
+
+####  {.tabset  .tabset-fade .tabset-pills}
+##### Casos
 ```{r ev_prov, echo=FALSE, fig.align='center', message=FALSE, warning=FALSE, out.width='100%'}
 
  tabla_prov<- covidArg %>% 
@@ -936,16 +934,53 @@ A continuación se muestra la evolución de nuevos casos detectados por día par
   
   names(tabla_prov) <- c("provincia", "fecha", "tipo", "cant")
  
-  tabla_prov %>%
-    ggplot(aes(x=fecha, y=cant, group=tipo, color=tipo))+
-    geom_line( show.legend=FALSE) +
-    labs(title="", # x='día',
-         y="Cantidad de casos", caption="Datos: Min. Salud Arg.") +
-      theme(
-        axis.text.x = element_text(colour="grey20", size=7, angle=45, hjust=.5, vjust=.5),
-        axis.text.y = element_text(colour="grey20", size=7),
-        text=element_text(size=9, family="Arial")) +
-     facet_wrap(~provincia,  ncol=5)
+  # tabla_prov %>%
+  #   ggplot(aes(x=fecha, y=cant, group=tipo, color=tipo))+
+  #   geom_line( show.legend=FALSE) +
+  #   labs(title="", # x='día',
+  #        y="Cantidad de casos", caption="Datos: Min. Salud Arg.") +
+  #     theme(
+  #       axis.text.x = element_text(colour="grey20", size=7, angle=45, hjust=.5, vjust=.5),
+  #       axis.text.y = element_text(colour="grey20", size=7),
+  #       text=element_text(size=9, family="Arial")) +
+  #    facet_wrap(~provincia,  ncol=5)
+  
+  p <- tabla_prov %>%
+    filter(cant>0&tipo=="acumulados") %>% 
+    group_by(provincia) %>% arrange(fecha) %>% mutate(dia1 = row_number()) 
+  
+  fig <- plot_ly(p, x = ~fecha, y = ~cant, color = ~provincia, type = "scatter", mode='lines+markers') 
+  fig <- layout(fig, title="Evolución de casos confirmados por Provincia",xaxis = list(title = "día"), yaxis = list(title = "casos"))
+  fig
+
+```
+
+
+##### Fallecidos
+```{r ev_provFall, echo=FALSE, fig.align='center', message=FALSE, warning=FALSE, out.width='100%'}
+
+   tabla_prov_m<- muertosArg %>% 
+      group_by(Provincia, fecha) %>% mutate(muertes=n()) %>% select(Provincia, fecha, muertes) %>% unique() 
+  
+      tabla_prov_m$acumulados <-0
+      tabla_prov_m$fecha <- as.Date(tabla_prov_m$fecha , "%d/%m/%Y")
+    
+    tabla_prov_m <- tabla_prov_m %>% ungroup() %>% group_by(Provincia) %>% 
+      arrange(Provincia, fecha) %>% 
+      mutate(acumulados =cumsum(muertes))
+    
+    tabla_prov_m <- tabla_prov_m %>%
+      gather(muertes, acumulados, -c(Provincia, fecha))# %>% ungroup()
+    
+    names(tabla_prov_m) <- c("provincia", "fecha", "tipo", "cant")
+   
+    p <- tabla_prov_m %>%
+      filter(cant>0&tipo=="acumulados") %>% 
+      group_by(provincia) %>% arrange(fecha) %>% mutate(dia1 = row_number()) 
+    
+    fig <- plot_ly(p, x = ~fecha, y = ~cant, color = ~provincia, type = "scatter", mode='lines+markers') 
+    fig <- layout(fig, title="Evolución fallecidos por Provincia",xaxis = list(title = "día"), yaxis = list(title = "fallecimientos"))
+    fig
 
 ```
 
@@ -954,7 +989,7 @@ A continuación se muestra la evolución de nuevos casos detectados por día par
 
 
 
-### IA por Provincia
+### Incidencia Acumulada
 
 La incidencia acumulada (IA) proporciona una estimación de la probabilidad o el riesgo de que un individuo, libre de una determinada enfermedad, la desarrolle durante un período específico de tiempo.
 
@@ -1158,16 +1193,17 @@ La evolución y distribución de los casos según el tipo en Argentina es:
   
 ```
 
-## Test
+### Test
 
   
-### Tasa de Positividad
+<!-- #### Tasa de Positividad -->
 
 Desde el día 16/03/2020 el Ministerio de Salud comenzó a informar la cantidad de pruebas diagnósticas y casos descartados de COVID-19.
-A continuación se visualiará la evolución en la proporción de los casos detectados sobre la cantidad de pruebas analizadas. 
+A continuación se visualiará la evolución en la proporción de los casos detectados sobre la cantidad de pruebas analizadas, la cantidad de test realizados hasta la fecha y la proporción de la cantidad de test por millón de habitantes
 
-####  {.tabset  .tabset-fade .tabset-pills}
-##### Tasa
+#####  {.tabset  .tabset-fade .tabset-pills}
+###### Tasa de Positividad
+A continuación se visualiará la evolución en la proporción de los casos detectados sobre la cantidad de pruebas analizadas. 
 ```{r test, echo=FALSE, fig.align='center', message=FALSE, warning=FALSE, out.width='100%'}
 
   test <- argCov %>% select(dia, DescTest, Detectados) %>%
@@ -1183,7 +1219,7 @@ A continuación se visualiará la evolución en la proporción de los casos dete
 
 ```
 
-##### Cantidades
+###### Cantidades
 ```{r propTestD, echo=FALSE, fig.align='center', message=FALSE, warning=FALSE, out.width='100%'}
   p4 <- plot_ly(test, x = ~dia, y = ~DescTest, type = "bar", name = "Test Negativos") %>% 
             add_trace(y = ~Detectados, name = "Test Positivos") %>% 
@@ -1194,7 +1230,7 @@ A continuación se visualiará la evolución en la proporción de los casos dete
 ```
 
 
-##### Test por Habitantes
+###### Test por Habitantes
 ```{r tesHab}
    testHab <- argCov %>%
       mutate(porHab = round(TotalPruebas/45376763*1000000, 1)) %>% select(dia, porHab) 

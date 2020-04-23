@@ -8,7 +8,7 @@ output:
   html_document:
     toc: true
     toc_float:
-       collapsed: true #false
+       collapsed: true 
        smooth_scroll: false
   github_document: default
 ---
@@ -51,10 +51,12 @@ output:
   ## Datos mundiales
     { # Confirmados
       covid19 <- read_csv("https://github.com/CSSEGISandData/COVID-19/raw/master/csse_covid_19_data/csse_covid_19_time_series/time_series_covid19_confirmed_global.csv")
+
       covid19 <- covid19[-1]
       
       # Fallecidos
-      covid19_m <- read_csv("https://github.com/CSSEGISandData/COVID-19/raw/master/csse_covid_19_data/csse_covid_19_time_series/time_series_covid19_deaths_global.csv")
+      covid19_m <- read_csv("https://raw.githubusercontent.com/CSSEGISandData/COVID-19/master/csse_covid_19_data/csse_covid_19_time_series/time_series_covid19_deaths_global.csv")
+      # covid19_m <- read_csv("https://github.com/CSSEGISandData/COVID-19/blob/master/csse_covid_19_data/csse_covid_19_time_series/time_series_covid19_deaths_global.csv")
       covid19_m <- covid19_m[-1]
       
      # Recuperados
@@ -983,6 +985,25 @@ A continuación se muestra la evolución de casos detectados y fallecidos por d�
     fig
 
 ```
+
+
+
+<!-- ##### Ambos -->
+ <!-- ```{r ev_provFall, echo=FALSE, fig.align='center', message=FALSE, warning=FALSE, out.width='100%'} -->
+
+<!--    tabla_prov -->
+<!--    tabla_prov_m -->
+
+
+<!--     p <- tabla_prov_m %>% -->
+<!--       filter(cant>0&tipo=="acumulados") %>% -->
+<!--       group_by(provincia) %>% arrange(fecha) %>% mutate(dia1 = row_number()) -->
+
+<!--     fig <- plot_ly(p, x = ~fecha, y = ~cant, color = ~provincia, type = "scatter", mode='lines+markers') -->
+<!--     fig <- layout(fig, title="Evolución fallecidos por Provincia",xaxis = list(title = "día"), yaxis = list(title = "fallecimientos")) -->
+<!--     fig -->
+
+<!-- ``` -->
 
 
 

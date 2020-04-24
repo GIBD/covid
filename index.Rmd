@@ -773,6 +773,87 @@ Situación de los casos detectados en la actualidad. Los casos Activos aquí se 
 
 
 
+## Composición por Edad
+A continuación se grafican las pirámides poblacionales de casos confirmados y fallecimientos.
+
+La composición de la siguiente pirámide poblacional de los casos confirmados fue confeccionada considerando que el porcentaje de Hombres y Mujeres informado por el Ministerio de Salud se distribute uniformemente en cada grupo etaraio.
+
+### {.tabset  .tabset-fade .tabset-pills}
+#### Casos confirmados
+```{r piramide}
+
+edades <- read_delim("data/edades_arg.csv", ";", escape_double = FALSE, locale = locale(decimal_mark = ","), trim_ws = TRUE)
+edades <- edades %>% gather(sexo, prop, c("mujeres", "varones"), -c(1:2, 5:13))
+edades$prop <- as.double(edades$prop)
+edades$fecha <- as.Date(edades$fecha, "%d/%m/%Y")
+edades <- edades %>% gather(edad, cant, c(3:11), -c(1:2, 12:13))
+edades<- edades %>%  mutate(n= round((cant * prop/100), 0)) %>% 
+   group_by(fecha) %>% mutate(porcent=round(n/sum(n)*100,2) ) %>% ungroup()
+
+edades$sexo <- if_else(edades$sexo=="varones",  "Hombre", "Mujer")
+
+edades$porcent <- if_else(edades$sexo=="Hombre",  edades$porcent*-1, edades$porcent)
+
+edadesHoy <- edades %>%  filter(fecha==max(fecha))
+plot_ly(edadesHoy, x = ~porcent, y = ~edad, color = ~sexo) %>%
+  add_bars(orientation = "h",
+        hoverinfo = "y+text+name", text = ~abs(n), 
+        colors = c("#2c7fb8", "#fa9fb5")) %>%
+  layout(bargap = 0.1, barmode = "overlay", 
+         title = "Piramide Poblaciónal de Casos Confirmados", 
+         xaxis = list(tickmode = "array", 
+                    tickvals = c(-100, -50, -25, -20, -15, -10, -5, 0, 
+                                   5, 10, 15, 20, 25, 50, 100),
+                      ticktext = c("100", "50%", "25%", "20%", "15%", "10%","5%", "0",
+                                   "5%", "10%", "15%","20%", "25%", "50%", "100%"),
+                      title = "Casos Confirmados"), 
+         yaxis = list(title = "Grupo Edad"))
+
+
+```
+
+#### Fallecidos
+```{r piramideFall}
+
+edades <- muertosArg  %>% group_by(genero, edad) %>% mutate(n=n())%>% 
+   select(genero, edad, n) 
+edades$grupo <- if_else(edades$edad < 10, "0 - 9", 
+                if_else(edades$edad < 20, "10 - 19", 
+                if_else(edades$edad < 30, "20 - 29", 
+                if_else(edades$edad < 40, "30 - 39", 
+                if_else(edades$edad < 50, "40 - 49", 
+                if_else(edades$edad < 60, "50 - 59", 
+                if_else(edades$edad < 70, "60 - 69", 
+                if_else(edades$edad < 80, "70 - 79", "80 o mas"))))))))
+
+edades <- edades %>% group_by(grupo, genero) %>% mutate(total = sum(n)) %>% 
+   select(grupo, genero, total) %>% unique() %>% ungroup() %>% 
+   mutate(prop = round(total/sum(total)*100, 2)) %>% 
+   select(grupo, genero, total, prop)
+
+edades$prop <- if_else(edades$genero=="Hombre", edades$prop*-1, edades$prop)
+
+
+
+plot_ly(edades, x = ~prop, y = ~grupo, color = ~genero) %>%
+  add_bars(orientation = "h",
+        hoverinfo = "y+text+name", text = ~paste(abs(prop), " %", '\n Cant. (', total,')'), 
+        colors = c("#2c7fb8", "#fa9fb5")) %>%
+  layout(bargap = 0.1, barmode = "overlay", 
+         title = "Piramide Poblaciónal de Personas Fallecidas", 
+         xaxis = list(tickmode = "array",
+                      tickvals = c(-100, -50, -25, -20, -15, -10, -5, 0, 
+                                   5, 10, 15, 20, 25, 50, 100),
+                      ticktext = c("100", "50%", "25%", "20%", "15%", "10%","5%", "0",
+                                   "5%", "10%", "15%","20%", "25%", "50%", "100%"),
+                      title = "Fallecidos"),
+         yaxis = list(title = "Grupo Edad"))
+
+
+```
+
+
+
 
 ## Casos actuales por Provincia
 

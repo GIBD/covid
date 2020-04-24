@@ -11,6 +11,7 @@ output:
        collapsed: true 
        smooth_scroll: false
   github_document: default
+runtime: shiny
 ---
 
 ```{r setup, include=FALSE}
@@ -23,26 +24,26 @@ output:
 ```
 
 ```{r importar, message=FALSE, warning=FALSE, include=FALSE}
+library(readr)
+library(dplyr)
+library(tidyr)
+library(ggplot2)
+library(lubridate)
+library(knitr)
+library(kableExtra)
+library(highcharter)
+library(rjson)
+library(plotly)
+library(gganimate)
+library(stringr)
+library(leaflet)
+library(sf)
+library(tmap)
+library(googlesheets4)
+library(readxl)
+library(shiny)
 
-  library(readr)
-  library(dplyr)
-  library(tidyr)
-  library(ggplot2)
-  library(lubridate)
-  library(knitr)
-  library(kableExtra)
-  library(highcharter)
-  library(rjson)
-  library(plotly)
-  library(gganimate)
-  library(stringr)
-  library(leaflet)
-  library(sf)
-  library(tmap)
-  library(googlesheets4)
-  library(readxl)
-
-  sep.miles <- function(x){format(x,big.mark=".")}
+sep.miles <- function(x){format(x,big.mark=".")}
  
   #################
   # Carga de Datos
@@ -1255,6 +1256,7 @@ A continuación se visualiará la evolución en la proporción de los casos dete
 
 # Entre Ríos
 
+## Casos por Departamento
 Cantidad de Casos confirmados por departamento en la provincia de Entre Ríos
 
 
@@ -1299,5 +1301,7 @@ Cantidad de Casos confirmados por departamento en la provincia de Entre Ríos
                        popup = paste(localidades_er$LOCALIDAD, ": ",localidades_er$cant)) 
     
 ```
+
+
 
 

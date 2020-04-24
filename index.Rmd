@@ -797,7 +797,7 @@ edades$porcent <- if_else(edades$sexo=="Hombre",  edades$porcent*-1, edades$porc
 edadesHoy <- edades %>%  filter(fecha==max(fecha))
 plot_ly(edadesHoy, x = ~porcent, y = ~edad, color = ~sexo) %>%
   add_bars(orientation = "h",
-        hoverinfo = "y+text+name", text = ~abs(n), 
+        hoverinfo = "y+text+name", text =  ~paste(abs(porcent), " %", '\n Cant.: (', n,')'),  
         colors = c("#2c7fb8", "#fa9fb5")) %>%
   layout(bargap = 0.1, barmode = "overlay", 
          title = "Piramide Poblaciónal de Casos Confirmados", 
@@ -837,7 +837,7 @@ edades$prop <- if_else(edades$genero=="Hombre", edades$prop*-1, edades$prop)
 
 plot_ly(edades, x = ~prop, y = ~grupo, color = ~genero) %>%
   add_bars(orientation = "h",
-        hoverinfo = "y+text+name", text = ~paste(abs(prop), " %", '\n Cant. (', total,')'), 
+        hoverinfo = "y+text+name", text = ~paste(abs(prop), " %", '\n Cant.: (', total,')'), 
         colors = c("#2c7fb8", "#fa9fb5")) %>%
   layout(bargap = 0.1, barmode = "overlay", 
          title = "Piramide Poblaciónal de Personas Fallecidas", 

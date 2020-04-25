@@ -83,9 +83,9 @@ sep.miles <- function(x){format(x,big.mark=".")}
                                c(44938712, 11383094,	210147125, 19107216, 50372424, 17300000,
                                  7152703, 33105273,524000, 3529014, 28067000))
       names(poblacion) <- c('pais', 'poblacion')
-    # poblacion_mundial <- read_delim("data/poblaciones/mundial.csv", ";", escape_double = FALSE,
-    #                                  locale = locale(decimal_mark = ",", encoding = "ISO-8859-1"), 
-    #                                 trim_ws = TRUE)
+      # poblacion_arg <- read_delim("data/poblaciones/prov_argentina.csv", ";", escape_double = FALSE,
+      #                                locale = locale(decimal_mark = ",", encoding = "ISO-8859-1"),
+      #                               trim_ws = TRUE)
   }  
 
   ## Dataset Mundial
@@ -163,7 +163,9 @@ sep.miles <- function(x){format(x,big.mark=".")}
         filter(pais %in% poblacion$pais) 
       
       sudamerica <- sudamerica %>% group_by(pais) %>% mutate(nuevos = casos-lag(casos))
-      sudamerica$nuevos <- if_else(is.na(sudamerica$nuevos)&sudamerica$dia==1, sudamerica$casos, sudamerica$nuevos)
+      
+      sudamerica$nuevos <- if_else(is.na(sudamerica$nuevos)&sudamerica$dia==1, 
+                                   sudamerica$casos, sudamerica$nuevos)
       
       sudamerica$semanal <- 0
         for(p in sudamerica$pais){
@@ -360,10 +362,6 @@ Las muertes por la pandemia alcanzan las **`r   sep.miles(as.integer(sum(covid19
 #### Detectados
 ```{r mapaMundoCasos, echo=FALSE, message=FALSE, warning=FALSE, paged.print=FALSE}
 
-      # mundialHoy <- mundial %>% 
-      #   group_by(pais) %>%  
-      #   filter(dia==max(dia))
-
       mundialHoy <- mundial_ambos %>% 
         group_by(pais) %>%  
         filter(dia==max(dia)) %>% select(pais, dia, fecha, casos)
@@ -390,10 +388,6 @@ Las muertes por la pandemia alcanzan las **`r   sep.miles(as.integer(sum(covid19
         filter(dia==max(dia)) %>% 
         select(pais, dia, fecha, muertes) 
 
-      # mundialMHoy <- mundial_m %>% 
-      #   group_by(pais) %>%  
-      #   filter(dia==max(dia)) 
-      
       highchart() %>% 
          hc_title(text = "<i>Fallecidos COVID-19</i>",
                   margin = 20, align = "center", style = list(color = "#780000", useHTML = TRUE)) %>%
@@ -495,142 +489,6 @@ A continuación se muestran las fechas en que se detectó por primera vez un inf
   timevis::timevis(fechas, zoomFactor = 0.8)
 ```
 
-## Evolución de nuevos casos
-La evolución de casos acumulados por país se muestra desde el día en que se detectó por primera vez un infectado.
-
-A las gráficas se les ha agregado la tendencia (basada en el modelo de regresión local)
-
-###  {.tabset  .tabset-fade .tabset-pills}
-#### Por país
-```{r casospais, echo=FALSE, message=FALSE, warning=FALSE, paged.print=FALSE, out.width='100%'}
-  sudamerica %>% 
-    group_by(pais) %>% 
-    ggplot(aes(x=dia, y=casos, color=pais))+
-    geom_line( show.legend=FALSE) +
-    geom_smooth(se=F, show.legend = F) +                  
-    labs(title="Casos detectados COVID-19 ", x='día',
-         y="Cantidad de casos", caption="Datos: Universidad Johns Hopkins") + 
-    facet_wrap(~pais,  ncol=4)
-
-```
-
-#### Sudamérica
-Las curvas de evolución de los países en simultáneo en base a la cantidad de días transcurridos desde la detección del primer infectado por COVID-19 se muestran a continuación:
-
-```{r pressure, echo=FALSE, out.width='90%', fig.align='center'}
-  sudamerica %>% 
-    ggplot(aes(x=dia, y=casos, group=pais, color=pais)) + 
-    geom_line(size=1.2 ) + geom_point()+
-    labs(title="COVID-19 en Sudamérica", y="Cantidad de casos", caption="Datos: Universidad Johns Hopkins") + 
-    theme_minimal() + labs(color='Países') 
-```
-
-## Incidencia Acumulada
-La incidencia acumulada (IA) proporciona una estimación de la probabilidad o el riesgo de que un individuo libre de una determinada enfermedad la desarrolle durante un período especificado de tiempo.
-
-Al día de la fecha las incidencias acumuladas por cada 100.000 habitantes de los países de Sud América es: 
-
-###  {.tabset  .tabset-fade .tabset-pills}
-#### Mapa
-```{r mapSud, echo=FALSE, message=FALSE, warning=FALSE, paged.print=FALSE}
-  ia <- sudamerica %>% 
-    group_by(pais) %>% 
-    filter(dia==max(dia)) %>% 
-    left_join(poblacion ) %>% 
-    mutate(inc= as.double(round(casos/poblacion*100000, 2))) %>%  
-    select(pais, dia, poblacion, casos, inc) %>% 
-    arrange(desc(inc))
-
-  highchart() %>%
-    hc_title(text = "<i>Incidencia COVID-19 en Sudamérica</i>",
-             margin = 20, align = "center", style = list(color = "#08338F", useHTML = TRUE)) %>%
-    hc_tooltip(followPointer =  FALSE) %>%
-    hc_add_series_map(sud, ia, name = "IA", value = "inc", joinBy = c("name", "pais"),
-                      dataLabels = list(enabled = TRUE, format = '{point.properties.woe-name}')) %>%
-    hc_colorAxis(minColor = "#B7D4EB", maxColor = "#08338F")  %>%
-    hc_legend(align = "center", x = 0, y = -10) %>%
-    hc_mapNavigation(enabled = TRUE) %>%
-    hc_add_theme(hc_theme_ffx()) %>%
-    hc_add_annotation(xValue = 0, yValue = 0, title = list(text = 'Fuente: Datos Propios. <p> Elaborado por: GIBD UTN')) %>%
-    hc_chart(borderColor = "#08338F", borderRadius = 10, borderWidth = 2)
-
-```
-
-#### Tabla Datos
-Como se observa, el país con la mayor Incidencia Acumulada al día de hoy es **`r ia[1,1] `**, que lleva *`r ia[1,2] ` días* desde la detección del primer caso.
-```{r ia, echo=FALSE, message=FALSE, warning=FALSE, paged.print=FALSE, out.width='100%'}
-  ia  %>% kable( col.names =  c("País", "Días", "Población","# Casos", "IA"),format.args = list( big.mark=".", decimal.mark = ","), align =  c('l', 'c', 'c', 'c', 'c') ) %>% 
-      kable_styling()
-```
-
-
-
-
-## Fallecimientos
-A continuación se grafica la evolución de las cantidades de fallecimientos desde la detección del virus en cada país, y la tabla correspondiente a la cantidad acumulada al día de la fecha.
-
-###  {.tabset  .tabset-fade .tabset-pills}
-#### Gráfico
-```{r muertesg, echo=FALSE, message=FALSE, warning=FALSE, paged.print=FALSE, out.width='100%'}
-  sudamerica %>% 
-    group_by(pais) %>% 
-    ggplot(aes(x=dia, y=muertes, color=pais))+
-    geom_line( show.legend=FALSE) +
-    geom_smooth(se=F, show.legend = F) +                  
-    labs(title="", x='día',
-         y="Cantidad de Fallecidos", caption="Datos: Universidad Johns Hopkins") + 
-    facet_wrap(~pais,  ncol=4)
-```
-
-#### Tabla
-Al día de la fecha las cantidad de muertes acumuladas país es de: 
-```{r muertest, echo=FALSE, message=FALSE, warning=FALSE, paged.print=FALSE, out.width='100%'}
-
-   # muertes <- 
-  sudamerica %>% 
-    group_by(pais) %>% 
-    filter(dia==max(dia)) %>% 
-    select(pais, muertes) %>% arrange(desc(muertes)) %>%  
-   # muertes %>% 
-    kable( col.names =  c("País", "# Fallecidos"),
-           format.args = list( big.mark=".", decimal.mark = ","),
-            align =  c('l', 'c') ) %>%  kable_styling()
-```
-
-## Tasa de Letalidad
-Una proporción interesante a comparar es la **tasa de mortalidad particular o tasa de letalidad**, es decir la cantidad de personas que fallecieron respecto al total de casos en un período de tiempo.
-A continuación se muestra la evolución de la tasa de letalidad en los distintos países considerando el primer día de detección del virus
-
-###  {.tabset  .tabset-fade .tabset-pills}
-#### Gráfica
-```{r g_tasa_mort, echo=FALSE, message=FALSE, warning=FALSE, paged.print=FALSE, out.width='100%', fig.align='center'}
-  # p <- ambos %>% mutate(tasa_m = round(fallecidos/casos * 100, 1))
-  p <- sudamerica %>% mutate(tasa_m = round(muertes/casos * 100, 1))
-  fig <- plot_ly(p, x = ~dia, y = ~tasa_m, color = ~pais, type = "scatter", mode='lines+markers') 
-  fig <- layout(fig, xaxis = list(title = "día"), yaxis = list(title = "Tasa de Letalidad"))
-  fig
-
-```
-
-#### Datos
-Los datos de la tasa de letalidad al `r  max(sudamerica$fecha)` para cada país son:
-```{r d_tasa_mort, echo=FALSE, message=FALSE, warning=FALSE, paged.print=FALSE, out.width='100%', fig.align='center'}
-
-  sudamerica %>% group_by(pais) %>% 
-    filter(fecha == max(fecha)) %>%   mutate(tasa_m = round(muertes/casos * 100, 2))%>%
-    select(pais, casos, muertes, tasa_m) %>% 
-    arrange(desc(tasa_m)) %>% 
-    kable( col.names =  c("País", "# Casos", "# Fallecidos", "Tasa de Letalidad(%)"),
-           format.args = list( big.mark=".", decimal.mark = ","),
-            align =  c('l', 'c', 'c','c') ) %>%    
-    kable_styling()
-
-```
-
-
-
-
-
 ## Casos Totales y Casos letales
 En el siguiente gráfico se muestran las series de cantidades de casos y cantidades de fallecidos en cada país, en el primero se visualiza la escala fija sobre el y, en la segunda se muestra la escala libre que mejor se adapta a cada país 
 
@@ -667,6 +525,139 @@ En el siguiente gráfico se muestran las series de cantidades de casos y cantida
 
 
 
+## Evolución de Covid
+A continuación se graficará la evolución de casos acumulados y falllecidos de los países en simultáneo, tomando como día inicial el día en que se detectó por primera vez un infectado en cada país.
+
+A las curvas se las mostrará en escala lineal y en escala (y) logaritmica para facilitar la visualización
+
+###  {.tabset  .tabset-fade .tabset-pills}
+#### Casos
+```{r casosSud, echo=FALSE, message=FALSE, warning=FALSE, paged.print=FALSE, out.width='100%'}
+
+p <- sudamerica %>% group_by(pais) 
+  fig <- plot_ly(p, x = ~dia, y = ~casos, color = ~pais, type = "scatter", mode='lines+markers') 
+  fig <- layout(fig,  title="Casos detectados en Sudamérica (escala lineal)",
+                xaxis = list(title = "día"), yaxis = list( title = "casos"))
+  fig
+#   
+# sudamerica %>% 
+#     group_by(pais) %>% 
+#     ggplot(aes(x=dia, y=casos, color=pais))+
+#     geom_line( show.legend=FALSE) +
+#     geom_smooth(se=F, show.legend = F) +                  
+#     labs(title="Casos detectados COVID-19 ", x='día',
+#          y="Cantidad de casos", caption="Datos: Universidad Johns Hopkins") + 
+#     facet_wrap(~pais,  ncol=4)
+
+```
+#### Casos (Log)
+```{r casosSudLog, echo=FALSE, message=FALSE, warning=FALSE, paged.print=FALSE, out.width='100%'}
+   p <- sudamerica %>% group_by(pais) 
+   fig <- plot_ly(p, x = ~dia, y = ~casos, color = ~pais, type = "scatter", mode='lines+markers') 
+   fig <- layout(fig, title="Casos detectados en Sudamérica (escala Log)",
+                 xaxis = list(title = "día"), yaxis = list(type="log", title = "casos"))
+   fig
+
+```
+#### Fallecidos
+```{r muertesSud, echo=FALSE, message=FALSE, warning=FALSE, paged.print=FALSE, out.width='100%'}
+   p <- sudamerica %>% group_by(pais) 
+   fig <- plot_ly(p, x = ~dia, y = ~muertes, color = ~pais, type = "scatter", mode='lines+markers') 
+   fig <- layout(fig,  title="Fallecidos en Sudamérica (escala lineal)",
+                 xaxis = list(title = "día"), yaxis = list( title = "casos"))
+   fig
+
+```
+#### Fallecidos (Log)
+```{r muertesSudLog, echo=FALSE, message=FALSE, warning=FALSE, paged.print=FALSE, out.width='100%'}
+  fig <- plot_ly(p, x = ~dia, y = ~muertes, color = ~pais, type = "scatter", mode='lines+markers') 
+  fig <- layout(fig,  title="Fallecidos en Sudamérica (escala log)",
+                xaxis = list(title = "día"), yaxis = list(type="log", title = "casos"))
+  fig
+
+```
+
+
+
+
+## Incidencia Acumulada
+La incidencia acumulada (IA) proporciona una estimación de la probabilidad o el riesgo de que un individuo libre de una determinada enfermedad la desarrolle durante un período especificado de tiempo.
+
+Al día de la fecha las incidencias acumuladas por cada 100.000 habitantes de los países de Sud América es: 
+
+###  {.tabset  .tabset-fade .tabset-pills}
+#### Mapa
+```{r mapSud, echo=FALSE, message=FALSE, warning=FALSE, paged.print=FALSE}
+  ia <- sudamerica %>% 
+    group_by(pais) %>% 
+    filter(dia==max(dia)) %>% 
+    left_join(poblacion ) %>% 
+    mutate(inc= as.double(round(casos/poblacion*100000, 2))) %>%  
+    select(pais, dia, poblacion, casos, inc) %>% 
+    arrange(desc(inc))
+
+  highchart() %>%
+    hc_title(text = "<i>Incidencia COVID-19 en Sudamérica</i>",
+             margin = 20, align = "center", style = list(color = "#08338F", useHTML = TRUE)) %>%
+    hc_tooltip(followPointer =  FALSE) %>%
+    hc_add_series_map(sud, ia, name = "IA", value = "inc", joinBy = c("name", "pais"),
+                      dataLabels = list(enabled = TRUE, format = '{point.properties.woe-name}')) %>%
+    hc_colorAxis(minColor = "#B7D4EB", maxColor = "#08338F")  %>%
+    hc_legend(align = "center", x = 0, y = -10) %>%
+    hc_mapNavigation(enabled = TRUE) %>%
+    hc_add_theme(hc_theme_ffx()) %>%
+    hc_add_annotation(xValue = 0, yValue = 0, 
+                      title = list(text = 'Fuente: OMS. <p> Elaborado por: GIBD UTN')) %>%
+    hc_chart(borderColor = "#08338F", borderRadius = 10, borderWidth = 2)
+
+```
+
+#### Tabla Datos
+Como se observa, el país con la mayor Incidencia Acumulada al día de hoy es **`r ia[1,1] `**, que lleva *`r ia[1,2] ` días* desde la detección del primer caso.
+```{r ia, echo=FALSE, message=FALSE, warning=FALSE, paged.print=FALSE, out.width='100%'}
+  ia  %>% kable( col.names =  c("País", "Días", "Población","# Casos", "IA"),format.args = list( big.mark=".", decimal.mark = ","), align =  c('l', 'c', 'c', 'c', 'c') ) %>% 
+      kable_styling()
+```
+
+
+
+
+
+## Tasa de Letalidad
+Una proporción interesante a comparar es la **tasa de mortalidad particular o tasa de letalidad**, es decir la cantidad de personas que fallecieron respecto al total de casos en un período de tiempo.
+A continuación se muestra la evolución de la tasa de letalidad en los distintos países considerando el primer día de detección del virus
+
+###  {.tabset  .tabset-fade .tabset-pills}
+#### Gráfica
+```{r g_tasa_mort, echo=FALSE, message=FALSE, warning=FALSE, paged.print=FALSE, out.width='100%', fig.align='center'}
+  # p <- ambos %>% mutate(tasa_m = round(fallecidos/casos * 100, 1))
+  p <- sudamerica %>% mutate(tasa_m = round(muertes/casos * 100, 1))
+  fig <- plot_ly(p, x = ~dia, y = ~tasa_m, color = ~pais, type = "scatter", mode='lines+markers') 
+  fig <- layout(fig, xaxis = list(title = "día"), yaxis = list(title = "Tasa de Letalidad"))
+  fig
+
+```
+
+#### Datos
+Los datos de la tasa de letalidad al `r  max(sudamerica$fecha)` para cada país son:
+```{r d_tasa_mort, echo=FALSE, message=FALSE, warning=FALSE, paged.print=FALSE, out.width='100%', fig.align='center'}
+
+  sudamerica %>% group_by(pais) %>% 
+    filter(fecha == max(fecha)) %>%   mutate(tasa_m = round(muertes/casos * 100, 2))%>%
+    select(pais, casos, muertes, tasa_m) %>% 
+    arrange(desc(tasa_m)) %>% 
+    kable( col.names =  c("País", "# Casos", "# Fallecidos", "Tasa de Letalidad(%)"),
+           format.args = list( big.mark=".", decimal.mark = ","),
+            align =  c('l', 'c', 'c','c') ) %>%    
+    kable_styling()
+
+```
+
+
+
+
+
+
 ## Trayectoria de Nuevos Casos
 Este gráfico (propuesto por https://aatishb.com/covidtrends/) muestra la evolución entre la cantidad total de casos de COVID-19 en una fecha frente a los nuevos casos confirmados en la semana previa a la misma. 
 
@@ -678,7 +669,13 @@ Se puede observar que casi todos los países siguen un camino muy similar de cre
 ```{r dinamico, echo=FALSE, fig.align='center', fig.show='animate', message=FALSE, warning=FALSE, paged.print=FALSE}
 
 	avance <- sudamerica %>% group_by(pais) %>% filter(dia != max(dia))
-
+   # plot_ly(avance, x=~casos, y=~semanal, )
+   # fig <- plot_ly(avance,  x=~casos, y=~semanal, color = ~pais, type = "scatter", mode='lines+markers') 
+   # fig <- layout(fig,  title="Casos detectados en Sudamérica (escala lineal)",
+   #              xaxis = list(title = "día"), xaxis=list(type="log"), 
+   #              yaxis = list(type="log", title = "casos"))
+   # fig + transition_manual(casos)
+  
 	dinamico <- ggplot(avance) +
 	  geom_line(aes(casos, semanal, group=pais, color=pais), size=1)+ scale_y_log10() + scale_x_log10() 
 
@@ -699,6 +696,7 @@ Se puede observar que casi todos los países siguen un camino muy similar de cre
     facet_wrap(~pais,  ncol=5)
 
 ```
+
 
 
 
@@ -986,8 +984,7 @@ Gracias al aporte de reunir y disponibilizar los datos de [Sistemas Mapache](htt
 
 
 ## Evolución por Provincia
-A continuación se muestra la evolución de casos detectados y fallecidos por día para cada una de las provincias argentinas.
-<!-- y la cantidad de casos acumulados. -->
+A continuación se muestra la evolución de casos detectados y fallecidos por día para cada una de las provincias argentinas. Ambas curvas se muestran a escala libre y escala logaritmica
 
 
 ###  {.tabset  .tabset-fade .tabset-pills}
@@ -1030,6 +1027,14 @@ A continuación se muestra la evolución de casos detectados y fallecidos por d�
 
 ```
 
+#### Casos (Log)
+```{r ev_provLog, echo=FALSE, fig.align='center', message=FALSE, warning=FALSE, out.width='100%'}
+  fig <- plot_ly(p, x = ~fecha, y = ~cant, color = ~provincia, type = "scatter", mode='lines+markers') 
+  fig <- layout(fig, title="Evolución de casos confirmados por Provincia (Log)",xaxis = list(title = "día"), yaxis = list(type = "log", title = "casos"))
+  fig
+
+```
+
 
 #### Fallecidos
 ```{r ev_provFall, echo=FALSE, fig.align='center', message=FALSE, warning=FALSE, out.width='100%'}
@@ -1045,7 +1050,7 @@ A continuación se muestra la evolución de casos detectados y fallecidos por d�
       mutate(acumulados =cumsum(muertes))
     
     tabla_prov_m <- tabla_prov_m %>%
-      gather(muertes, acumulados, -c(Provincia, fecha))# %>% ungroup()
+      gather(muertes, acumulados, -c(Provincia, fecha))
     
     names(tabla_prov_m) <- c("provincia", "fecha", "tipo", "cant")
    
@@ -1059,6 +1064,14 @@ A continuación se muestra la evolución de casos detectados y fallecidos por d�
 
 ```
 
+
+#### Fallecidos (Log)
+```{r ev_provFallLog, echo=FALSE, fig.align='center', message=FALSE, warning=FALSE, out.width='100%'}
+    fig <- plot_ly(p, x = ~fecha, y = ~cant, color = ~provincia, type = "scatter", mode='lines+markers') 
+    fig <- layout(fig, title="Evolución fallecidos por Provincia",xaxis = list(title = "día"), yaxis = list(title = "fallecimientos", type = "log"))
+    fig
+
+```
 
 
 <!-- ##### Ambos -->
@@ -1130,6 +1143,28 @@ Al día de la fecha las incidencias acumuladas por cada 100.000 habitantes en la
 
 
 
+
+
+## Casos por Superficie
+
+```{r casosSup}
+   casosSuper <- ia_prov %>% mutate(dens=poblacion/superficie, tasa = cant/superficie) %>% arrange(desc(tasa))
+
+  highchart() %>%
+    hc_title(text = "<i>Casos por Km2 COVID-19 en Argentina</i> ",
+             margin = 20, align = "center", style = list(color = "#780000", useHTML = TRUE)) %>%
+    hc_tooltip(followPointer =  FALSE) %>%
+    hc_add_series_map(argentina, casosSuper, name = "tasa", value = "tasa", joinBy = c("name", "provincia"),
+                      dataLabels = list(enabled = TRUE, format = '{point.properties.woe-name}')) %>%
+    hc_colorAxis(minColor = "#FFAAAA", maxColor = "#780000")  %>%
+    hc_legend(align = "center", x = 0, y = -10) %>%
+    hc_mapNavigation(enabled = TRUE) %>%
+    hc_add_theme(hc_theme_ffx()) %>% 
+    hc_add_annotation(xValue = 0, yValue = 0, title = list(text = 'Fuente: Ministerio Salud - INDEC')) %>% 
+    hc_chart(borderColor = "#780000", borderRadius = 10, borderWidth = 2)
+   
+   
+```
 
 ## Letalidad en Argentina
 
@@ -1331,6 +1366,7 @@ A continuación se visualiará la evolución en la proporción de los casos dete
     layout(title="Test x Millón de Habitantes", xaxis=list(title=""), yaxis = list(title = "Test x millón de Habitantes"))
 
 ```
+
 
 
 

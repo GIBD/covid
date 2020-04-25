@@ -539,17 +539,10 @@ p <- sudamerica %>% group_by(pais)
   fig <- layout(fig,  title="Casos detectados en Sudamérica (escala lineal)",
                 xaxis = list(title = "día"), yaxis = list( title = "casos"))
   fig
-#   
-# sudamerica %>% 
-#     group_by(pais) %>% 
-#     ggplot(aes(x=dia, y=casos, color=pais))+
-#     geom_line( show.legend=FALSE) +
-#     geom_smooth(se=F, show.legend = F) +                  
-#     labs(title="Casos detectados COVID-19 ", x='día',
-#          y="Cantidad de casos", caption="Datos: Universidad Johns Hopkins") + 
-#     facet_wrap(~pais,  ncol=4)
+
 
 ```
+
 #### Casos (Log)
 ```{r casosSudLog, echo=FALSE, message=FALSE, warning=FALSE, paged.print=FALSE, out.width='100%'}
    p <- sudamerica %>% group_by(pais) 
@@ -559,6 +552,7 @@ p <- sudamerica %>% group_by(pais)
    fig
 
 ```
+
 #### Fallecidos
 ```{r muertesSud, echo=FALSE, message=FALSE, warning=FALSE, paged.print=FALSE, out.width='100%'}
    p <- sudamerica %>% group_by(pais) 
@@ -568,6 +562,7 @@ p <- sudamerica %>% group_by(pais)
    fig
 
 ```
+
 #### Fallecidos (Log)
 ```{r muertesSudLog, echo=FALSE, message=FALSE, warning=FALSE, paged.print=FALSE, out.width='100%'}
   fig <- plot_ly(p, x = ~dia, y = ~muertes, color = ~pais, type = "scatter", mode='lines+markers') 
@@ -576,6 +571,7 @@ p <- sudamerica %>% group_by(pais)
   fig
 
 ```
+
 
 
 

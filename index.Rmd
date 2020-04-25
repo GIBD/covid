@@ -459,7 +459,21 @@ Excluyendo China y comparando la evolución de los casos detectados en estos pai
 ## Evolución luego de 100 casos
 Para poner en contexto la situación, en el siguiente gráfico puede verse cómo fue evolucionando la cantidad de personas infectadas en estos países en el período siguiente al de haber llegado a los 100 casos confirmados.
 
+###  {.tabset  .tabset-fade .tabset-pills}
+#### Logaritmica
 ```{r dia100mundo, echo=FALSE, out.width='95%', fig.align='center'}
+  p <- afectados %>%
+    filter(casos>100 & pais != "China") %>% 
+    group_by(pais) %>% arrange(fecha) %>% mutate(dia100 = row_number()) 
+  fig <- plot_ly(p, x = ~dia, y = ~casos, color = ~pais, type = "scatter", mode='lines+markers') 
+  fig <- layout(fig, xaxis = list(title = "día"), yaxis = list(type="log",title = "casos"))
+  fig
+  
+```
+
+
+#### Lineal
+```{r dia100mundoLin, echo=FALSE, out.width='95%', fig.align='center'}
   p <- afectados %>%
     filter(casos>100 & pais != "China") %>% 
     group_by(pais) %>% arrange(fecha) %>% mutate(dia100 = row_number()) 
@@ -468,6 +482,7 @@ Para poner en contexto la situación, en el siguiente gráfico puede verse cómo
   fig
   
 ```
+
 
 
 # Sudamérica

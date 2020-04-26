@@ -1339,14 +1339,14 @@ A continuación se visualiará la evolución en la proporción de los casos dete
 A continuación se visualiará la evolución en la proporción de los casos detectados sobre la cantidad de pruebas analizadas. 
 ```{r test, echo=FALSE, fig.align='center', message=FALSE, warning=FALSE, out.width='100%'}
 
-  test <- argCov %>% select(dia, DescTest, Detectados) %>%
-      mutate(total = DescTest + Detectados)
+  test <- argCov %>% select(dia, DescTest, Detectados, Recuperados) %>%
+      mutate(total = DescTest + Detectados+ Recuperados)
   test <- test %>% filter(DescTest >= 0) %>%  mutate(prop= round(Detectados/total * 100, 2)) %>% arrange(dia)
  
   test$dia <-as.Date(test$dia, "%d/%m/%Y")
   
   plot_ly(test, x = ~dia, y = ~prop, type = "bar", name = "Tasa de Positividad",
-           texttemplate = '%{y:.3s}', textposition = 'outside') %>% 
+           texttemplate = '%{y:.2s}', textposition = 'outside') %>% 
     layout(title="Tasa de Positividad", xaxis=list(title=""), yaxis = list(title = "Tasa de Positividad (%)"))
   
 

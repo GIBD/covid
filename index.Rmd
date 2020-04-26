@@ -219,7 +219,8 @@ sep.miles <- function(x){format(x,big.mark=".")}
 
       ### RIO NEGRO
       {
-        rio_negro_c <- read_csv("https://docs.google.com/spreadsheets/d/16-bnsDdmmgtSxdWbVMboIHo5FRuz76DBxsz_BbsEVWA/export?format=csv&id=16-bnsDdmmgtSxdWbVMboIHo5FRuz76DBxsz_BbsEVWA&gid=971636305")
+        # rio_negro_c <- read_csv("https://docs.google.com/spreadsheets/d/16-bnsDdmmgtSxdWbVMboIHo5FRuz76DBxsz_BbsEVWA/export?format=csv&id=16-bnsDdmmgtSxdWbVMboIHo5FRuz76DBxsz_BbsEVWA&gid=971636305")
+        rio_negro_c <- read_delim("data/rionegro_gral.csv",";", locale = locale(encoding = "ISO-8859-1"))
         rio_negro_c <- rio_negro_c %>% select(localidad, casos_acumulados)
         names(rio_negro_c) <- c("localidad", "cantidad")
         rio_negro_c$provincia <- "Río Negro"
@@ -254,7 +255,6 @@ sep.miles <- function(x){format(x,big.mark=".")}
         stafe_c <- read_delim("data/santafe_gral.csv",  ";", #skip=3,
                           escape_double = FALSE, locale = locale(encoding = "ISO-8859-1"),
                           trim_ws = TRUE)
-        # "https://docs.google.com/spreadsheets/d/16-bnsDdmmgtSxdWbVMboIHo5FRuz76DBxsz_BbsEVWA/export?format=csv&id=16-bnsDdmmgtSxdWbVMboIHo5FRuz76DBxsz_BbsEVWA&gid=1214016401", skip = 3)
         stafe_c <- stafe_c %>% gather(fecha, casos, 7:max(col(stafe_c)), -X6)
         stafe_c <- stafe_c %>% filter(!(is.na(casos)) & casos >0 ) %>%
                        group_by(X6) %>% filter(fecha == max(fecha)) %>%
@@ -274,16 +274,14 @@ sep.miles <- function(x){format(x,big.mark=".")}
       ### NEUQUÉN
       {## Hoja de Planilla Excel compartida por Mapache
 
-        neuquen_c <- read_sheet("https://docs.google.com/spreadsheets/d/16-bnsDdmmgtSxdWbVMboIHo5FRuz76DBxsz_BbsEVWA/edit#gid=1711452704", sheet = 4)
-        # neuquen_c$Municipio <-
+         neuquen_c <- read_delim("data/neuquen_gral.csv",  ";", escape_double = FALSE, 
+                             locale = locale(encoding = "ISO-8859-1"), trim_ws = TRUE)
         neuquen_c$Localidad <- gsub("Ã©", "é", neuquen_c$Localidad)
         neuquen_c$Localidad <- gsub("Ã¡", "á", neuquen_c$Localidad)
         neuquen_c$Localidad <- gsub("Ã³", "ó", neuquen_c$Localidad)
         neuquen_c$Localidad <- gsub("Ã","í", neuquen_c$Localidad)
-        neuquen_c <- neuquen_c %>% select(Localidad, casos) #, Prov)
-
-        neuquen_c$Prov <- "Neuquén"
-
+        neuquen_c <- neuquen_c %>% select(Prov, casos) 
+        neuquen_c$provincia <- "Neuquén"
         names(neuquen_c) <- c( "localidad", "cantidad", "provincia")
 
         neuquen_c$localidad <- gsub("Cutral Co", "Cutral Có", 	neuquen_c$localidad)

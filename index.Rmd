@@ -194,7 +194,9 @@ sep.miles <- function(x){format(x,big.mark=".")}
                                                  encoding = "ISO-8859-1"), trim_ws = TRUE)
        
       ### Detalle por provincias
-      covidArg <-read_delim("data/argentina_casos.csv", ";", 
+      # covidArg <-read_delim("data/argentina_casos.csv", ";", 
+      #                       escape_double = FALSE, trim_ws = TRUE, locale = locale(encoding = "ISO-8859-1"))
+      covidArg <-read_delim("data/casos_provincias.csv", ";", 
                             escape_double = FALSE, trim_ws = TRUE, locale = locale(encoding = "ISO-8859-1"))
       covidArg$FECHA <- as.Date(covidArg$FECHA, '%d/%m/%Y')
     

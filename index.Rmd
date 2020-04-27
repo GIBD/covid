@@ -324,11 +324,20 @@ sep.miles <- function(x){format(x,big.mark=".")}
         chaco_c$localidad <- gsub( "Villa Ángela", "Villa Ángela", chaco_c$localidad)
       }
 
+        ### SALTA
+      {
+        salta_c <- read_delim("data/salta_gral.csv", ";",
+                          escape_double = FALSE, locale = locale(encoding = "ISO-8859-1"),
+                          trim_ws = TRUE)
+        salta_c <- salta_c %>% select(Localidad, casos)
+        salta_c$provincia <- "Salta"
+        names(salta_c) <- c( "localidad", "cantidad", "provincia")
+      }
       casos_pronvinciales <- rbind.data.frame(entre_rios_c, rio_negro_c,
                                               caba_c, bsas_c, stafe_c,
                                               neuquen_c, cordoba_c,
-                                              tucuman_c, chaco_c)
-      rm(entre_rios_c, rio_negro_c,caba_c, bsas_c, stafe_c,neuquen_c, cordoba_c, tucuman_c)
+                                              tucuman_c, chaco_c, salta_c)
+      rm(entre_rios_c, rio_negro_c,caba_c, bsas_c, stafe_c,neuquen_c, cordoba_c, tucuman_c, salta_c)
       
     }
   
@@ -680,13 +689,7 @@ Se puede observar que casi todos los países siguen un camino muy similar de cre
 ```{r dinamico, echo=FALSE, fig.align='center', fig.show='animate', message=FALSE, warning=FALSE, paged.print=FALSE}
 
 	avance <- sudamerica %>% group_by(pais) %>% filter(dia != max(dia))
-   # plot_ly(avance, x=~casos, y=~semanal, )
-   # fig <- plot_ly(avance,  x=~casos, y=~semanal, color = ~pais, type = "scatter", mode='lines+markers') 
-   # fig <- layout(fig,  title="Casos detectados en Sudamérica (escala lineal)",
-   #              xaxis = list(title = "día"), xaxis=list(type="log"), 
-   #              yaxis = list(type="log", title = "casos"))
-   # fig + transition_manual(casos)
-  
+   
 	dinamico <- ggplot(avance) +
 	  geom_line(aes(casos, semanal, group=pais, color=pais), size=1)+ scale_y_log10() + scale_x_log10() 
 
@@ -942,7 +945,7 @@ El Ministerio diariamente informa la cantidad de casos por provincia pudiendo re
 
 
 ### Distribución por Departamentos
-Gracias al aporte de reunir y disponibilizar los datos de [Sistemas Mapache](https://github.com/SistemasMapache/Covid19arData) y al aporte de muchos usuarios como [ClariCardozoCas](https://twitter.com/ClariCardozoCas) se muestra la distribución de casos a nivel departamental de las provincias: Buenos Aires, Ciudad Autónoma de Buenos Aires, Santa Fe, Río Negro, Neuquén, Tucumán y Entre Ríos en base a datos propios.
+Gracias al aporte de reunir y disponibilizar los datos de [Sistemas Mapache](https://github.com/SistemasMapache/Covid19arData) y al aporte de muchos usuarios como [@ClariCardozoCas](https://twitter.com/ClariCardozoCas), [@juanjocorrea_ok](https://twitter.com/juanjocorrea_ok) se muestra la distribución de casos a nivel departamental de las provincias: Buenos Aires, Ciudad Autónoma de Buenos Aires, Río Negro, Neuquén, Tucumán,  Santa Fe, Chaco, Salta y Entre Ríos en base a datos propios.
 
 ```{r dptoArg,echo=FALSE, message=FALSE, warning=FALSE }
 
@@ -972,7 +975,8 @@ Gracias al aporte de reunir y disponibilizar los datos de [Sistemas Mapache](htt
   
   deptos_covid <- deptos %>%  
       left_join(casos_pronvinciales, by=c("departamen" = "departamento", "provincia"="provincia")) %>% 
-      filter(!is.na(casos)) %>% unique()
+      filter(!is.na(casos)) %>% 
+     unique()
   
   leaflet(data = deptos_covid) %>% addTiles() %>%
     addProviderTiles(providers$OpenStreetMap) %>% 
@@ -985,7 +989,11 @@ Gracias al aporte de reunir y disponibilizar los datos de [Sistemas Mapache](htt
                              deptos_covid$departamen, ": ", 
                              deptos_covid$casos),
                highlightOptions = highlightOptions(color = "white", weight = 2,
-                                                   bringToFront = TRUE) ) 
+                                                   bringToFront = TRUE)) 
+  # %>% addLegend(colors = c('#ffffb2', '#fecc5c', '#fd8d3c', '#f03b20', '#bd0026'), 
+  #                   labels= c("1-25", "25-50", "50-100", "100-500", "500 o más"),
+  #              position ="bottomright")
+        
 
 ```
 
@@ -995,8 +1003,10 @@ Gracias al aporte de reunir y disponibilizar los datos de [Sistemas Mapache](htt
 
 
 ## Evolución por Provincia
-A continuación se muestra la evolución de casos detectados y fallecidos por día para cada una de las provincias argentinas. Ambas curvas se muestran a escala libre y escala logaritmica
+A continuación se muestra la evolución de casos detectados por provincias y las curvas de casos confirmados y fallecimientos por día para cada una de las provincias argentinas. Ambas curvas se muestran a escala libre y escala logaritmica
 
+<!-- ### Evolución -->
+<iframe width="760" height="500" src="https://preview.flourish.studio/2125321/R0ECnRKTwlv1xuOmT0wP9XQuaG66nj0TPEgdMBACYQY9BWfIEXMnxfgX4EVUlm9O/" frameborder="0" allow="accelerometer; autoplay; encrypted-media; gyroscope; picture-in-picture" allowfullscreen></iframe>
 
 ###  {.tabset  .tabset-fade .tabset-pills}
 #### Casos
@@ -1084,23 +1094,6 @@ A continuación se muestra la evolución de casos detectados y fallecidos por d�
 
 ```
 
-
-<!-- ##### Ambos -->
- <!-- ```{r ev_provFall, echo=FALSE, fig.align='center', message=FALSE, warning=FALSE, out.width='100%'} -->
-
-<!--    tabla_prov -->
-<!--    tabla_prov_m -->
-
-
-<!--     p <- tabla_prov_m %>% -->
-<!--       filter(cant>0&tipo=="acumulados") %>% -->
-<!--       group_by(provincia) %>% arrange(fecha) %>% mutate(dia1 = row_number()) -->
-
-<!--     fig <- plot_ly(p, x = ~fecha, y = ~cant, color = ~provincia, type = "scatter", mode='lines+markers') -->
-<!--     fig <- layout(fig, title="Evolución fallecidos por Provincia",xaxis = list(title = "día"), yaxis = list(title = "fallecimientos")) -->
-<!--     fig -->
-
-<!-- ``` -->
 
 ## Incidencia Acumulada
 

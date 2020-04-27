@@ -41,7 +41,7 @@ library(sf)
 library(tmap)
 library(googlesheets4)
 library(readxl)
-library(shiny)
+# library(shiny)
 
 sep.miles <- function(x){format(x,big.mark=".")}
  
@@ -1179,7 +1179,7 @@ Al día de la fecha las incidencias acumuladas por cada 100.000 habitantes en la
 
 En la actualidad (`r max(totalesArg$dia)`) en Argentina, la **tasa de mortalidad particular o letalidad** es de `r round(totalesArg$Fallecidos[totalesArg$dia==max(totalesArg$dia)]/totalesArg$Detectados[totalesArg$dia==max(totalesArg$dia)] * 100, 2)`%, mientras que el **porcentaje pacientes recuperados** es del `r round(totalesArg$Recuperados[totalesArg$dia==max(totalesArg$dia)]/totalesArg$Detectados[totalesArg$dia==max(totalesArg$dia)] * 100, 2)`%.
 
-La tasa de Letalidad a nivel nacional a evolucionado como lo muestra la siguiente gráfica.
+La tasa de Letalidad a nivel nacional ha evolucionado como lo muestra la siguiente gráfica.
 
 ```{r evolLetalArg, echo=FALSE, fig.align='center', message=FALSE, warning=FALSE, out.width='100%' }
     evolLet <- argCov %>% mutate(let = round(Fallecidos/Detectados * 100, 1) ) %>% 

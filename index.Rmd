@@ -152,7 +152,6 @@ sep.miles <- function(x){format(x,big.mark=".")}
         afectados$pais <- gsub("Italy", "Italia", afectados$pais)
         afectados$pais <- gsub("Germany", "Alemania", afectados$pais)
         afectados$pais <- gsub("France", "Francia", afectados$pais)
-        
         rm(masAfectados, masAfectados_m)
     }
     
@@ -194,8 +193,6 @@ sep.miles <- function(x){format(x,big.mark=".")}
                                                  encoding = "ISO-8859-1"), trim_ws = TRUE)
        
       ### Detalle por provincias
-      # covidArg <-read_delim("data/argentina_casos.csv", ";", 
-      #                       escape_double = FALSE, trim_ws = TRUE, locale = locale(encoding = "ISO-8859-1"))
       covidArg <-read_delim("data/casos_provincias.csv", ";", 
                             escape_double = FALSE, trim_ws = TRUE, locale = locale(encoding = "ISO-8859-1"))
       covidArg$FECHA <- as.Date(covidArg$FECHA, '%d/%m/%Y')
@@ -207,149 +204,25 @@ sep.miles <- function(x){format(x,big.mark=".")}
   
   ## Dataset Provincias Argentinas
     {
-      ### ENTRE RIOS
-      {
-        covid_er <- read_delim("data/entre_rios_casos.csv", ";",
-                          escape_double = FALSE, locale = locale(encoding = "ISO-8859-1"),
-                          trim_ws = TRUE)
-
-        entre_rios_c <- covid_er %>% group_by(LOCALIDAD) %>%
-          mutate(cantidad = n()) %>% select(LOCALIDAD, cantidad)
-        names(entre_rios_c) <- c("localidad", "cantidad")
-        entre_rios_c$provincia <- "Entre Ríos"
-      }
-
-      ### RIO NEGRO
-      {
-        # rio_negro_c <- read_csv("https://docs.google.com/spreadsheets/d/16-bnsDdmmgtSxdWbVMboIHo5FRuz76DBxsz_BbsEVWA/export?format=csv&id=16-bnsDdmmgtSxdWbVMboIHo5FRuz76DBxsz_BbsEVWA&gid=971636305")
-        rio_negro_c <- read_delim("data/rionegro_gral.csv",";", locale = locale(encoding = "ISO-8859-1"))
-        rio_negro_c <- rio_negro_c %>% select(localidad, casos_acumulados)
-        names(rio_negro_c) <- c("localidad", "cantidad")
-        rio_negro_c$provincia <- "Río Negro"
-        rio_negro_c$localidad <- gsub("Bariloche", "San Carlos de Bariloche", rio_negro_c$localidad)
-        rio_negro_c$localidad <- gsub("Viedma, Río Negro, Argentina", "Viedma", rio_negro_c$localidad)
-      }
-
-      ### CABA
-      {
-        # caba_c <- read_csv("https://docs.google.com/spreadsheets/d/16-bnsDdmmgtSxdWbVMboIHo5FRuz76DBxsz_BbsEVWA/export?format=csv&id=16-bnsDdmmgtSxdWbVMboIHo5FRuz76DBxsz_BbsEVWA&gid=1718330171")
-        caba_c <- read_delim("data/caba_gral.csv",";",
-                          escape_double = FALSE, locale = locale(encoding = "ISO-8859-1"),
-                          trim_ws = TRUE)
-        caba_c <- caba_c %>% select(comunas, `casos confirmados`)
-        names(caba_c) <- c("localidad", "cantidad")
-        caba_c$localidad <- paste0("Comuna ", caba_c$localidad)
-        caba_c$provincia <- "Ciudad Autónoma de Buenos Aires"
-      }
-
-      ### BUENOS AIRES
-      {
-        # bsas_c <- read_csv("https://docs.google.com/spreadsheets/d/16-bnsDdmmgtSxdWbVMboIHo5FRuz76DBxsz_BbsEVWA/export?format=csv&id=16-bnsDdmmgtSxdWbVMboIHo5FRuz76DBxsz_BbsEVWA&gid=606357729")
-        bsas_c <- read_delim("data/buenosaires_gral.csv",  ";", escape_double = FALSE, 
-                             locale = locale(encoding = "ISO-8859-1"), trim_ws = TRUE)
-        bsas_c <-bsas_c %>%   select(Municipio, Casos)
-        names(bsas_c) <- c("localidad", "cantidad")
-        bsas_c$provincia <- "Buenos Aires"
-      }
-
-      ### SANTA FE
-      {
-        stafe_c <- read_delim("data/santafe_gral.csv",  ";", #skip=3,
-                          escape_double = FALSE, locale = locale(encoding = "ISO-8859-1"),
-                          trim_ws = TRUE)
-        stafe_c <- stafe_c %>% gather(fecha, casos, 7:max(col(stafe_c)), -X6)
-        stafe_c <- stafe_c %>% filter(!(is.na(casos)) & casos >0 ) %>%
-                       group_by(X6) %>% filter(fecha == max(fecha)) %>%
-                       mutate(cantidad = as.integer(casos)) %>% ungroup() %>%
-                       select(X6, cantidad) %>% unique()
-        names(stafe_c) <- c("localidad", "cantidad")
-        stafe_c$localidad <- str_to_title(stafe_c$localidad )
-        stafe_c$provincia <-"Santa Fe"
-        stafe_c$localidad <- gsub("GáLvez", "Gálvez", stafe_c$localidad)
-        stafe_c$localidad <- gsub("Roldan", "Roldán", stafe_c$localidad)
-        stafe_c$localidad <- gsub("ChabáS", "Chabas", stafe_c$localidad)
-        stafe_c$localidad <- gsub("Cañada De Gomez", "Cañada de Gómez", stafe_c$localidad)
-        stafe_c$localidad <- gsub("San Jose Del Rincón", "San José del Rincón", stafe_c$localidad)
-      }
-
-
-      ### NEUQUÉN
-      {## Hoja de Planilla Excel compartida por Mapache
-
-         neuquen_c <- read_delim("data/neuquen_gral.csv",  ";", escape_double = FALSE, 
-                             locale = locale(encoding = "ISO-8859-1"), trim_ws = TRUE)
-        neuquen_c$Localidad <- gsub("Ã©", "é", neuquen_c$Localidad)
-        neuquen_c$Localidad <- gsub("Ã¡", "á", neuquen_c$Localidad)
-        neuquen_c$Localidad <- gsub("Ã³", "ó", neuquen_c$Localidad)
-        neuquen_c$Localidad <- gsub("Ã","í", neuquen_c$Localidad)
-        neuquen_c <- neuquen_c %>% select(Prov, casos) 
-        neuquen_c$provincia <- "Neuquén"
-        names(neuquen_c) <- c( "localidad", "cantidad", "provincia")
-
-        neuquen_c$localidad <- gsub("Cutral Co", "Cutral Có", 	neuquen_c$localidad)
-        neuquen_c$localidad <- gsub("San Martin de los Andes", "San Martín de los Andes", 	neuquen_c$localidad)
-        neuquen_c$localidad <- gsub("Vista Alegre", "Vista Alegre Norte", 	neuquen_c$localidad)
-      }
-
-      ### CÓRDOBA
-      {
-        cordoba_c <- read_delim("data/cordoba_gral.csv", ";",
-                          escape_double = FALSE, locale = locale(encoding = "ISO-8859-1"),
-                          trim_ws = TRUE)
-        cordoba_c <- cordoba_c %>% select(Localidad, casos)
-        cordoba_c$provincia <- "Córdoba"
-        names(cordoba_c) <- c( "localidad", "cantidad", "provincia")
-        cordoba_c$localidad <- gsub("Cerro Azul", "Villa Cerro Azul", cordoba_c$localidad)
-        cordoba_c$localidad <- gsub("San Marcos Sud", "San Marcos", cordoba_c$localidad)
-        cordoba_c$localidad <- gsub("Villa Gral Belgrano", "Villa General Belgrano", cordoba_c$localidad)
-      }
-
-      ### TUCUMAN
-      {  tucuman_c <- read_excel("data/minsalud_casosdpto.xlsx", skip = 2)
-        tucuman_c <- tucuman_c[-c(nrow(tucuman_c),nrow(tucuman_c)-1),]
-        tucuman_c <- tucuman_c %>% select("Departamento", "Casos")
-        tucuman_c$provincia <- "Tucumán"
-        names(tucuman_c) <- c( "localidad", "cantidad", "provincia")
-      }
-      
-      ### CHACO
-      {
-        chaco_c <- read_delim("data/chaco_gral.csv", ";",
-                          escape_double = FALSE, locale = locale(encoding = "ISO-8859-1"),
-                          trim_ws = TRUE)
-        chaco_c <- chaco_c %>% select(Localidad, casos)
-        chaco_c$provincia <- "Chaco"
-        names(chaco_c) <- c( "localidad", "cantidad", "provincia")
-        chaco_c$localidad <- gsub( "Puerto Bermejo", "Puerto Bermejo Nuevo", chaco_c$localidad)
-        chaco_c$localidad <- gsub( "Villa Ángela", "Villa Ángela", chaco_c$localidad)
-      }
-
-        ### SALTA
-      {
-        salta_c <- read_delim("data/salta_gral.csv", ";",
-                          escape_double = FALSE, locale = locale(encoding = "ISO-8859-1"),
-                          trim_ws = TRUE)
-        salta_c <- salta_c %>% select(Localidad, casos)
-        salta_c$provincia <- "Salta"
-        names(salta_c) <- c( "localidad", "cantidad", "provincia")
-      }
-      casos_pronvinciales <- rbind.data.frame(entre_rios_c, rio_negro_c,
-                                              caba_c, bsas_c, stafe_c,
-                                              neuquen_c, cordoba_c,
-                                              tucuman_c, chaco_c, salta_c)
-      rm(entre_rios_c, rio_negro_c,caba_c, bsas_c, stafe_c,neuquen_c, cordoba_c, tucuman_c, salta_c)
-      
+       casos_pronvinciales <-read_delim("data/covid_departamental.csv", ";", 
+                        escape_double = FALSE, trim_ws = TRUE, locale = locale(encoding = "ISO-8859-1"))
+       casos_pronvinciales <- casos_pronvinciales[,-c(4:(ncol(casos_pronvinciales)-1))] 
+       names(casos_pronvinciales) <- c("provincia", "departamento", "localidad", "cantidad")
+    
+       ### ENTRE RIOS
+       covid_er <- read_delim("data/entre_rios_casos.csv", ";", escape_double = FALSE, 
+                              locale = locale(encoding = "ISO-8859-1"), trim_ws = TRUE)
     }
   
-  color <- function(d){
-       c <- if_else(d < 10, '#ffffb2',
-            if_else(d < 20, '#fecc5c',
-            if_else(d < 50, '#fd8d3c',
-            if_else(d < 100, '#f03b20',
-            if_else(d < 500, '#bd0026',
-            if_else(d < 1000, '#FEB24C',
-            if_else(d < 10000, '#FED976','#FFEDA0')))))))
-      return(c)}
+     color <- function(d){
+          c <- if_else(d < 25, '#fdd49e',
+               if_else(d < 50, '#fc8d59',
+               if_else(d < 75, '#d7301f',
+               if_else(d < 100, '#b30000',
+                       "#7f0000"))))
+               # if_else(d < 125, '#FEB24C',
+               # if_else(d < 150, '#FED976','#FFEDA0')))))))
+         return(c)}
   
 ```
 
@@ -794,32 +667,32 @@ La composición de la siguiente pirámide poblacional de los casos confirmados f
 #### Casos confirmados
 ```{r piramide}
 
-edades <- read_delim("data/edades_arg.csv", ";", escape_double = FALSE, locale = locale(decimal_mark = ","), trim_ws = TRUE)
-edades <- edades %>% gather(sexo, prop, c("mujeres", "varones"), -c(1:2, 5:13))
-edades$prop <- as.double(edades$prop)
-edades$fecha <- as.Date(edades$fecha, "%d/%m/%Y")
-edades <- edades %>% gather(edad, cant, c(3:11), -c(1:2, 12:13))
-edades<- edades %>%  mutate(n= round((cant * prop/100), 0)) %>% 
-   group_by(fecha) %>% mutate(porcent=round(n/sum(n)*100,2) ) %>% ungroup()
-
-edades$sexo <- if_else(edades$sexo=="varones",  "Hombre", "Mujer")
-
-edades$porcent <- if_else(edades$sexo=="Hombre",  edades$porcent*-1, edades$porcent)
-
-edadesHoy <- edades %>%  filter(fecha==max(fecha))
-plot_ly(edadesHoy, x = ~porcent, y = ~edad, color = ~sexo) %>%
-  add_bars(orientation = "h",
-        hoverinfo = "y+text+name", text =  ~paste(abs(porcent), " %", '\n Cant.: (', n,')'),  
-        colors = c("#2c7fb8", "#fa9fb5")) %>%
-  layout(bargap = 0.1, barmode = "overlay", 
-         title = "Piramide Poblaciónal de Casos Confirmados", 
-         xaxis = list(tickmode = "array", 
-                    tickvals = c(-100, -50, -25, -20, -15, -10, -5, 0, 
-                                   5, 10, 15, 20, 25, 50, 100),
-                      ticktext = c("100", "50%", "25%", "20%", "15%", "10%","5%", "0",
-                                   "5%", "10%", "15%","20%", "25%", "50%", "100%"),
-                      title = "Casos Confirmados"), 
-         yaxis = list(title = "Grupo Edad"))
+   edades <- read_delim("data/edades_arg.csv", ";", escape_double = FALSE, locale = locale(decimal_mark = ","), trim_ws = TRUE)
+   edades <- edades %>% gather(sexo, prop, c("mujeres", "varones"), -c(1:2, 5:13))
+   edades$prop <- as.double(edades$prop)
+   edades$fecha <- as.Date(edades$fecha, "%d/%m/%Y")
+   edades <- edades %>% gather(edad, cant, c(3:11), -c(1:2, 12:13))
+   edades<- edades %>%  mutate(n= round((cant * prop/100), 0)) %>% 
+      group_by(fecha) %>% mutate(porcent=round(n/sum(n)*100,2) ) %>% ungroup()
+   
+   edades$sexo <- if_else(edades$sexo=="varones",  "Hombre", "Mujer")
+   
+   edades$porcent <- if_else(edades$sexo=="Hombre",  edades$porcent*-1, edades$porcent)
+   
+   edadesHoy <- edades %>%  filter(fecha==max(fecha))
+   plot_ly(edadesHoy, x = ~porcent, y = ~edad, color = ~sexo) %>%
+     add_bars(orientation = "h",
+           hoverinfo = "y+text+name", text =  ~paste(abs(porcent), " %", '\n Cant.: (', n,')'),  
+           colors = c("#2c7fb8", "#fa9fb5")) %>%
+     layout(bargap = 0.1, barmode = "overlay", 
+            title = "Piramide Poblaciónal de Casos Confirmados", 
+            xaxis = list(tickmode = "array", 
+                       tickvals = c(-100, -50, -25, -20, -15, -10, -5, 0, 
+                                      5, 10, 15, 20, 25, 50, 100),
+                         ticktext = c("100", "50%", "25%", "20%", "15%", "10%","5%", "0",
+                                      "5%", "10%", "15%","20%", "25%", "50%", "100%"),
+                         title = "Casos Confirmados"), 
+            yaxis = list(title = "Grupo Edad"))
 
 
 ```
@@ -949,52 +822,50 @@ Gracias al aporte de reunir y disponibilizar los datos de [Sistemas Mapache](htt
 
 ```{r dptoArg,echo=FALSE, message=FALSE, warning=FALSE }
 
+   casos_pronvinciales <- casos_pronvinciales %>% select(provincia, localidad, cantidad)
   
   casos_pronvinciales <- casos_pronvinciales %>% 
     left_join(localidades, by=c("localidad"="nombre", "provincia"="provincia")) %>% unique()
-
-  # casos_pronvinciales$departamen <- if_else(casos_pronvinciales$departamen
+  
   casos_pronvinciales$departamen <- if_else(is.na(casos_pronvinciales$departamen)&
                                               casos_pronvinciales$provincia=="Buenos Aires",
-                                              casos_pronvinciales$localidad, casos_pronvinciales$departamen)
+                                            casos_pronvinciales$localidad, casos_pronvinciales$departamen)
   casos_pronvinciales$departamen <- if_else(is.na(casos_pronvinciales$departamen)&
                                               casos_pronvinciales$provincia=="Ciudad Autónoma de Buenos Aires",
-                                              casos_pronvinciales$localidad, casos_pronvinciales$departamen)
+                                            casos_pronvinciales$localidad, casos_pronvinciales$departamen)
   casos_pronvinciales$departamen <- if_else(is.na(casos_pronvinciales$departamen)&
                                               casos_pronvinciales$provincia=="Tucumán",
-                                              casos_pronvinciales$localidad, casos_pronvinciales$departamen)
+                                            casos_pronvinciales$localidad, casos_pronvinciales$departamen)
   
   # vacios <- casos_pronvinciales %>% filter(is.na(departamen))
-    
+  
   casos_pronvinciales <- casos_pronvinciales %>%
-      ungroup() %>% 
-      group_by(provincia, departamen) %>% 
-      mutate(casos = sum(cantidad))%>% unique() %>% 
-      select(provincia, departamen, casos)
+    ungroup() %>% 
+    group_by(provincia, departamen) %>% 
+    mutate(casos = sum(cantidad))%>% unique() %>% 
+    select(provincia, departamen, casos)
   names(casos_pronvinciales) <- c("provincia", "departamento", "casos")
   
   deptos_covid <- deptos %>%  
-      left_join(casos_pronvinciales, by=c("departamen" = "departamento", "provincia"="provincia")) %>% 
-      filter(!is.na(casos)) %>% 
-     unique()
+    left_join(casos_pronvinciales, by=c("departamen" = "departamento", "provincia"="provincia")) %>% 
+    filter(!is.na(casos)) %>% 
+    unique()
   
   leaflet(data = deptos_covid) %>% addTiles() %>%
     addProviderTiles(providers$OpenStreetMap) %>% 
     addPolygons( color = "#444444", weight = 1,
-               fillColor = color(deptos_covid$casos), fillOpacity = 0.6,
-               label = paste(deptos_covid$provincia, ", ",
-                             deptos_covid$departamen, ": ", 
-                             deptos_covid$casos),
-               popup = paste(deptos_covid$provincia, "<br/>",
-                             deptos_covid$departamen, ": ", 
-                             deptos_covid$casos),
-               highlightOptions = highlightOptions(color = "white", weight = 2,
-                                                   bringToFront = TRUE)) 
-  # %>% addLegend(colors = c('#ffffb2', '#fecc5c', '#fd8d3c', '#f03b20', '#bd0026'), 
-  #                   labels= c("1-25", "25-50", "50-100", "100-500", "500 o más"),
-  #              position ="bottomright")
-        
-
+                 fillColor = color(deptos_covid$casos), fillOpacity = 0.6,
+                 label = paste(deptos_covid$provincia, ", ",
+                               deptos_covid$departamen, ": ", 
+                               deptos_covid$casos),
+                 popup = paste(deptos_covid$provincia, "<br/>",
+                               deptos_covid$departamen, ": ", 
+                               deptos_covid$casos),
+                 highlightOptions = highlightOptions(color = "white", weight = 2,
+                                                     bringToFront = TRUE))  %>% 
+     addLegend(colors = c('#fdd49e', '#fc8d59', '#d7301f', '#b30000', '#7f0000'), 
+                    labels= c("1-24", "25-49", "50-74", "75 - 99", "100 o más"), position ="bottomright") 
+             
 ```
 
 

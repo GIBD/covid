@@ -1249,7 +1249,7 @@ A continuación se visualiará la evolución en la proporción de los casos dete
 # Entre Ríos
 
 ## Casos por Departamento
-Cantidad de Casos confirmados por departamento en la provincia de Entre Ríos
+A continuación se muestran la cantidad de casos de COVID-19 confirmados por el Ministerio de Salud de Entre Ríos, discriminados por departamento y localidad
 
 
 ###  {.tabset  .tabset-fade .tabset-pills}
@@ -1297,3 +1297,9 @@ Cantidad de Casos confirmados por departamento en la provincia de Entre Ríos
 
 
 
+
+
+<!-- ## Evolución de Casos -->
+<!-- ```{r casosER} -->
+<!--    casos_er<- read_csv("G:/Mi unidad/PID Mineria de Datos/COVID_casos/entre_rios_gral.gsheet") -->
+<!-- ``` -->

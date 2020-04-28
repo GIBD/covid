@@ -215,7 +215,7 @@ sep.miles <- function(x){format(x,big.mark=".")}
        poblac_er <-  read_delim("data/poblaciones/poblacion_entre_rios.csv",  ";", escape_double = FALSE, 
                            locale = locale(decimal_mark = ",", 
                                            grouping_mark = ".", encoding = "ISO-8859-1"), trim_ws = TRUE)
-   
+       names(poblac_er) <- c("departamento", "poblacion")
     }
   
      color <- function(d){
@@ -887,7 +887,7 @@ A continuación se muestra la evolución de casos detectados por provincias y la
 #### Casos
 ```{r ev_prov, echo=FALSE, fig.align='center', message=FALSE, warning=FALSE, out.width='100%'}
 
- tabla_prov<- covidArg %>% 
+   tabla_prov<- covidArg %>% 
     group_by(PROVINCIA, FECHA) %>% mutate(casos=sum(CASOS)) %>% select(PROVINCIA, FECHA, casos) %>% unique() 
 
     tabla_prov$acumulados <-0
@@ -968,6 +968,34 @@ A continuación se muestra la evolución de casos detectados por provincias y la
     fig
 
 ```
+
+### Días Transcurridos
+
+Los días transcurridos dese que el Ministerio de Saludu de Nación no reporta casos para cada una de las provincias son:
+
+```{r diasProv}
+
+   dias <- tabla_prov %>% filter(tipo== "casos" & cant > 0) %>% group_by(provincia) %>% 
+      mutate(ultimo=max(fecha)) %>% select(provincia, ultimo) %>% unique() %>%  
+      mutate(sincasos= (today()-ultimo),
+             col=if_else(sincasos < 2, "#d7191c", if_else(sincasos < 5,"#d6604d",
+                   if_else(sincasos < 15, "#a6d96a", "#1a9641")))) %>% 
+     arrange(desc(sincasos),desc(provincia))
+
+   fig <- plot_ly(dias, type="bar", colors = ~unique(col)) 
+   fig <- fig %>% add_trace( x = ~sincasos, y = ~provincia, name= "Días",
+                            color=~col, text=~sincasos, textposition = 'auto',
+                            mode="lines",
+                               showlegend = FALSE,
+                               line = list(width = 15)) %>% 
+      layout(title="Días Transcurridos Sin reportar nuevos casos", 
+             xaxis = list(title = "días"), yaxis=list(title=""))
+   fig
+   
+   
+
+```
+
 
 
 ## Incidencia Acumulada
@@ -1209,7 +1237,7 @@ A continuación se visualiará la evolución en la proporción de los casos dete
 A continuación se visualiará la evolución en la proporción de los casos detectados sobre la cantidad de pruebas analizadas. 
 ```{r test, echo=FALSE, fig.align='center', message=FALSE, warning=FALSE, out.width='100%'}
 
-  test <- argCov %>% select(dia, DescTest, Detectados, Recuperados) %>%
+  test <- argCov %>% select(dia, DescTest, Detectados, Recuperados, MuestraD) %>%
       mutate(total = DescTest + Detectados+ Recuperados)
   test <- test %>% filter(DescTest >= 0) %>%  mutate(prop= round(Detectados/total * 100, 2)) %>% arrange(dia)
  
@@ -1227,7 +1255,7 @@ A continuación se visualiará la evolución en la proporción de los casos dete
   p4 <- plot_ly(test, x = ~dia, y = ~DescTest, type = "bar", name = "Test Negativos") %>% 
             add_trace(y = ~Detectados, name = "Test Positivos") %>% 
         layout(title="Cantidad de Test Realizados", yaxis = list(title = "Acumulado de Pruebas Realizadas"), barmode = "stack")
- p4
+  p4
 
   
 ```
@@ -1307,21 +1335,22 @@ A continuación se muestran la cantidad de casos de COVID-19 confirmados por el 
 
 ## Incidencia Acumulada
 
-La incidencia acumulada (IA) a nivel departamental, considerando la población proyectada por INDEC para el 2020 se observan en el mapa y tabla a continuación
+En Argentina, la tasa de incidencia acumulada nacional es de `r round(sum(argCov$casosD)/45376763 * 100000, 2)` cada 100 mil habitantes. La Incidencia Acumulada de toda la provincia de Entre Ríos es de `r round(sum(covider$cantidad)/sum(poblac_er$poblacion, na.rm = T)*100000, 2)` cada 100.000 habitantes.
 
-En Argentina, la tasa de incidencia acumulada nacional es de `r round(sum(argCov$casosD)/45376763 * 100000, 2)` cada 100 mil habitantes.
+La incidencia acumulada (IA) a nivel departamental, considerando la población proyectada por INDEC para el 2020 se observan en el mapa y tabla a continuación
 
 
 ###  {.tabset  .tabset-fade .tabset-pil}
 #### Mapa
 ```{r casosER}
-   names(poblac_er) <- c("departamento", "poblacion")
+
+
    
    covid_er_ia <- covider %>% left_join(poblac_er, by=c("DEPARTAMENTO"="departamento")) %>% 
        mutate(ia= round(cantidad/poblacion * 100000, 2)) %>% arrange(desc(ia))
 
    highchart() %>%
-    hc_title(text = "<i>Casos de COVID-19 en Entre Ríos</i> ",
+    hc_title(text = "<i>Incidencia Acumulada de COVID-19 en Entre Ríos</i> ",
              margin = 20, align = "center", style = list(color = "#780000", useHTML = TRUE)) %>%
     hc_tooltip(followPointer =  FALSE) %>%
     hc_add_series_map(entrerios, covid_er_ia, name = "Incidencia", value = "ia",

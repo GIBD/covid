@@ -971,7 +971,7 @@ A continuación se muestra la evolución de casos detectados por provincias y la
 
 ### Días Transcurridos
 
-Los días transcurridos dese que el Ministerio de Saludu de Nación no reporta casos para cada una de las provincias son:
+Los días transcurridos dese que el Ministerio de Salud de Nación no reporta casos para cada una de las provincias son:
 
 ```{r diasProv}
 
@@ -995,6 +995,7 @@ Los días transcurridos dese que el Ministerio de Saludu de Nación no reporta c
    
 
 ```
+
 
 
 
@@ -1052,26 +1053,9 @@ Al día de la fecha las incidencias acumuladas por cada 100.000 habitantes en la
 
 
 
-## Casos por Superficie
 
-```{r casosSup}
-   casosSuper <- ia_prov %>% mutate(dens=poblacion/superficie, tasa = cant/superficie) %>% arrange(desc(tasa))
 
-  highchart() %>%
-    hc_title(text = "<i>Casos por Km2 COVID-19 en Argentina</i> ",
-             margin = 20, align = "center", style = list(color = "#780000", useHTML = TRUE)) %>%
-    hc_tooltip(followPointer =  FALSE) %>%
-    hc_add_series_map(argentina, casosSuper, name = "tasa", value = "tasa", joinBy = c("name", "provincia"),
-                      dataLabels = list(enabled = TRUE, format = '{point.properties.woe-name}')) %>%
-    hc_colorAxis(minColor = "#FFAAAA", maxColor = "#780000")  %>%
-    hc_legend(align = "center", x = 0, y = -10) %>%
-    hc_mapNavigation(enabled = TRUE) %>%
-    hc_add_theme(hc_theme_ffx()) %>% 
-    hc_add_annotation(xValue = 0, yValue = 0, title = list(text = 'Fuente: Ministerio Salud - INDEC')) %>% 
-    hc_chart(borderColor = "#780000", borderRadius = 10, borderWidth = 2)
-   
-   
-```
+
 
 ## Letalidad en Argentina
 
@@ -1238,6 +1222,7 @@ A continuación se visualiará la evolución en la proporción de los casos dete
 ```{r test, echo=FALSE, fig.align='center', message=FALSE, warning=FALSE, out.width='100%'}
 
   test <- argCov %>% select(dia, DescTest, Detectados, Recuperados, MuestraD) %>%
+         # mutate(total = DescTest + Detectados)
       mutate(total = DescTest + Detectados+ Recuperados)
   test <- test %>% filter(DescTest >= 0) %>%  mutate(prop= round(Detectados/total * 100, 2)) %>% arrange(dia)
  

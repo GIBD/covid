@@ -715,7 +715,7 @@ edades$grupo <- if_else(edades$edad < 10, "0 - 9",
                 if_else(edades$edad < 70, "60 - 69", 
                 if_else(edades$edad < 80, "70 - 79", "80 o mas"))))))))
 
-edades <- edades %>% group_by(grupo, genero) %>% mutate(total = sum(n)) %>% 
+edades <- edades %>% group_by(grupo, genero) %>% mutate(total = n()) %>% 
    select(grupo, genero, total) %>% unique() %>% ungroup() %>% 
    mutate(prop = round(total/sum(total)*100, 2)) %>% 
    select(grupo, genero, total, prop)
@@ -855,7 +855,9 @@ Gracias al aporte de reunir y disponibilizar los datos de [Sistemas Mapache](htt
     filter(!is.na(casos)) %>% 
     unique()
   
+  
   leaflet(data = deptos_covid) %>% addTiles() %>%
+     # addProviderTiles(proveedorIGN) %>% 
     addProviderTiles(providers$OpenStreetMap) %>% 
     addPolygons( color = "#444444", weight = 1,
                  fillColor = color(deptos_covid$casos), fillOpacity = 0.6,
@@ -1210,8 +1212,6 @@ La evolución y distribución de los casos según el tipo en Argentina es:
 
 ## Test
 
-  
-<!-- #### Tasa de Positividad -->
 
 Desde el día 16/03/2020 el Ministerio de Salud comenzó a informar la cantidad de pruebas diagnósticas y casos descartados de COVID-19.
 A continuación se visualiará la evolución en la proporción de los casos detectados sobre la cantidad de pruebas analizadas, la cantidad de test realizados hasta la fecha y la proporción de la cantidad de test por millón de habitantes

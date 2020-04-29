@@ -209,6 +209,9 @@ sep.miles <- function(x){format(x,big.mark=".")}
        casos_pronvinciales <- casos_pronvinciales[,-c(4:(ncol(casos_pronvinciales)-1))] 
        names(casos_pronvinciales) <- c("provincia", "departamento", "localidad", "cantidad")
     
+       ###
+       provincias_hoy <- read_excel("data/provincias_hoy.xlsx")
+       
        ### ENTRE RIOS
        covid_er <- read_delim("data/entre_rios_casos.csv", ";", escape_double = FALSE, 
                               locale = locale(encoding = "ISO-8859-1"), trim_ws = TRUE)
@@ -751,6 +754,35 @@ El Ministerio diariamente informa la cantidad de casos por provincia pudiendo re
 
 
 ####  {.tabset  .tabset-fade .tabset-pills}
+##### Activos
+La cantidad de casos Activos se ha calculado en base a los informes provinciales de los Ministerios de Salud, considerando los casos confirmados menos los recuperados/altas menos los fallecidos-
+Debido a que no todas las provincias lo informan diariamente pueden existir algunas diferencias con las situaciones actuales.
+
+```{r mapaActivos, echo=FALSE, message=FALSE, warning=FALSE, fig.align='center',  out.height='100%'}
+  activos <- provincias_hoy %>% mutate(activos=confirmados-recuperados-fallecidos) %>%  
+   select(provincia, activos, confirmados, recuperados, fallecidos) 
+
+  colors <- c("#ffffcc", "#ffeda0", "#fed976", "#feb24c", "#fd8d3c", "#fc4e2a", "#e31a1c", "#bd0026", "#800026")
+
+  highchart() %>%
+     hc_title(text = "<i>Casos Activos COVID-19 por Provincia en Argentina</i> - <b>GIBD</b>",
+              margin = 5, align = "center", style = list(color = "#bd0026", useHTML = TRUE, fontWeight = "bold")) %>% 
+          hc_tooltip(followPointer =  FALSE) %>%
+          hc_add_series_map(argentina, activos, name = "Activos",
+                            value = "activos", joinBy = c("name", "provincia"),
+                            dataLabels = list(enabled = TRUE, format = '{point.properties.woe-name}')) %>%
+         hc_colorAxis(stops=color_stops(n=length(colors), colors = colors)) %>%
+          hc_legend(align = "center", x = 0, y = -10) %>%
+          hc_mapNavigation(enabled = TRUE) %>%
+          hc_add_theme(hc_theme_ffx()) %>% 
+          hc_add_annotation(xValue = 0, yValue = 0, title = list(text = 'Fuente: Ministerios de Salud Provinciales')) %>% 
+          hc_chart(borderColor = "#bd0026",
+             borderRadius = 10,
+             borderWidth = 2)
+               
+```
+
+
 ##### Casos
 ```{r mapas, echo=FALSE, message=FALSE, warning=FALSE, fig.align='center'}
   covidArg_hoy <- covidArg %>% 
@@ -810,9 +842,16 @@ El Ministerio diariamente informa la cantidad de casos por provincia pudiendo re
 
 ##### Tabla
 ```{r tabProv, echo=FALSE, message=FALSE, warning=FALSE}
-  covidArg_hoy  %>% kable( col.names =  c("Provincia", "Casos Totales"),
+   
+   tabla <- covidArg_hoy %>% left_join(muertosArg_hoy, by=c("PROVINCIA"="Provincia")) %>% 
+      left_join(activos,  by=c("PROVINCIA"="provincia")) %>% select(PROVINCIA, total.x, total.y, recuperados)
+   names(tabla) <- c("Provincia", "Confirmados", "Fallecidos", "Recuperados") 
+   tabla$Fallecidos <- if_else(is.na(tabla$Fallecidos), 0, as.double(tabla$Fallecidos))
+  
+   tabla  %>%  kable( col.names =  c("Provincia", "Confirmados", "Fallecidos", "Recuperados"),
                            format.args = list( big.mark=".", decimal.mark = ","),
-            align =  c('l', 'c') ) %>%  kable_styling()
+            align =  c('l', 'c', 'c', 'c') ) %>%  kable_styling()
+  
 ```
 
 
@@ -824,7 +863,7 @@ El Ministerio diariamente informa la cantidad de casos por provincia pudiendo re
 ### Distribución por Departamentos
 Gracias al aporte de reunir y disponibilizar los datos de [Sistemas Mapache](https://github.com/SistemasMapache/Covid19arData) y al aporte de muchos usuarios como [@ClariCardozoCas](https://twitter.com/ClariCardozoCas), [@juanjocorrea_ok](https://twitter.com/juanjocorrea_ok) se muestra la distribución de casos a nivel departamental de las provincias: Buenos Aires, Ciudad Autónoma de Buenos Aires, Río Negro, Neuquén, Tucumán,  Santa Fe, Chaco, Salta y Entre Ríos en base a datos propios.
 
-```{r dptoArg,echo=FALSE, message=FALSE, warning=FALSE }
+```{r dptoArg, echo=FALSE, message=FALSE, warning=FALSE}
 
    casos_pronvinciales <- casos_pronvinciales %>% select(provincia, localidad, cantidad)
   

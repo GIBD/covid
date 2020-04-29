@@ -1,0 +1,26 @@
+provincia;fecha;confirmados;recuperados;fallecidos;internados;uti;en estudio;aislados;estudiados;descartados
+Buenos Aires;28/4/2020;1381;265;79;;;;;;
+Catamarca;28/4/2020;0;;;;;;;;
+Chaco;28/4/2020;310;104;13;;3;216;;;2208
+Chubut;26/4/2020;2;;;;;7;1839;;86
+Ciudad de Buenos Aires;;1.039;;;;;;;;
+Córdoba;26/4/2020;277;96;13;62;5;373;;6416;5987
+Corrientes;28/4/2020;47;27;0;;1;10;2081;;
+Entre Ríos;28/4/2020;24;13;0;;1;;;534;
+Formosa;28/4/2020;0;;;;;;;;
+Jujuy;27/4/2020;5;4;;;;1;1454;110;104
+La Pampa;28/4/2020;5;5;;;;;1867;106;101
+La Rioja;28/4/2020;51;9;6;;;;;;
+La Rioja;28/4/2020;50;;;;;;;;
+Mendoza;28/4/2020;75;;;;;;;;
+Misiones;28/4/2020;8;2;1;;;;;451;
+Neuquén;28/4/2020;108;;;;;;;;
+Río Negro;28/4/2020;193;;;;;;;;
+Salta;28/4/2020;4;;;;;;;;
+San Juan;28/4/2020;2;;;;;;;;
+San Luis;28/4/2020;11;;;;;;;;
+Santa Cruz;28/4/2020;48;;;;;;;;
+Santa Fe;28/4/2020;242;;;;;;;;
+Santiago del Estero;25/4/2020;12;5;;;;;218;;119
+Tierra del Fuego;27/4/2020;118;69;;;1;37;;;747
+Tucumán;26/4/2020;35;14;4;;;;;1144;

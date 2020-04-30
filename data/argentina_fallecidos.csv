@@ -19,11 +19,11 @@ fecha;genero;edad;Provincia;Antecedentes;obs
 28/3/2020;Hombre;51;Buenos Aires;no tenía;
 28/3/2020;Mujer;84;Ciudad de Buenos Aires;no tenía;
 29/3/2020;Hombre;58;Buenos Aires;EPOC;
-30/3/2020;Hombre;50;Tucumán;;
+30/3/2020;Hombre;50;Tucumá;;
 30/3/2020;Hombre;58;Buenos Aires;;
 30/3/2020;Hombre;67;Buenos Aires;;
 30/3/2020;Mujer;68;Neuquén;;
-30/3/2020;Mujer;77;Tucumán;"obesidad; diabetes; hipertensión arterial";*Acá informa 24 y yo tengo 25. La diferencia está en que el 30/03 en el informe matutino informan un Hombre de 50 años de Tucumán y en el vespertino no aparece
+30/3/2020;Mujer;77;Tucumá;"obesidad; diabetes; hipertensión arterial";"  informa 24 y yo tengo 25. La diferencia est  en que el 30/03 en el informe matutino informan un Hombre de 50 a¤os de Tucumá y en el vespertino no aparece
 31/3/2020;Mujer;52;La Rioja;;
 31/3/2020;Mujer;63;Chaco;;
 31/3/2020;Mujer;89;Córdoba;;
@@ -62,7 +62,7 @@ fecha;genero;edad;Provincia;Antecedentes;obs
 8/4/2020;Hombre;64;Neuquén;;
 8/4/2020;Hombre;68;Ciudad de Buenos Aires;;
 8/4/2020;Hombre;71;Ciudad de Buenos Aires;;
-8/4/2020;Mujer;61;Tucumán;;
+8/4/2020;Mujer;61;Tucumá;;
 8/4/2020;Mujer;82;Buenos Aires;;
 9/4/2020;Hombre;40;Buenos Aires;;
 9/4/2020;Hombre;60;Buenos Aires;;
@@ -213,3 +213,6 @@ fecha;genero;edad;Provincia;Antecedentes;obs
 29/4/2020;Hombre;37;Buenos Aires;;
 29/4/2020;Hombre;86;Ciudad de Buenos Aires;;
 29/4/2020;Hombre;38;Río Negro;;
+30/4/2020;Hombre;80;Buenos Aires;;
+30/4/2020;Hombre;61;Buenos Aires;;
+30/4/2020;Hombre;48;Ciudad de Buenos Aires;;

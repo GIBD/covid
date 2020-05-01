@@ -204,11 +204,17 @@ sep.miles <- function(x){format(x,big.mark=".")}
   
   ## Dataset Provincias Argentinas
     {
+       # casos_pronvinciales <-read_delim("data/covid_departamental.csv", ";", 
+       #                  escape_double = FALSE, trim_ws = TRUE, locale = locale(encoding = "ISO-8859-1"))
+       # casos_pronvinciales <- casos_pronvinciales[,-c(4:(ncol(casos_pronvinciales)-1))] 
+       # names(casos_pronvinciales) <- c("provincia", "departamento", "localidad", "cantidad")
+    
        casos_pronvinciales <-read_delim("data/covid_departamental.csv", ";", 
                         escape_double = FALSE, trim_ws = TRUE, locale = locale(encoding = "ISO-8859-1"))
-       casos_pronvinciales <- casos_pronvinciales[,-c(4:(ncol(casos_pronvinciales)-1))] 
-       names(casos_pronvinciales) <- c("provincia", "departamento", "localidad", "cantidad")
-    
+       casos_pronvinciales <- casos_pronvinciales[,-c(6:(ncol(casos_pronvinciales)))] 
+       names(casos_pronvinciales) <- c("provincia", "departamento",  "localidad","fecha","cantidad")
+ 
+       
        ###
        provincias_hoy <- read_excel("data/provincias_hoy.xlsx")
        
@@ -860,12 +866,14 @@ Debido a que no todas las provincias lo informan diariamente pueden existir algu
 
 
 
-### Distribución por Departamentos
+
+
+## Distribución por Departamentos
 Gracias al aporte de reunir y disponibilizar los datos de [Sistemas Mapache](https://github.com/SistemasMapache/Covid19arData) y al aporte de muchos usuarios como [@ClariCardozoCas](https://twitter.com/ClariCardozoCas), [@juanjocorrea_ok](https://twitter.com/juanjocorrea_ok) se muestra la distribución de casos a nivel departamental de las provincias: Buenos Aires, Ciudad Autónoma de Buenos Aires, Río Negro, Neuquén, Tucumán,  Santa Fe, Chaco, Salta y Entre Ríos en base a datos propios.
 
 ```{r dptoArg, echo=FALSE, message=FALSE, warning=FALSE}
 
-   casos_pronvinciales <- casos_pronvinciales %>% select(provincia, localidad, cantidad)
+  casos_pronvinciales <- casos_pronvinciales %>% select(provincia, localidad, cantidad)
   
   casos_pronvinciales <- casos_pronvinciales %>% 
     left_join(localidades, by=c("localidad"="nombre", "provincia"="provincia")) %>% unique()
@@ -879,6 +887,9 @@ Gracias al aporte de reunir y disponibilizar los datos de [Sistemas Mapache](htt
   casos_pronvinciales$departamen <- if_else(is.na(casos_pronvinciales$departamen)&
                                               casos_pronvinciales$provincia=="Tucumán",
                                             casos_pronvinciales$localidad, casos_pronvinciales$departamen)
+  casos_pronvinciales$departamen <- if_else(is.na(casos_pronvinciales$departamen)&
+                                              casos_pronvinciales$provincia=="Santiago del Estero",
+                                            casos_pronvinciales$localidad, casos_pronvinciales$departamen)
   
   # vacios <- casos_pronvinciales %>% filter(is.na(departamen))
   
@@ -889,14 +900,14 @@ Gracias al aporte de reunir y disponibilizar los datos de [Sistemas Mapache](htt
     select(provincia, departamen, casos)
   names(casos_pronvinciales) <- c("provincia", "departamento", "casos")
   
+  # deptos <- deptos %>%  left_join(casos_pronvinciales, by=c("provincia"="provincia"))
+  
   deptos_covid <- deptos %>%  
     left_join(casos_pronvinciales, by=c("departamen" = "departamento", "provincia"="provincia")) %>% 
-    filter(!is.na(casos)) %>% 
+    filter(!is.na(casos)) %>%
     unique()
   
-  
   leaflet(data = deptos_covid) %>% addTiles() %>%
-     # addProviderTiles(proveedorIGN) %>% 
     addProviderTiles(providers$OpenStreetMap) %>% 
     addPolygons( color = "#444444", weight = 1,
                  fillColor = color(deptos_covid$casos), fillOpacity = 0.6,
@@ -906,10 +917,10 @@ Gracias al aporte de reunir y disponibilizar los datos de [Sistemas Mapache](htt
                  popup = paste(deptos_covid$provincia, "<br/>",
                                deptos_covid$departamen, ": ", 
                                deptos_covid$casos),
-                 highlightOptions = highlightOptions(color = "white", weight = 2,
-                                                     bringToFront = TRUE))  %>% 
-     addLegend(colors = c('#fdd49e', '#fc8d59', '#d7301f', '#b30000', '#7f0000'), 
-                    labels= c("1-24", "25-49", "50-74", "75 - 99", "100 o más"), position ="bottomright") 
+                 highlightOptions = highlightOptions(color = "white", weight = 2, bringToFront = TRUE))  %>% 
+     addLegend(colors = c("##ffffcc",'#fdd49e', '#fc8d59', '#d7301f', '#b30000', '#7f0000'), 
+                    labels= c("0", "1-24", "25-49", "50-74", "75 - 99", "100 o más"), position ="bottomright") 
+  
              
 ```
 

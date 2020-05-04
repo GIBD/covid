@@ -24,24 +24,24 @@ runtime: shiny
 ```
 
 ```{r importar, message=FALSE, warning=FALSE, include=FALSE}
-library(readr)
-library(dplyr)
-library(tidyr)
-library(ggplot2)
-library(lubridate)
-library(knitr)
-library(kableExtra)
-library(highcharter)
-library(rjson)
-library(plotly)
-library(gganimate)
-library(stringr)
-library(leaflet)
-library(sf)
-library(tmap)
-library(googlesheets4)
-library(readxl)
-# library(shiny)
+   library(readr)
+   library(dplyr)
+   library(tidyr)
+   library(ggplot2)
+   library(lubridate)
+   library(knitr)
+   library(kableExtra)
+   library(highcharter)
+   library(rjson)
+   library(plotly)
+   library(gganimate)
+   library(stringr)
+   library(leaflet)
+   library(sf)
+   library(tmap)
+   library(googlesheets4)
+   library(readxl)
+   # library(shiny)
 
 sep.miles <- function(x){format(x,big.mark=".")}
  
@@ -60,9 +60,9 @@ sep.miles <- function(x){format(x,big.mark=".")}
       # covid19_m <- read_csv("https://github.com/CSSEGISandData/COVID-19/blob/master/csse_covid_19_data/csse_covid_19_time_series/time_series_covid19_deaths_global.csv")
       covid19_m <- covid19_m[-1]
       
-     # Recuperados
-    #   covid_19_r <- read_csv("https://github.com/CSSEGISandData/COVID-19/raw/master/csse_covid_19_data/csse_covid_19_time_series/time_series_covid19_recovered_global.csv")
-    # covid_19_r <- covid_19_r[-1]
+    # Recuperados
+      covid_19_r <- read_csv("https://github.com/CSSEGISandData/COVID-19/raw/master/csse_covid_19_data/csse_covid_19_time_series/time_series_covid19_recovered_global.csv")
+    covid_19_r <- covid_19_r[-1]
     }  
 
   ## Mapas y Poblaciones
@@ -70,10 +70,16 @@ sep.miles <- function(x){format(x,big.mark=".")}
       argentina <- fromJSON(file = "data/mapas/ar-all.geo.json")
       sud <- fromJSON(file="data/mapas/south-america.geo.json")
       world <- fromJSON(file="data/mapas/world.geo.json")
-      entrerios <- fromJSON(file="data/mapas/entrerios_dpto.geo.json")
+   
       deptos <- st_read(dsn ="data/mapas/departamentos.shp") 
+      amba_dptos <- st_read(dsn ="data/mapas/AMBA_dptos.shp")
+     
+      entrerios <- fromJSON(file="data/mapas/entrerios_dpto.geo.json")
       deptos_er <- st_read(dsn ="data/mapas/departamentos_entrerios.shp") 
-    
+  
+      amba_loc <-read_delim("data/poblaciones/AMBA.csv", ";", escape_double = FALSE, 
+                            locale = locale(encoding = "ISO-8859-1"), trim_ws = TRUE)
+         
       localidades <- read_csv("data/mapas/localidades.csv", 
                               locale = locale(encoding = "ISO-8859-1"))
       
@@ -108,6 +114,24 @@ sep.miles <- function(x){format(x,big.mark=".")}
         arrange(pais,fecha) %>% 
         mutate(dia= 1:n())
       
+      mundial_r <- covid_19_r[,-c(2,3)]
+         
+      mundial_r <- mundial_r %>% gather(fecha, recuperados, 2:max(col(mundial_r)), -`Country/Region`) 
+      names(mundial_r) <- c('pais', 'fecha', 'recuperados')
+      mundial_r$pais <- if_else(mundial_r$pais==	'US', 'United States of America', mundial_r$pais)
+      
+      mundial_r <- mundial_r %>% group_by(pais, fecha) %>% 
+        mutate(recuperados =sum(recuperados)) %>% select(pais, fecha, recuperados) %>% unique()
+      
+      mundial_r$fecha <-paste0(mundial_r$fecha,'20')
+      mundial_r$fecha <-as.Date(mundial_r$fecha ,"%m/%d/%Y")
+      
+      mundial_r<-mundial_r %>%
+        filter(recuperados > 0) %>% 
+        group_by(pais) %>% 
+        arrange(pais,fecha) %>% 
+        mutate(dia= 1:n())
+      
       mundial_m <- covid19_m[,-c(2,3)]
          
       mundial_m <- mundial_m %>% gather(fecha, casos, 2:max(col(mundial_m)), -`Country/Region`) 
@@ -126,18 +150,24 @@ sep.miles <- function(x){format(x,big.mark=".")}
         arrange(pais,fecha) %>% 
         mutate(dia= 1:n())
       
-      mundial_ambos <- mundial %>% 
-        left_join(mundial_m, by=c('pais', 'fecha')) %>%  select(pais, fecha, dia.x, casos, muertes)
-      mundial_ambos$muertes <- if_else(is.na(mundial_ambos$muertes), 0, mundial_ambos$muertes)
+       mundial_ambos <- mundial %>% 
+        left_join(mundial_m, by=c('pais', 'fecha')) %>% 
+        left_join(mundial_r, by=c('pais', 'fecha')) %>%  select(pais, fecha, dia.x, casos, muertes, recuperados)
       
-      names(mundial_ambos) <- c("pais", "fecha", "dia", "casos", "muertes")
+      mundial_ambos$muertes <- if_else(is.na(mundial_ambos$muertes), 0, mundial_ambos$muertes)
+      mundial_ambos$recuperados <- if_else(is.na(mundial_ambos$recuperados), 0, mundial_ambos$recuperados)
+       
+      names(mundial_ambos) <- c("pais", "fecha", "dia", "casos", "muertes", "recuperados")
       mundial_ambos$fecha <-as.Date(mundial_ambos$fecha ,"%m/%d/%Y")
       
-      rm(mundial_m, mundial)
+      
+      rm(mundial_m, mundial, mundial_r)
+    
       }
     
   ## Dataset Paises mas afectados y Arg
-    { mayores <- c('China', 'France', 'US', 'Spain', 'Italy',  'Germany', 'Argentina')#, 'Korea, South')
+    { 
+       mayores <- c('China', 'France', 'US', 'Spain', 'Italy',  'Germany', 'Argentina')#, 'Korea, South')
       
       afectados <- mundial_ambos %>% 
         filter(pais %in% mayores) %>% 
@@ -147,7 +177,7 @@ sep.miles <- function(x){format(x,big.mark=".")}
         afectados$muertes <- if_else(is.na(afectados$muertes), 0, afectados$muertes)
         
         afectados$pais <- gsub("US", "EEUU", afectados$pais)
-        afectados$pais <- gsub("Spain", "España", afectados$pais)
+        afectados$pais <- gsub("Spain", "EspaÃ±a", afectados$pais)
         afectados$pais <- gsub("Korea, South", "Corea del Sur", afectados$pais)
         afectados$pais <- gsub("Italy", "Italia", afectados$pais)
         afectados$pais <- gsub("Germany", "Alemania", afectados$pais)
@@ -171,7 +201,7 @@ sep.miles <- function(x){format(x,big.mark=".")}
           for(i in 8:max(sudamerica$dia[sudamerica$pais==p])){
             semanal <- sum(sudamerica$nuevos[((sudamerica[,"pais"]==p)&
                                                 (sudamerica[,"dia"]<=i)&(sudamerica[,"dia"]>=(i-6)))])
-            sudamerica$semanal[((sudamerica[,"pais"]==p) & 
+            sudamerica$semanal[((sudamerica[,"pais"]==p) &
                                   (sudamerica[,"dia"]==i))] <- if_else(semanal >0, semanal, 0)
           }}
 
@@ -193,30 +223,27 @@ sep.miles <- function(x){format(x,big.mark=".")}
                                                  encoding = "ISO-8859-1"), trim_ws = TRUE)
        
       ### Detalle por provincias
-      covidArg <-read_delim("data/casos_provincias.csv", ";", 
+      covidArg <- read_delim("data/casos_provincias.csv", ";", 
                             escape_double = FALSE, trim_ws = TRUE, locale = locale(encoding = "ISO-8859-1"))
       covidArg$FECHA <- as.Date(covidArg$FECHA, '%d/%m/%Y')
     
       ### Detalle fallecidos
       muertosArg <- read_delim("data/argentina_fallecidos.csv", ";", 
                                escape_double = FALSE, trim_ws = TRUE, locale = locale(encoding = "ISO-8859-1"))
+      
    }
   
   ## Dataset Provincias Argentinas
     {
-       # casos_pronvinciales <-read_delim("data/covid_departamental.csv", ";", 
-       #                  escape_double = FALSE, trim_ws = TRUE, locale = locale(encoding = "ISO-8859-1"))
-       # casos_pronvinciales <- casos_pronvinciales[,-c(4:(ncol(casos_pronvinciales)-1))] 
-       # names(casos_pronvinciales) <- c("provincia", "departamento", "localidad", "cantidad")
     
-       casos_pronvinciales <-read_delim("data/covid_departamental.csv", ";", 
-                        escape_double = FALSE, trim_ws = TRUE, locale = locale(encoding = "ISO-8859-1"))
-       casos_pronvinciales <- casos_pronvinciales[,-c(6:(ncol(casos_pronvinciales)))] 
-       names(casos_pronvinciales) <- c("provincia", "departamento",  "localidad","fecha","cantidad")
+       casos_pronvinciales <- read_excel("data/covid_departamental.xlsx")
+           names(casos_pronvinciales) <- c("provincia", "departamento",  "localidad","fecha",
+                                       "cantidad", "recuperados", "fallecidos", "internados", 
+                                       "uti", "enestudio", "aislados", "estudiados", "descartados")
  
        
        ###
-       provincias_hoy <- read_excel("data/provincias_hoy.xlsx")
+       # provincias_hoy <- read_excel("data/provincias_hoy.xlsx")
        
        ### ENTRE RIOS
        covid_er <- read_delim("data/entre_rios_casos.csv", ";", escape_double = FALSE, 
@@ -228,18 +255,21 @@ sep.miles <- function(x){format(x,big.mark=".")}
     }
   
      color <- function(d){
-          c <- if_else(d < 25, '#fdd49e',
+          c <- if_else(d==0, '#FFFFFF',
+               if_else(d < 25, '#fdd49e',
                if_else(d < 50, '#fc8d59',
                if_else(d < 75, '#d7301f',
                if_else(d < 100, '#b30000',
-                       "#7f0000"))))
-               # if_else(d < 125, '#FEB24C',
-               # if_else(d < 150, '#FED976','#FFEDA0')))))))
+                       "#7f0000")))))
          return(c)}
   
+       urlign <- "https://wms.ign.gob.ar/geoserver/gwc/service/tms/1.0.0/capabaseargenmap@EPSG%3A3857@png/{z}/{x}/{-y}.png"
+       
 ```
 
-> Análisis realizado por el Grupo de Investigación en Bases de Datos - UTN - FRCU 
+
+
+> Análisis realizado por el Grupo de Investigación en Bases de Datos - UTN - FRCU
 > <http://www.frcu.utn.edu.ar/gibd>
 >
 > gibd@frcu.utn.edu.ar
@@ -254,12 +284,40 @@ Las muertes por la pandemia alcanzan las **`r   sep.miles(as.integer(sum(covid19
 
 
 ###  {.tabset  .tabset-fade .tabset-pills}
-#### Detectados
-```{r mapaMundoCasos, echo=FALSE, message=FALSE, warning=FALSE, paged.print=FALSE}
+#### Activos
+```{r mapaMundoActivos, echo=FALSE, message=FALSE, warning=FALSE, paged.print=FALSE}
 
       mundialHoy <- mundial_ambos %>% 
         group_by(pais) %>%  
-        filter(dia==max(dia)) %>% select(pais, dia, fecha, casos)
+        filter(dia==max(dia)) %>% mutate(activos=casos-muertes-recuperados) #%>% select(pais, dia, fecha, activos)
+      
+      colors <- c("#ffffcc", "#ffeda0", "#fed976", "#feb24c", 
+                  "#fd8d3c", "#fc4e2a", "#e31a1c", "#bd0026", "#800026")
+
+      highchart() %>% 
+         hc_title(text = "<i>Casos Activos COVID-19</i>",
+                  margin = 20, align = "center", style = list(color = "#800026", useHTML = TRUE)) %>%
+         hc_tooltip(followPointer =  FALSE) %>%
+         hc_add_series_map(world, mundialHoy, name = "Activos", value = "activos", joinBy = c("name", "pais"),
+                      dataLabels = list(enabled = TRUE, format = '{point.properties.woe-name}')) %>%
+         hc_colorAxis(stops=color_stops(n=length(colors), colors = colors)) %>%
+         hc_legend(align = "center", x = 0, y = -10) %>%
+         hc_mapNavigation(enabled = TRUE) %>%
+         hc_add_theme(hc_theme_ffx()) %>%
+         hc_add_annotation(xValue = 0, yValue = 0,
+                           title = list(text = 'Fuente: Johns Hopkins. <p> Elaborado por: GIBD UTN')) %>%
+         hc_chart(borderColor = "#800026", borderRadius = 10, borderWidth = 2)
+      
+      
+```
+
+
+#### Detectados
+```{r mapaMundoCasos, echo=FALSE, message=FALSE, warning=FALSE, paged.print=FALSE}
+
+      # mundialHoy <- mundial_ambos %>% 
+      #   group_by(pais) %>%  
+      #   filter(dia==max(dia)) %>% select(pais, dia, fecha, casos)
       
       highchart() %>% 
          hc_title(text = "<i>Casos Acumulados COVID-19</i>",
@@ -271,47 +329,73 @@ Las muertes por la pandemia alcanzan las **`r   sep.miles(as.integer(sum(covid19
          hc_legend(align = "center", x = 0, y = -10) %>%
          hc_mapNavigation(enabled = TRUE) %>%
          hc_add_theme(hc_theme_ffx()) %>%
-         hc_add_annotation(xValue = 0, yValue = 0, title = list(text = 'Fuente: Johns Hopkins. <p> Elaborado por: GIBD UTN')) %>%
+         hc_add_annotation(xValue = 0, yValue = 0, 
+                           title = list(text = 'Fuente: Johns Hopkins. <p> Elaborado por: GIBD UTN')) %>%
          hc_chart(borderColor = "#08338F", borderRadius = 10, borderWidth = 2)
 ```
 
 #### Fallecidos
 ```{r mapaMundoMuertes, echo=FALSE, message=FALSE, warning=FALSE, paged.print=FALSE}
 
-      mundialMHoy <- mundial_ambos %>% 
-        group_by(pais) %>%  
-        filter(dia==max(dia)) %>% 
-        select(pais, dia, fecha, muertes) 
+      # mundialMHoy <- mundial_ambos %>% 
+      #   group_by(pais) %>%  
+      #   filter(dia==max(dia)) %>% 
+      #   select(pais, dia, fecha, muertes) 
 
       highchart() %>% 
          hc_title(text = "<i>Fallecidos COVID-19</i>",
                   margin = 20, align = "center", style = list(color = "#780000", useHTML = TRUE)) %>%
          hc_tooltip(followPointer =  FALSE) %>%
-         hc_add_series_map(world, mundialMHoy, name = "Muertes", value = "muertes", joinBy = c("name", "pais"),
+         hc_add_series_map(world, mundialHoy, name = "Muertes", value = "muertes", joinBy = c("name", "pais"),
                       dataLabels = list(enabled = TRUE, format = '{point.properties.woe-name}')) %>%
          hc_colorAxis(minColor = "#FFAAAA", maxColor = "#780000")  %>%
          hc_legend(align = "center", x = 0, y = -10) %>%
          hc_mapNavigation(enabled = TRUE) %>%
          hc_add_theme(hc_theme_ffx()) %>%
-         hc_add_annotation(xValue = 0, yValue = 0, title = list(text = 'Fuente: Johns Hopkins. <p> Elaborado por: GIBD UTN')) %>%
+         hc_add_annotation(xValue = 0, yValue = 0, 
+                           title = list(text = 'Fuente: Johns Hopkins. <p> Elaborado por: GIBD UTN')) %>%
          hc_chart(borderColor = "#780000", borderRadius = 10, borderWidth = 2)
        
 ```
 
-#### Letalidad
-```{r letalidadMundo, echo=FALSE, message=FALSE, warning=FALSE, paged.print=FALSE}
 
-      letalHoy <- mundial_ambos %>% 
+
+## Letalidad
+###  {.tabset  .tabset-fade .tabset-pills}
+#### Curvas
+```{r grafLetalidadMundo, echo=FALSE, message=FALSE, warning=FALSE, paged.print=FALSE}
+
+      letal <- mundial_ambos %>% 
         group_by(pais) %>% 
-        filter(dia==max(dia)) %>%
-        mutate(letalidad = round(muertes/casos * 100, 2)) %>% unique() %>% arrange(desc(letalidad))
+        # filter(dia==max(dia) & muertes>=100) %>%
+         filter(muertes>=100) %>%
+        mutate(letalidad = round(muertes/casos * 100, 2)) %>% unique() %>% arrange(pais, dia)
       
-      letalHoy %>% select(pais, fecha, casos, muertes, letalidad) %>% filter(letalidad >0) %>% 
-          kable( col.names =  c("País", "Fecha", "Casos",  "Fallecidos", "Tasa Letalidad"),
-            align =  c('l', 'c', 'c', 'c', 'c')  , format.args = list( big.mark=".", decimal.mark = ",")) %>%    
-        kable_styling()
+        fig <- plot_ly(letal, x = ~dia, y = ~letalidad, color = ~pais, type = "scatter", mode='lines+markers') 
+  fig <- layout(fig, yaxis = list(type = "log"))
+  fig
+
        
 ```
+
+#### Tabla
+```{r letalidadMundo, echo=FALSE, message=FALSE, warning=FALSE, paged.print=FALSE}
+   
+      letalHoy <- mundial_ambos %>% 
+        group_by(pais) %>% 
+        filter(dia==max(dia) & muertes>=100) %>%
+        mutate(letalidad = round(muertes/casos * 100, 2)) %>% unique() %>% arrange(desc(letalidad), pais)
+      
+   letalHoy %>% select(pais, fecha, casos, muertes, letalidad) %>% filter(letalidad >0) %>% 
+   kable( col.names =  c("País", "Fecha", "Casos",  "Fallecidos", "Tasa Letalidad"),
+          align =  c('l', 'c', 'c', 'c', 'c')  , format.args = list( big.mark=".", decimal.mark = ",")) %>% 
+   kable_styling()
+
+   rm(covid19, covid19_m, covid_19_r)
+   rm(letalHoy)
+       
+```
+
 
 ## Evolución por fecha
 En el siguiente gráfico se puede analizar la velocidad y magnitud que ha tenido la propagación del Covid-19 en los países más afectados hasta la fecha indicada y Argentina. 
@@ -572,15 +656,16 @@ Se puede observar que casi todos los países siguen un camino muy similar de cre
 
 ###  {.tabset  .tabset-fade .tabset-pills}
 #### Sudamérica
-```{r dinamico, echo=FALSE, fig.align='center', fig.show='animate', message=FALSE, warning=FALSE, paged.print=FALSE}
-
+ <!-- ```{r dinamico, echo=FALSE, fig.align='center', fig.show='animate', message=FALSE, warning=FALSE, paged.print=FALSE} -->
+```{r dinamico, echo=FALSE, fig.align='center',message=FALSE, warning=FALSE, paged.print=FALSE}
 	avance <- sudamerica %>% group_by(pais) %>% filter(dia != max(dia))
    
-	dinamico <- ggplot(avance) +
+	# dinamico <- 
+	   ggplot(avance) +
 	  geom_line(aes(casos, semanal, group=pais, color=pais), size=1)+ scale_y_log10() + scale_x_log10() 
 
-	dinamico <- dinamico + transition_reveal(casos)
-	animate(dinamico, renderer = ffmpeg_renderer(format = "webm"))
+	# dinamico <- dinamico + transition_reveal(casos)
+	# animate(dinamico, renderer = ffmpeg_renderer(format = "webm"))
 ```
 
 #### Por país
@@ -765,9 +850,15 @@ La cantidad de casos Activos se ha calculado en base a los informes provinciales
 Debido a que no todas las provincias lo informan diariamente pueden existir algunas diferencias con las situaciones actuales.
 
 ```{r mapaActivos, echo=FALSE, message=FALSE, warning=FALSE, fig.align='center',  out.height='100%'}
-  activos <- provincias_hoy %>% mutate(activos=confirmados-recuperados-fallecidos) %>%  
-   select(provincia, activos, confirmados, recuperados, fallecidos) 
+ activos <- casos_pronvinciales %>%filter(departamento == "TOTAL GENERAL") %>%  mutate(activos = cantidad-recuperados-fallecidos) %>%  
+   select(provincia, activos, cantidad, recuperados, fallecidos) 
 
+   activos$activos <- if_else(is.na(activos$activos), 0, activos$activos)
+ 
+   activos$recuperados <- if_else(is.na(activos$recuperados), 0, activos$recuperados)
+   activos$provincia <- if_else(activos$provincia=="Tierra del Fuego, Antártida e Islas del Atlántico Sur", "Tierra del Fuego", activos$provincia)
+   activos$provincia <- if_else(activos$provincia=="Ciudad Autónoma de Buenos Aires", "Ciudad de Buenos Aires", activos$provincia)
+   
   colors <- c("#ffffcc", "#ffeda0", "#fed976", "#feb24c", "#fd8d3c", "#fc4e2a", "#e31a1c", "#bd0026", "#800026")
 
   highchart() %>%
@@ -864,51 +955,52 @@ Debido a que no todas las provincias lo informan diariamente pueden existir algu
 
 
 
-
-
-
-
 ## Distribución por Departamentos
 Gracias al aporte de reunir y disponibilizar los datos de [Sistemas Mapache](https://github.com/SistemasMapache/Covid19arData) y al aporte de muchos usuarios como [@ClariCardozoCas](https://twitter.com/ClariCardozoCas), [@juanjocorrea_ok](https://twitter.com/juanjocorrea_ok) se muestra la distribución de casos a nivel departamental de las provincias: Buenos Aires, Ciudad Autónoma de Buenos Aires, Río Negro, Neuquén, Tucumán,  Santa Fe, Chaco, Salta y Entre Ríos en base a datos propios.
 
 ```{r dptoArg, echo=FALSE, message=FALSE, warning=FALSE}
-
-  casos_pronvinciales <- casos_pronvinciales %>% select(provincia, localidad, cantidad)
+   
+     casos_pronvincialesT <- casos_pronvinciales %>% 
+   # filter(departamento != "TOTAL GENERAL") %>%  
+   select(provincia, localidad, cantidad) 
   
-  casos_pronvinciales <- casos_pronvinciales %>% 
+  casos_pronvincialesT <- casos_pronvincialesT %>% 
     left_join(localidades, by=c("localidad"="nombre", "provincia"="provincia")) %>% unique()
   
-  casos_pronvinciales$departamen <- if_else(is.na(casos_pronvinciales$departamen)&
-                                              casos_pronvinciales$provincia=="Buenos Aires",
-                                            casos_pronvinciales$localidad, casos_pronvinciales$departamen)
-  casos_pronvinciales$departamen <- if_else(is.na(casos_pronvinciales$departamen)&
-                                              casos_pronvinciales$provincia=="Ciudad Autónoma de Buenos Aires",
-                                            casos_pronvinciales$localidad, casos_pronvinciales$departamen)
-  casos_pronvinciales$departamen <- if_else(is.na(casos_pronvinciales$departamen)&
-                                              casos_pronvinciales$provincia=="Tucumán",
-                                            casos_pronvinciales$localidad, casos_pronvinciales$departamen)
-  casos_pronvinciales$departamen <- if_else(is.na(casos_pronvinciales$departamen)&
-                                              casos_pronvinciales$provincia=="Santiago del Estero",
-                                            casos_pronvinciales$localidad, casos_pronvinciales$departamen)
+  casos_pronvincialesT$departamen <- if_else(is.na(casos_pronvincialesT$departamen)&
+                                              casos_pronvincialesT$provincia=="Buenos Aires",
+                                            casos_pronvincialesT$localidad, casos_pronvincialesT$departamen)
+  casos_pronvincialesT$departamen <- if_else(is.na(casos_pronvincialesT$departamen)&
+                                              casos_pronvincialesT$provincia=="Ciudad Autónoma de Buenos Aires",
+                                            casos_pronvincialesT$localidad, casos_pronvincialesT$departamen)
+  casos_pronvincialesT$departamen <- if_else(is.na(casos_pronvincialesT$departamen)&
+                                              casos_pronvincialesT$provincia=="Tucumán",
+                                            casos_pronvincialesT$localidad, casos_pronvincialesT$departamen)
+  casos_pronvincialesT$departamen <- if_else(is.na(casos_pronvincialesT$departamen)&
+                                              casos_pronvincialesT$provincia=="Santiago del Estero",
+                                            casos_pronvincialesT$localidad, casos_pronvincialesT$departamen)
   
   # vacios <- casos_pronvinciales %>% filter(is.na(departamen))
   
-  casos_pronvinciales <- casos_pronvinciales %>%
+  casos_pronvincialesT <- casos_pronvincialesT %>%
     ungroup() %>% 
     group_by(provincia, departamen) %>% 
     mutate(casos = sum(cantidad))%>% unique() %>% 
     select(provincia, departamen, casos)
-  names(casos_pronvinciales) <- c("provincia", "departamento", "casos")
+  names(casos_pronvincialesT) <- c("provincia", "departamento", "casos")
   
-  # deptos <- deptos %>%  left_join(casos_pronvinciales, by=c("provincia"="provincia"))
+  provincias_casos <- casos_pronvincialesT %>% group_by(provincia) %>% 
+     select(provincia) %>% unique() %>% ungroup()
+  deptos <- deptos %>%  right_join(provincias_casos , by=c("provincia"="provincia"))
   
   deptos_covid <- deptos %>%  
-    left_join(casos_pronvinciales, by=c("departamen" = "departamento", "provincia"="provincia")) %>% 
-    filter(!is.na(casos)) %>%
+    left_join(casos_pronvincialesT, by=c("departamen" = "departamento", "provincia"="provincia")) %>% 
     unique()
   
-  leaflet(data = deptos_covid) %>% addTiles() %>%
-    addProviderTiles(providers$OpenStreetMap) %>% 
+  deptos_covid$casos<- if_else(is.na(deptos_covid$casos), 0, deptos_covid$casos)
+     
+  leaflet(data = deptos_covid) %>%
+         addTiles(urlTemplate = urlign, attribution="IGN") %>% 
     addPolygons( color = "#444444", weight = 1,
                  fillColor = color(deptos_covid$casos), fillOpacity = 0.6,
                  label = paste(deptos_covid$provincia, ", ",
@@ -918,11 +1010,79 @@ Gracias al aporte de reunir y disponibilizar los datos de [Sistemas Mapache](htt
                                deptos_covid$departamen, ": ", 
                                deptos_covid$casos),
                  highlightOptions = highlightOptions(color = "white", weight = 2, bringToFront = TRUE))  %>% 
-     addLegend(colors = c("##ffffcc",'#fdd49e', '#fc8d59', '#d7301f', '#b30000', '#7f0000'), 
+     addLegend(colors = c('#FFFFFF','#fdd49e', '#fc8d59', '#d7301f', '#b30000', '#7f0000'), 
                     labels= c("0", "1-24", "25-49", "50-74", "75 - 99", "100 o más"), position ="bottomright") 
   
              
 ```
+
+
+
+
+### AMBA
+```{r dptoAMBA, echo=FALSE, message=FALSE, warning=FALSE}
+
+   amba <-amba_loc %>% left_join(casos_pronvinciales, by=c("provincia"="provincia", "departamento"="localidad")) %>%
+  select(provincia, departamento, cantidad, fallecidos, recuperados)
+
+  names(amba) <- c("provincia", "localidad", "cantidad", "fallecidos", "recuperados")
+  amba$localidad <- gsub("TOTAL GENERAL", "Ciudad Autónoma de Buenos Aires",  amba$localidad )
+  
+  amba <- amba %>% 
+    left_join(localidades, by=c("localidad"="nombre", "provincia"="provincia")) %>% unique() %>% 
+    select(provincia, departamen, localidad, cantidad, fallecidos, recuperados)
+  
+  amba$departamen <- if_else(is.na(amba$departamen)& amba$provincia=="Buenos Aires",
+                                            amba$localidad, amba$departamen)
+  
+  deptos_covid <- amba_dptos %>%  
+    left_join(amba, by=c("departam_1" = "departamen", "provincia_"="provincia")) %>% 
+    unique() 
+ 
+  deptos_covid$cantidad<- if_else(is.na(deptos_covid$cantidad), 0, 
+                                  as.double(deptos_covid$cantidad))
+  deptos_covid$recuperados<- if_else(is.na(deptos_covid$recuperados), 0,
+                                     as.double(deptos_covid$recuperados))
+  deptos_covid$fallecidos<- if_else(is.na(deptos_covid$fallecidos), 0,
+                                    as.double(deptos_covid$fallecidos))
+  
+  tabla <- amba %>% mutate(casost=sum(cantidad), 
+                           muertesT=sum(fallecidos, na.rm = T),
+                           recuperadosT=sum(recuperados, na.rm = T)) %>% 
+    select(casost, muertesT, recuperadosT) %>% unique()
+  
+  paisT <- argCov %>% filter(dia==max(dia)) %>% select(Detectados, Fallecidos, Recuperados)
+
+  
+
+  
+  
+```
+
+En la actualidad el Area Metropolitana concentra un `r round(tabla$casost/paisT$Detectados*100, 2)` % de los casos confirmados por COVID-19 en todo el país y un `r round(tabla$muertesT/paisT$Fallecidos*100, 2)` % de los fallecidos. Es por ello que a continuación se muestra aparte el mapa del AMBA.
+
+```{r mapaAmba, echo=FALSE, message=FALSE, warning=FALSE}
+ 
+  leaflet(data = deptos_covid) %>%      
+   addTiles(urlTemplate = urlign ) %>% 
+    addPolygons( color = "#444444", weight = 1,
+                 fillColor = color(deptos_covid$cantidad), fillOpacity = 0.6,
+                 popup = paste(deptos_covid$provincia_, "  ", deptos_covid$departam_1,
+                               " <br/>- confirmados ", deptos_covid$cantidad,
+                               " <br/>- recuperados ",deptos_covid$recuperados,
+                               " <br/>- fallecidos ",deptos_covid$fallecidos),
+                 highlightOptions = highlightOptions(color = "white", weight = 2, bringToFront = TRUE))  %>% 
+     addLegend(colors = c('#FFFFFF','#fdd49e', '#fc8d59', '#d7301f', '#b30000', '#7f0000'), 
+                    labels= c("0", "1-24", "25-49", "50-74", "75 - 99", "100 o más"), 
+               position ="bottomright") 
+  
+
+rm(deptos_covid, deptos, casos_pronvincialesT, casos_pronvinciales)
+```
+
+
+
+
 
 
 
@@ -954,17 +1114,7 @@ A continuación se muestra la evolución de casos detectados por provincias y la
   
   names(tabla_prov) <- c("provincia", "fecha", "tipo", "cant")
  
-  # tabla_prov %>%
-  #   ggplot(aes(x=fecha, y=cant, group=tipo, color=tipo))+
-  #   geom_line( show.legend=FALSE) +
-  #   labs(title="", # x='día',
-  #        y="Cantidad de casos", caption="Datos: Min. Salud Arg.") +
-  #     theme(
-  #       axis.text.x = element_text(colour="grey20", size=7, angle=45, hjust=.5, vjust=.5),
-  #       axis.text.y = element_text(colour="grey20", size=7),
-  #       text=element_text(size=9, family="Arial")) +
-  #    facet_wrap(~provincia,  ncol=5)
-  
+ 
   p <- tabla_prov %>%
     filter(cant>0&tipo=="acumulados") %>% 
     group_by(provincia) %>% arrange(fecha) %>% mutate(dia1 = row_number()) 
@@ -1131,7 +1281,7 @@ La tasa de Letalidad a nivel nacional ha evolucionado como lo muestra la siguien
 
 El `r round(nrow(muertosArg[muertosArg$genero=="Hombre", ])/nrow(muertosArg) * 100, 1)` % de los fallecidos son Hombres, mientras que el `r round(nrow(muertosArg[muertosArg$genero=="Mujer", ])/nrow(muertosArg) * 100, 1)` % restante corresponde a Mujeres.
 
-La edad media de los pacientes fallecidos es de `r round(mean(muertosArg$edad), 0)` años, y en particular la edad media de los Hombres fallecidos es de `r round(mean(muertosArg$edad[muertosArg$genero=="Hombre"]), 0)` años y en la Mujeres de `r round(mean(muertosArg$edad[muertosArg$genero=="Mujer"]), 0)` años.
+La edad media de los pacientes fallecidos es de `r round(mean(muertosArg$edad), 0)` aÃ±os, y en particular la edad media de los Hombres fallecidos es de `r round(mean(muertosArg$edad[muertosArg$genero=="Hombre"]), 0)` aÃ±os y en la Mujeres de `r round(mean(muertosArg$edad[muertosArg$genero=="Mujer"]), 0)` aÃ±os.
 
 En el siguiente gráfico se observa la distribución de los pacientes fallecidos por sexo y edad.
 
@@ -1353,7 +1503,8 @@ A continuación se muestran la cantidad de casos de COVID-19 confirmados por el 
     select(LOCALIDAD, Lat, Long, cant) %>% unique() %>% ungroup()
   
   leaflet() %>% addTiles() %>% 
-      addProviderTiles(providers$OpenStreetMap) %>% 
+      # addProviderTiles(providers$OpenStreetMap) %>% 
+         addTiles(urlTemplate = urlign ) %>% 
       addPolygons(data=deptos_er, fill=FALSE, weight = 1, color = "#000")  %>% 
       addCircleMarkers(data=localidades_er,  lat = localidades_er$Lat, lng = localidades_er$Long, 
                        radius = ~cant*3, weight = 1, color = "red", 

@@ -1568,21 +1568,21 @@ A continuación se muestran la cantidad de casos de COVID-19 confirmados por el 
 
 
 
-#### Por Ciudad
-```{r locER, echo=FALSE, message=FALSE, warning=FALSE, paged.print=FALSE}
- 
-  localidades_er <- covid_er %>% group_by(Lat, Long) %>% mutate(cant=n()) %>% 
-    select(LOCALIDAD, Lat, Long, cant) %>% unique() %>% ungroup()
-  
-  leaflet() %>% addTiles() %>% 
-      # addProviderTiles(providers$OpenStreetMap) %>% 
-         addTiles(urlTemplate = urlign ) %>% 
-      addPolygons(data=deptos_er, fill=FALSE, weight = 1, color = "#000")  %>% 
-      addCircleMarkers(data=localidades_er,  lat = localidades_er$Lat, lng = localidades_er$Long, 
-                       radius = ~cant*3, weight = 1, color = "red", 
-                       popup = paste(localidades_er$LOCALIDAD, ": ",localidades_er$cant)) 
-    
-```
+<!-- #### Por Ciudad -->
+<!-- ```{r locER, echo=FALSE, message=FALSE, warning=FALSE, paged.print=FALSE} -->
+
+<!--   localidades_er <- covid_er %>% group_by(Lat, Long) %>% mutate(cant=n()) %>%  -->
+<!--     select(LOCALIDAD, Lat, Long, cant) %>% unique() %>% ungroup() -->
+
+<!--   leaflet() %>% addTiles() %>%  -->
+<!--       # addProviderTiles(providers$OpenStreetMap) %>%  -->
+<!--          addTiles(urlTemplate = urlign ) %>%  -->
+<!--       addPolygons(data=deptos_er, fill=FALSE, weight = 1, color = "#000")  %>%  -->
+<!--       addCircleMarkers(data=localidades_er,  lat = localidades_er$Lat, lng = localidades_er$Long,  -->
+<!--                        radius = ~cant*3, weight = 1, color = "red",  -->
+<!--                        popup = paste(localidades_er$LOCALIDAD, ": ",localidades_er$cant))  -->
+
+<!-- ``` -->
 
 
 

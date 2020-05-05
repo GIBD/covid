@@ -217,7 +217,8 @@ sep.miles <- function(x){format(x,big.mark=".")}
       names(argCov) <- c("dia", "casosD", "Detectados", "muertesD", "Fallecidos", "Recuperados",
                       "UTI","MuestraD","TotalPruebas","DescEpidemiologia", "DescTest", "Descartados", 
                       "Mujeres", "Hombres", "Importados", "Estrecho", "Comunitaria", "Investigacion")
-
+      argCov$dia <- as.Date(argCov$dia, '%d/%m/%Y')
+      
       poblacionArg <- read_delim("data/poblaciones/prov_argentina.csv", ";", escape_double = FALSE,
                                  locale = locale(decimal_mark = ",", grouping_mark = ".",
                                                  encoding = "ISO-8859-1"), trim_ws = TRUE)
@@ -363,7 +364,7 @@ Las muertes por la pandemia alcanzan las **`r   sep.miles(as.integer(sum(covid19
 ## Letalidad
 ###  {.tabset  .tabset-fade .tabset-pills}
 #### Curvas
-```{r grafLetalidadMundo, echo=FALSE, message=FALSE, warning=FALSE, paged.print=FALSE}
+```{r grafLetalidadMundo, echo=FALSE, message=FALSE, warning=FALSE, paged.print=FALSE, fig.align='center',  out.height='100%'}
 
       letal <- mundial_ambos %>% 
         group_by(pais) %>% 
@@ -372,8 +373,8 @@ Las muertes por la pandemia alcanzan las **`r   sep.miles(as.integer(sum(covid19
         mutate(letalidad = round(muertes/casos * 100, 2)) %>% unique() %>% arrange(pais, dia)
       
         fig <- plot_ly(letal, x = ~dia, y = ~letalidad, color = ~pais, type = "scatter", mode='lines+markers') 
-  fig <- layout(fig, yaxis = list(type = "log"))
-  fig
+        fig <- layout(fig, yaxis = list(type = "log"))
+        fig
 
        
 ```
@@ -778,6 +779,7 @@ La composición de la siguiente pirámide poblacional de los casos confirmados f
    edades$porcent <- if_else(edades$sexo=="Hombre",  edades$porcent*-1, edades$porcent)
    
    edadesHoy <- edades %>%  filter(fecha==max(fecha))
+   
    plot_ly(edadesHoy, x = ~porcent, y = ~edad, color = ~sexo) %>%
      add_bars(orientation = "h",
            hoverinfo = "y+text+name", text =  ~paste(abs(porcent), " %", '\n Cant.: (', n,')'),  
@@ -797,28 +799,25 @@ La composición de la siguiente pirámide poblacional de los casos confirmados f
 
 #### Fallecidos
 ```{r piramideFall}
+   edades_m <- muertosArg  %>% group_by(genero, edad) %>% mutate(n=n())%>% 
+      select(genero, edad, n) 
+   edades_m$grupo <- if_else(edades_m$edad < 10, "0 a 9", 
+                   if_else(edades_m$edad < 20, "10 a 19", 
+                   if_else(edades_m$edad < 30, "20 a 29", 
+                   if_else(edades_m$edad < 40, "30 a 39", 
+                   if_else(edades_m$edad < 50, "40 a 49", 
+                   if_else(edades_m$edad < 60, "50 a 59", 
+                   if_else(edades_m$edad < 70, "60 a 69", 
+                   if_else(edades_m$edad < 80, "70 a 79", "80 o mas"))))))))
 
-edades <- muertosArg  %>% group_by(genero, edad) %>% mutate(n=n())%>% 
-   select(genero, edad, n) 
-edades$grupo <- if_else(edades$edad < 10, "0 - 9", 
-                if_else(edades$edad < 20, "10 - 19", 
-                if_else(edades$edad < 30, "20 - 29", 
-                if_else(edades$edad < 40, "30 - 39", 
-                if_else(edades$edad < 50, "40 - 49", 
-                if_else(edades$edad < 60, "50 - 59", 
-                if_else(edades$edad < 70, "60 - 69", 
-                if_else(edades$edad < 80, "70 - 79", "80 o mas"))))))))
+      edades_m <- edades_m %>% group_by(grupo, genero) %>% mutate(total = n()) %>% 
+         select(grupo, genero, total) %>% unique() %>% ungroup() %>% 
+         mutate(prop = round(total/sum(total)*100, 2)) %>% 
+         select(grupo, genero, total, prop)
+      
+      edades_m$prop <- if_else(edades_m$genero=="Hombre", edades_m$prop*-1, edades_m$prop)
 
-edades <- edades %>% group_by(grupo, genero) %>% mutate(total = n()) %>% 
-   select(grupo, genero, total) %>% unique() %>% ungroup() %>% 
-   mutate(prop = round(total/sum(total)*100, 2)) %>% 
-   select(grupo, genero, total, prop)
-
-edades$prop <- if_else(edades$genero=="Hombre", edades$prop*-1, edades$prop)
-
-
-
-plot_ly(edades, x = ~prop, y = ~grupo, color = ~genero) %>%
+plot_ly(edades_m, x = ~prop, y = ~grupo, color = ~genero) %>%
   add_bars(orientation = "h",
         hoverinfo = "y+text+name", text = ~paste(abs(prop), " %", '\n Cant.: (', total,')'), 
         colors = c("#2c7fb8", "#fa9fb5")) %>%
@@ -832,8 +831,26 @@ plot_ly(edades, x = ~prop, y = ~grupo, color = ~genero) %>%
                       title = "Fallecidos"),
          yaxis = list(title = "Grupo Edad"))
 
+   
 
 ```
+
+#### Letalidad por Grupo
+```{r let_Edad}
+
+   let_edad <- edadesHoy %>% left_join(edades_m, by=c("sexo"="genero", "edad"="grupo")) %>% 
+   mutate(let = round(total/n*100, 1)) 
+
+   plot_ly(let_edad, x=~let, y=~edad, color=~sexo) %>% 
+       add_bars(orientation = "h",
+        hoverinfo = "y+text", text = ~paste('Género: ', sexo, '\n Letalidad: ', let, ' %'), 
+        colors = c("#2c7fb8", "#fa9fb5")) %>% 
+       layout( title = "Tasas de Letalidad por Grupo",
+               xaxis = list(title = "Letalidad"), yaxis = list(title = "Grupo Edad"))
+
+```
+
+
 
 
 
@@ -953,6 +970,59 @@ Debido a que no todas las provincias lo informan diariamente pueden existir algu
 
 
 
+## Distribución por Provincias
+Los porcentajes que representa cada provincia de casos confirmados, fallecidos y activos se muestra a continuación
+
+###  {.tabset  .tabset-fade .tabset-pills}
+#### Confirmados
+```{r distrProvConf}
+  
+   tabla$parents <- "Confirmados"
+   plot_ly(data = tabla,
+        type= "treemap",
+        values = ~Confirmados,
+        labels= ~Provincia,
+        parents=  ~parents,
+        domain = list(column=0),
+        name = "Confirmados",
+        textinfo="label+value+percent parent") %>%
+  layout(title = "Covid19 - Distribución de casos Confirmados por provincia")
+
+```
+
+#### Fallecidos
+```{r distrProvFall}
+   tabla$parents <- "Fallecidos"
+   plot_ly(data = tabla,
+        type= "treemap",
+        values = ~Fallecidos,
+        labels= ~Provincia,
+        parents=  ~parents,
+        domain = list(column=0),
+        name = "Fallecidos",
+        textinfo="label+value+percent parent") %>%
+  layout(title = "Covid19 - Distribución de casos Fallecidos por provincia")
+
+```
+
+#### Activos
+```{r distrProvAct}
+   tabla$Activos <- tabla$Confirmados-tabla$Recuperados-tabla$Fallecidos
+   tabla$parents <- "Activos"
+   plot_ly(data = tabla,
+        type= "treemap",
+        values = ~Activos,
+        labels= ~Provincia,
+        parents=  ~parents,
+        domain = list(column=0),
+        name = "Activos",
+        textinfo="label+value+percent parent") %>%
+  layout(title = "Covid19 - Distribución de casos Activos por provincia")
+
+```
+
+
+
 
 
 ## Distribución por Departamentos
@@ -1032,9 +1102,11 @@ Gracias al aporte de reunir y disponibilizar los datos de [Sistemas Mapache](htt
     left_join(localidades, by=c("localidad"="nombre", "provincia"="provincia")) %>% unique() %>% 
     select(provincia, departamen, localidad, cantidad, fallecidos, recuperados)
   
-  amba$departamen <- if_else(is.na(amba$departamen)& amba$provincia=="Buenos Aires",
+  amba$departamen <- if_else(is.na(amba$departamen) & amba$provincia=="Buenos Aires",
                                             amba$localidad, amba$departamen)
   
+   amba$departamen <- if_else( amba$provincia=="Ciudad Autónoma de Buenos Aires",
+                                            amba$localidad, amba$departamen)
   deptos_covid <- amba_dptos %>%  
     left_join(amba, by=c("departam_1" = "departamen", "provincia_"="provincia")) %>% 
     unique() 
@@ -1046,7 +1118,7 @@ Gracias al aporte de reunir y disponibilizar los datos de [Sistemas Mapache](htt
   deptos_covid$fallecidos<- if_else(is.na(deptos_covid$fallecidos), 0,
                                     as.double(deptos_covid$fallecidos))
   
-  tabla <- amba %>% mutate(casost=sum(cantidad), 
+  tabla <- amba %>% mutate(casost=sum(cantidad, na.rm = T), 
                            muertesT=sum(fallecidos, na.rm = T),
                            recuperadosT=sum(recuperados, na.rm = T)) %>% 
     select(casost, muertesT, recuperadosT) %>% unique()
@@ -1067,7 +1139,7 @@ En la actualidad el Area Metropolitana concentra un `r round(tabla$casost/paisT$
    addTiles(urlTemplate = urlign ) %>% 
     addPolygons( color = "#444444", weight = 1,
                  fillColor = color(deptos_covid$cantidad), fillOpacity = 0.6,
-                 popup = paste(deptos_covid$provincia_, "  ", deptos_covid$departam_1,
+                 popup = paste(deptos_covid$provincia_, " <br/> ", deptos_covid$departam_1,
                                " <br/>- confirmados ", deptos_covid$cantidad,
                                " <br/>- recuperados ",deptos_covid$recuperados,
                                " <br/>- fallecidos ",deptos_covid$fallecidos),
@@ -1077,7 +1149,7 @@ En la actualidad el Area Metropolitana concentra un `r round(tabla$casost/paisT$
                position ="bottomright") 
   
 
-rm(deptos_covid, deptos, casos_pronvincialesT, casos_pronvinciales)
+rm(deptos_covid, deptos, casos_pronvincialesT, casos_pronvinciales, amba_dptos)
 ```
 
 
@@ -1281,12 +1353,12 @@ La tasa de Letalidad a nivel nacional ha evolucionado como lo muestra la siguien
 
 El `r round(nrow(muertosArg[muertosArg$genero=="Hombre", ])/nrow(muertosArg) * 100, 1)` % de los fallecidos son Hombres, mientras que el `r round(nrow(muertosArg[muertosArg$genero=="Mujer", ])/nrow(muertosArg) * 100, 1)` % restante corresponde a Mujeres.
 
-La edad media de los pacientes fallecidos es de `r round(mean(muertosArg$edad), 0)` aÃ±os, y en particular la edad media de los Hombres fallecidos es de `r round(mean(muertosArg$edad[muertosArg$genero=="Hombre"]), 0)` aÃ±os y en la Mujeres de `r round(mean(muertosArg$edad[muertosArg$genero=="Mujer"]), 0)` aÃ±os.
+La edad media de los pacientes fallecidos es de `r round(mean(muertosArg$edad, na.rm = T), 0)` años, y en particular la edad media de los Hombres fallecidos es de `r round(mean(muertosArg$edad[muertosArg$genero=="Hombre"], na.rm = T), 0)` años y en la Mujeres de `r round(mean(muertosArg$edad[muertosArg$genero=="Mujer"], na.rm = T), 0)` años.
 
 En el siguiente gráfico se observa la distribución de los pacientes fallecidos por sexo y edad.
 
 ```{r fallArg, echo=FALSE, fig.align='center', message=FALSE, warning=FALSE, out.width='100%'}
-
+ # round(mean(muertosArg$edad[muertosArg$genero=="Mujer"], na.rm = T), 0)
   ggplot(muertosArg, aes(x=genero, y=edad, fill= genero) )+
       geom_violin(alpha=0.6) +
       labs( 

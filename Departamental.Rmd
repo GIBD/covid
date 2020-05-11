@@ -1,7 +1,14 @@
 ---
 title: "Departamental"
-output: html_document
+output:
+  html_document:
+    toc: true
+    toc_float: true
+    collapsed: false
+    number_sections: false
+    toc_depth: 4
 ---
+
 
 ```{r setup, include=FALSE}
 knitr::opts_chunk$set(echo = TRUE)
@@ -89,12 +96,12 @@ knitr::opts_chunk$set(echo = TRUE)
       
 ```
 
-# Departamental
+<!-- # Departamental -->
 
 ## Distribución por Departamentos
-Gracias al aporte de reunir y disponibilizar los datos de [Sistemas Mapache](https://github.com/SistemasMapache/Covid19arData) y al aporte de muchos usuarios como [@ClariCardozoCas](https://twitter.com/ClariCardozoCas), [@juanjocorrea_ok](https://twitter.com/juanjocorrea_ok) se muestra la distribución de casos a nivel departamental de las provincias: Buenos Aires, Ciudad Autónoma de Buenos Aires, Río Negro, Neuquén, Tucumán,  Santa Fe, Chaco, Salta y Entre Ríos en base a datos propios.
+Gracias al aporte de reunir y disponibilizar los datos de [Sistemas Mapache](https://github.com/SistemasMapache/Covid19arData) y al aporte de muchos usuarios como [@ClariCardozoCas](https://twitter.com/ClariCardozoCas), [@juanjocorrea_ok](https://twitter.com/juanjocorrea_ok) se muestra la distribución de casos a nivel departamental de las provincias.
 
-```{r dptoArg, echo=FALSE, message=FALSE, warning=FALSE}
+```{r dptoArg, echo=FALSE, message=FALSE, warning=FALSE, out.width='100%'}
    
    casos_pronvincialesT <- casos_pronvinciales %>% 
          # filter(departamento != "TOTAL GENERAL") %>%  

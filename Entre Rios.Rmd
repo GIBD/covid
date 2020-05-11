@@ -1,6 +1,12 @@
 ---
 title: "Entre Ríos"
-output: html_document
+output:
+  html_document:
+    toc: true
+    toc_float: true
+    collapsed: false
+    number_sections: false
+    toc_depth: 4
 ---
 
 ```{r setup, include=FALSE}
@@ -37,7 +43,8 @@ entrerios <- fromJSON(file="data/mapas/entrerios_dpto.geo.json")
      names(poblac_er) <- c("departamento", "poblacion")
      
 ```
-# Entre Ríos
+
+<!-- # Entre Ríos -->
 
 ## Casos por Departamento
 A continuación se muestran la cantidad de casos de COVID-19 confirmados por el Ministerio de Salud de Entre Ríos, discriminados por departamento y localidad

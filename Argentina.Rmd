@@ -4,10 +4,9 @@ output:
   html_document:
     toc: true
     toc_float: true
-    collapsed: true
+    collapsed: false
     number_sections: false
     toc_depth: 4
-    #code_folding: hide
 ---
 
 
@@ -112,7 +111,7 @@ sep.miles <- function(x){format(x,big.mark=".")}
        
 ```
 
-# Argentina
+<!-- # Argentina -->
 
 ## Cantidad de Casos Actuales
 En Argentina los datos son informados diariamente por el Ministerio de Salud de la Nación. Estos datos se informan de manera desestructurada y diariamente se modifica la cantidad de datos brindados.

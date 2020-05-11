@@ -3,6 +3,7 @@ title: "COVID-19 Sudamérica"
 output:
   html_document: 
     keep_md: yes
+    collapsed: false
     toc: yes
     toc_depth: 4
     toc_float: yes
@@ -19,7 +20,23 @@ output:
 ```
 
 ```{r importarSud, message=FALSE, warning=FALSE, include=FALSE}
- 
+  library(readr)
+  library(dplyr)
+  library(tidyr)
+  library(ggplot2)
+  library(lubridate)
+  library(knitr)
+  library(kableExtra)
+  library(highcharter)
+  library(rjson)
+  library(plotly)
+  library(gganimate)
+  library(stringr)
+  library(leaflet)
+  library(sf)
+  library(tmap)
+  library(googlesheets4)
+  library(readxl)
 sep.miles <- function(x){format(x,big.mark=".")}
  
   #################
@@ -129,7 +146,8 @@ sep.miles <- function(x){format(x,big.mark=".")}
     
  
 ```
-# Sudamérica
+
+<!-- # Sudamérica -->
 
 ## Inicios
 En Sud América el primer caso detectado de COVID-19 se informa el día `r day(min(sudamerica$fecha))` de `r format(min(sudamerica$fecha), "%b")` del 2020 en `r sudamerica %>% filter(fecha==min(sudamerica$fecha)) %>% select(pais)`. 

@@ -703,6 +703,27 @@ En base a las provincias de residencia de los fallecidos, informadas por el Mini
 
 
 
+## Relación entre Letalidad y Recuperados
+En el siguiente gráfico se 
+```{r letRec, , echo=FALSE, fig.align='center', message=FALSE, warning=FALSE, out.width='100%' }
+  totalesProv <- casos_pronvinciales %>%  filter(departamento=="TOTAL GENERAL") %>%  select(provincia, cantidad, recuperados, fallecidos)
+  totalesProv$porcRec <- round(totalesProv$recuperados/totalesProv$cantidad *100, 1)
+  totalesProv$porcFall <- round(totalesProv$fallecidos/totalesProv$cantidad *100, 1)
+  # totalesProv$porcRec/totalesProv$porcFall
+  totalesProv$activos <- totalesProv$cantidad - totalesProv$recuperados - totalesProv$fallecidos
+  totalesProv$porcAct <- round(totalesProv$activos/totalesProv$cantidad *100, 1)
+  
+  fig <- plot_ly(totalesProv, x = ~porcFall, y = ~porcRec, text = ~provincia, 
+                 color = ~provincia,
+                 type = 'scatter', mode = 'markers',
+        marker = list(size= ~porcAct, opacity = 0.5))
+  fig <- fig %>% layout(title = 'Relación entre Recuperados y Fallecidos por Provincia',
+           xaxis = list(title="% de Fallecidos", showgrid = FALSE),
+           yaxis = list(title="% de Recuperados", showgrid = FALSE))
+  fig
+  
+```
+
 ## Distribución de Casos por Tipo
 Los tipos de Casos confirmados se clasifican en:
 *Importados* (cuando se registra trasmisión relacionada viajes al exterior del país)

@@ -8,7 +8,25 @@ knitr::opts_chunk$set(echo = TRUE)
 ```
 
 ```{r carga, message=FALSE, warning=FALSE, include=FALSE, paged.print=FALSE}
-  entrerios <- fromJSON(file="data/mapas/entrerios_dpto.geo.json")
+   library(readr)
+  library(dplyr)
+  library(tidyr)
+  library(ggplot2)
+  library(lubridate)
+  library(knitr)
+  library(kableExtra)
+  library(highcharter)
+  library(rjson)
+  library(plotly)
+  library(gganimate)
+  library(stringr)
+  library(leaflet)
+  library(sf)
+  library(tmap)
+  library(googlesheets4)
+  library(readxl)
+
+entrerios <- fromJSON(file="data/mapas/entrerios_dpto.geo.json")
   deptos_er <- st_read(dsn ="data/mapas/departamentos_entrerios.shp") 
       
   ### ENTRE RIOS
@@ -61,7 +79,8 @@ A continuación se muestran la cantidad de casos de COVID-19 confirmados por el 
   leaflet() %>% addTiles() %>% 
       addProviderTiles(providers$OpenStreetMap) %>% 
       addPolygons(data=deptos_er, fill=FALSE, weight = 1, color = "#000")  %>% 
-      addCircleMarkers(data=localidades_er,  lat = localidades_er$Lat, lng = localidades_er$Long, 
+      addCircleMarkers(data=localidades_er,  
+                       lat = as.double(localidades_er$Lat), lng = as.double(localidades_er$Long), 
                        radius = ~cant*3, weight = 1, color = "red", 
                        popup = paste(localidades_er$LOCALIDAD, ": ",localidades_er$cant)) 
     
@@ -76,7 +95,7 @@ A continuación se muestran la cantidad de casos de COVID-19 confirmados por el 
 
 ## Incidencia Acumulada
 
-En Argentina, la tasa de incidencia acumulada nacional es de `r round(sum(argCov$casosD)/45376763 * 100000, 2)` cada 100 mil habitantes. La Incidencia Acumulada de toda la provincia de Entre Ríos es de `r round(sum(covider$cantidad)/sum(poblac_er$poblacion, na.rm = T)*100000, 2)` cada 100.000 habitantes.
+La Incidencia Acumulada de toda la provincia de Entre Ríos es de `r round(sum(covider$cantidad)/sum(poblac_er$poblacion, na.rm = T)*100000, 2)` cada 100.000 habitantes.
 
 La incidencia acumulada (IA) a nivel departamental, considerando la población proyectada por INDEC para el 2020 se observan en el mapa y tabla a continuación
 

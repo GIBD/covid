@@ -1,0 +1,119 @@
+---
+title: "Entre Ríos"
+author: "GIBD"
+date: "1/5/2020"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+```{r carga, message=FALSE, warning=FALSE, include=FALSE, paged.print=FALSE}
+  entrerios <- fromJSON(file="data/mapas/entrerios_dpto.geo.json")
+  deptos_er <- st_read(dsn ="data/mapas/departamentos_entrerios.shp") 
+      
+  ### ENTRE RIOS
+       covid_er <- read_delim("data/entre_rios_casos.csv", ";", escape_double = FALSE, 
+                              locale = locale(encoding = "ISO-8859-1"), trim_ws = TRUE)
+       poblac_er <-  read_delim("data/poblaciones/poblacion_entre_rios.csv",  ";", escape_double = FALSE, 
+                           locale = locale(decimal_mark = ",", 
+                                           grouping_mark = ".", encoding = "ISO-8859-1"), trim_ws = TRUE)
+       names(poblac_er) <- c("departamento", "poblacion")
+
+```
+
+## Casos por Departamento
+A continuación se muestran la cantidad de casos de COVID-19 confirmados por el Ministerio de Salud de Entre Ríos, discriminados por departamento y localidad
+
+
+###  {.tabset  .tabset-fade .tabset-pills}
+#### Departamental
+```{r mapaER, echo=FALSE, message=FALSE, warning=FALSE, paged.print=FALSE}
+
+  covider <- covid_er %>% group_by(DEPARTAMENTO) %>%
+    mutate(cantidad=n()) %>% select(DEPARTAMENTO, cantidad) %>% unique()
+  
+  
+  highchart() %>%
+    hc_title(text = "<i>Casos de COVID-19 en Entre Ríos</i> ",
+             margin = 20, align = "center", style = list(color = "#08338F", useHTML = TRUE)) %>%
+    hc_tooltip(followPointer =  FALSE) %>%
+    hc_add_series_map(entrerios, covider, name = "Casos", value = "cantidad",
+                      joinBy = c("nam", "DEPARTAMENTO"),
+                      dataLabels = list(enabled = TRUE,
+                                        format = '{point.properties.nam}: {point.value}')) %>%
+    hc_colorAxis(minColor = "#B7D4EB", maxColor = "#08338F")  %>%
+    hc_legend(align = "center", x = 0, y = -10) %>%
+    hc_mapNavigation(enabled = TRUE) %>%
+    hc_add_theme(hc_theme_ffx()) %>% 
+    hc_add_annotation(xValue = 0, yValue = 0, title = list(text = 'Fuente: Ministerio Salud ER')) %>% 
+    hc_chart(borderColor = "#08338F", borderRadius = 10, borderWidth = 2)
+  
+```
+
+
+
+#### Por Ciudad
+```{r locER, echo=FALSE, message=FALSE, warning=FALSE, paged.print=FALSE}
+ 
+  localidades_er <- covid_er %>% group_by(Lat, Long) %>% mutate(cant=n()) %>% 
+    select(LOCALIDAD, Lat, Long, cant) %>% unique() %>% ungroup()
+  
+  leaflet() %>% addTiles() %>% 
+      addProviderTiles(providers$OpenStreetMap) %>% 
+      addPolygons(data=deptos_er, fill=FALSE, weight = 1, color = "#000")  %>% 
+      addCircleMarkers(data=localidades_er,  lat = localidades_er$Lat, lng = localidades_er$Long, 
+                       radius = ~cant*3, weight = 1, color = "red", 
+                       popup = paste(localidades_er$LOCALIDAD, ": ",localidades_er$cant)) 
+    
+```
+
+
+
+
+
+
+
+
+## Incidencia Acumulada
+
+En Argentina, la tasa de incidencia acumulada nacional es de `r round(sum(argCov$casosD)/45376763 * 100000, 2)` cada 100 mil habitantes. La Incidencia Acumulada de toda la provincia de Entre Ríos es de `r round(sum(covider$cantidad)/sum(poblac_er$poblacion, na.rm = T)*100000, 2)` cada 100.000 habitantes.
+
+La incidencia acumulada (IA) a nivel departamental, considerando la población proyectada por INDEC para el 2020 se observan en el mapa y tabla a continuación
+
+
+###  {.tabset  .tabset-fade .tabset-pil}
+#### Mapa
+```{r casosER, echo=FALSE, message=FALSE, warning=FALSE, paged.print=FALSE}
+
+
+   
+   covid_er_ia <- covider %>% left_join(poblac_er, by=c("DEPARTAMENTO"="departamento")) %>% 
+       mutate(ia= round(cantidad/poblacion * 100000, 2)) %>% arrange(desc(ia))
+
+   highchart() %>%
+    hc_title(text = "<i>Incidencia Acumulada de COVID-19 en Entre Ríos</i> ",
+             margin = 20, align = "center", style = list(color = "#780000", useHTML = TRUE)) %>%
+    hc_tooltip(followPointer =  FALSE) %>%
+    hc_add_series_map(entrerios, covid_er_ia, name = "Incidencia", value = "ia",
+                      joinBy = c("nam", "DEPARTAMENTO"),
+                      dataLabels = list(enabled = TRUE,
+                                        format = '{point.properties.nam}: {point.value}')) %>%
+    hc_colorAxis(minColor = "#FFAAAA", maxColor = "#780000")  %>%
+    hc_legend(align = "center", x = 0, y = -10) %>%
+    hc_mapNavigation(enabled = TRUE) %>%
+    hc_add_theme(hc_theme_ffx()) %>% 
+    hc_add_annotation(xValue = 0, yValue = 0, title = list(text = 'Fuente: Ministerio Salud ER')) %>% 
+    hc_chart(borderColor = "#780000", borderRadius = 10, borderWidth = 2)
+
+```
+
+#### Tabla
+```{r tablaIAER, echo=FALSE, message=FALSE, warning=FALSE, paged.print=FALSE}
+ tabiaprov_er <- covid_er_ia %>% select(DEPARTAMENTO, poblacion, cantidad, ia) %>% arrange(desc(ia))
+  tabiaprov_er %>% kable(col.names = c("Departemento","Población",  "Casos", "Tasa Incidencia"),
+                      format.args = list( big.mark=".", decimal.mark = ","),
+            align=c('l', 'c', 'c', 'c')) %>%
+  kable_styling()
+```

@@ -1,0 +1,19 @@
+name: "COVID-19 GIBD"
+theme: jekyll-theme-cayman
+navbar:
+  title: "COVID-19 GIBD"
+  left:
+    - text: "Inicio"
+      href: index.html
+    - text: "Mundial"
+      href: Mundial.html
+    - text: "Sudamerica"
+      href: Sudamerica.html
+    - text: "Argentina"
+      href: Argentina.html  
+    - text: "Departamental"
+      href: Departamental.html  
+    - text: "Entre Rios"
+      href: Entre-Rios.html  
+output_dir: "docs"
+exclude: "data"

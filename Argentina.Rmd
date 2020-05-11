@@ -704,23 +704,62 @@ En base a las provincias de residencia de los fallecidos, informadas por el Mini
 
 
 ## Relación entre Letalidad y Recuperados
-En el siguiente gráfico se 
+En el siguiente gráfico se ilustra la relación entre la tasa de letalidad y el porcentaje de recuperados de cada provincia. El tamaño de las burbujas está dado por la cantidad de casos activos actualmente.
+
 ```{r letRec, , echo=FALSE, fig.align='center', message=FALSE, warning=FALSE, out.width='100%' }
-  totalesProv <- casos_pronvinciales %>%  filter(departamento=="TOTAL GENERAL") %>%  select(provincia, cantidad, recuperados, fallecidos)
-  totalesProv$porcRec <- round(totalesProv$recuperados/totalesProv$cantidad *100, 1)
-  totalesProv$porcFall <- round(totalesProv$fallecidos/totalesProv$cantidad *100, 1)
-  # totalesProv$porcRec/totalesProv$porcFall
-  totalesProv$activos <- totalesProv$cantidad - totalesProv$recuperados - totalesProv$fallecidos
-  totalesProv$porcAct <- round(totalesProv$activos/totalesProv$cantidad *100, 1)
+ 
+    fallecidos <- muertosArg %>% group_by(Provincia) %>% 
+      mutate(cantidad = n()) %>%
+      select(Provincia, cantidad) %>% unique()
+
+    casos <- tabla_prov %>%
+      filter(tipo == "acumulados") %>%
+      group_by(provincia) %>%
+      filter(fecha == max(fecha)) %>%
+      select(provincia, cant)
+    
+    recuperados <- casos_pronvinciales %>% 
+      filter(departamento=="TOTAL GENERAL") %>%  
+      select(provincia, recuperados)
+    recuperados$provincia <- gsub("Tierra del Fuego, Antártida e Islas del Atlántico Sur", 
+                                "Tierra del Fuego", recuperados$provincia)
+    recuperados$provincia <- gsub("Ciudad Autónoma de Buenos Aires", 
+                                  "Ciudad de Buenos Aires", recuperados$provincia)
   
-  fig <- plot_ly(totalesProv, x = ~porcFall, y = ~porcRec, text = ~provincia, 
-                 color = ~provincia,
-                 type = 'scatter', mode = 'markers',
-        marker = list(size= ~porcAct, opacity = 0.5))
-  fig <- fig %>% layout(title = 'Relación entre Recuperados y Fallecidos por Provincia',
-           xaxis = list(title="% de Fallecidos", showgrid = FALSE),
-           yaxis = list(title="% de Recuperados", showgrid = FALSE))
-  fig
+    totalesProv <- casos %>% left_join(fallecidos, by=c("provincia"="Provincia")) 
+    totalesProv <-totalesProv %>% left_join(recuperados, by=c("provincia"="provincia"))
+    names(totalesProv) <- c("provincia", "cantidad", "fallecidos", "recuperados")
+    
+    totalesProv$fallecidos <- if_else(is.na(totalesProv$fallecidos), 0, as.double(totalesProv$fallecidos))
+    totalesProv$recuperados <- if_else(is.na(totalesProv$recuperados), 0, as.double(totalesProv$recuperados))
+    totalesProv$porcRec <- round(totalesProv$recuperados/totalesProv$cantidad *100, 1)
+    totalesProv$porcFall <- round(totalesProv$fallecidos/totalesProv$cantidad *100, 1)
+    totalesProv$activos <- totalesProv$cantidad - totalesProv$recuperados - totalesProv$fallecidos
+    totalesProv$porcAct <- round(totalesProv$activos/totalesProv$cantidad *100, 1)
+    totalesProv$provincia <- gsub("Ciudad Autónoma de Buenos Aires", "CABA", totalesProv$provincia)
+    
+    totalesProv$provincia <- gsub("Tierra del Fuego, Antártida e Islas del Atlántico Sur", 
+                                "Tierra del Fuego", totalesProv$provincia)
+    totalesProv <- totalesProv %>% filter(!is.na(porcAct))
+    
+    fig <- plot_ly(totalesProv, x = ~porcFall, y = ~porcRec, hoverinfo='text',
+                   texttemplate = '%{y:.2s}', textposition = 'inside',
+                   text = ~paste('</br> Provincia: ', provincia ,
+                                 '</br> Letalidad: ', porcFall, '%',
+                                 '</br> Recuperados: ', porcRec,'%',
+                                 '</br> Activos: ',activos),
+                   color = ~provincia,
+                   type = 'scatter', mode = 'markers',
+                   marker = list(size= ~porcAct, opacity = 0.7, symbol = 'circle', sizemode = 'diameter',
+                                 line = list(width = 1, color = '#FFFFFF')))
+    
+    fig <- fig %>% layout(title = 'Relación entre Recuperados y Fallecidos por Provincia',
+                          xaxis = list(title="% de Fallecidos", showgrid = FALSE ),
+                          yaxis = list(title="% de Recuperados", showgrid = FALSE),
+                          paper_bgcolor = 'rgb(243, 243, 243)',
+                          plot_bgcolor = 'rgb(243, 243, 243)')
+    fig
+  
   
 ```
 

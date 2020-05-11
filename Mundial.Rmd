@@ -4,7 +4,7 @@ output:
   html_document:
     toc: true
     toc_float: true
-    # collapsed: false
+    collapsed: false
     number_sections: false
     toc_depth: 4
     #code_folding: hide
@@ -164,7 +164,6 @@ output:
          return(c)}
   
 ```
-
 
 # Situación Mundial
 ## Casos actuales

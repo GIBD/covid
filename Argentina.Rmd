@@ -50,12 +50,12 @@ sep.miles <- function(x){format(x,big.mark=".")}
   ## Mapas y Poblaciones
     {
       argentina <- fromJSON(file = "data/mapas/ar-all.geo.json")
-     
+      localidades <- read_csv("data/mapas/localidades.csv", 
+                              locale = locale(encoding = "ISO-8859-1"))
       
     }  
 
-
-  # Dataset Argentina
+  ## Dataset Argentina
     {  
       ### Totales generales
       argCov <- read_delim("data/argentina_gral.csv", ";", 
@@ -63,28 +63,54 @@ sep.miles <- function(x){format(x,big.mark=".")}
                            locale = locale(encoding = "ISO-8859-1"))
       names(argCov) <- c("dia", "casosD", "Detectados", "muertesD", "Fallecidos", "Recuperados",
                       "UTI","MuestraD","TotalPruebas","DescEpidemiologia", "DescTest", "Descartados", 
-                      "Mujeres", "Hombres", "Importados", "Estrecho", "Comunitaria", "Investigacion")
-
+                    #  "Mujeres", "Hombres", 
+                    "Importados", "Estrecho", "Comunitaria", "Investigacion", "InicioSint")
+      argCov$dia <- as.Date(argCov$dia, '%d/%m/%Y')
+      
       poblacionArg <- read_delim("data/poblaciones/prov_argentina.csv", ";", escape_double = FALSE,
                                  locale = locale(decimal_mark = ",", grouping_mark = ".",
                                                  encoding = "ISO-8859-1"), trim_ws = TRUE)
        
       ### Detalle por provincias
-      covidArg <-read_delim("data/casos_provincias.csv", ";", 
+      covidArg <- read_delim("data/casos_provincias.csv", ";", 
                             escape_double = FALSE, trim_ws = TRUE, locale = locale(encoding = "ISO-8859-1"))
       covidArg$FECHA <- as.Date(covidArg$FECHA, '%d/%m/%Y')
     
       ### Detalle fallecidos
       muertosArg <- read_delim("data/argentina_fallecidos.csv", ";", 
                                escape_double = FALSE, trim_ws = TRUE, locale = locale(encoding = "ISO-8859-1"))
+      
    }
   
-  casos_pronvinciales <- read_excel("data/covid_departamental.xlsx")
-   names(casos_pronvinciales) <- c("provincia", "departamento",  "localidad","fecha","cantidad", "recuperados",
-                                   "fallecidos", "internados", "uti", "enestudio", "aislados", "estudiados",
-                                   "descartados")
+  ## Dataset Provincias Argentinas
+    {
+    
+       casos_pronvinciales <- read_excel("data/covid_departamental.xlsx")
+           names(casos_pronvinciales) <- c("provincia", "departamento",  "localidad","fecha",
+                                       "cantidad", "recuperados", "fallecidos", "internados", 
+                                       "uti", "enestudio", "aislados", "estudiados", "descartados")
+ 
+       ### ENTRE RIOS
+       covid_er <- entre_rios_casos <- read_excel("data/entre_rios_casos.xlsx")
+       poblac_er <-  read_delim("data/poblaciones/poblacion_entre_rios.csv",  ";", escape_double = FALSE, 
+                           locale = locale(decimal_mark = ",", 
+                                           grouping_mark = ".", encoding = "ISO-8859-1"), trim_ws = TRUE)
+       names(poblac_er) <- c("departamento", "poblacion")
+    }
+  
+     color <- function(d){
+          c <- if_else(d==0, '#FFFFFF',
+               if_else(d < 25, '#fdd49e',
+               if_else(d < 50, '#fc8d59',
+               if_else(d < 75, '#d7301f',
+               if_else(d < 100, '#b30000',
+                       "#7f0000")))))
+         return(c)}
+  
+       urlign <- "https://wms.ign.gob.ar/geoserver/gwc/service/tms/1.0.0/capabaseargenmap@EPSG%3A3857@png/{z}/{x}/{-y}.png"
+       
+       
 ```
-
 
 # Argentina
 
@@ -791,6 +817,10 @@ A continuación se visualiará la evolución en la proporción de los casos dete
     layout(title="Test x Millón de Habitantes", xaxis=list(title=""), yaxis = list(title = "Test x millón de Habitantes"))
 
 ```
+
+
+
+
 
 
 

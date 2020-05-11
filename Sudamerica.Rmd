@@ -129,7 +129,6 @@ sep.miles <- function(x){format(x,big.mark=".")}
     
  
 ```
-
 # Sudamérica
 
 ## Inicios
@@ -340,6 +339,7 @@ Se puede observar que casi todos los países siguen un camino muy similar de cre
   sudamerica %>% 
     group_by(pais) %>% 
     ggplot(aes(x=casos, y=semanal, color=pais))+
+          geom_point(aes(casos, semanal, group=pais, color=pais), size=1)+
     geom_line(show.legend=FALSE) +
     scale_y_log10() + scale_x_log10() +
     labs(title="", x='Total de Casos',

@@ -254,17 +254,20 @@ Las muertes por la pandemia alcanzan las **`r   sep.miles(as.integer(sum(covid19
 ## Letalidad
 ###  {.tabset  .tabset-fade .tabset-pills}
 #### Curvas
-```{r grafLetalidadMundo, echo=FALSE, message=FALSE, warning=FALSE, paged.print=FALSE, fig.align='center',  out.height='100%'}
+```{r grafLetalidadMundo, echo=FALSE, message=FALSE, warning=FALSE, paged.print=FALSE, out.width='100%', fig.align='center',  out.height='100%'}
 
       letal <- mundial_ambos %>% 
         group_by(pais) %>% 
-        # filter(dia==max(dia) & muertes>=100) %>%
-         filter(muertes>=100) %>%
-        mutate(letalidad = round(muertes/casos * 100, 2)) %>% unique() %>% arrange(pais, dia)
+         filter(dia==max(dia) & muertes>=100) %>%
+         mutate(letalidad = round(muertes/casos * 100, 2)) %>% unique() %>% arrange(desc(letalidad))
       
-        fig <- plot_ly(letal, x = ~dia, y = ~letalidad, color = ~pais, type = "scatter", mode='lines+markers') 
-        fig <- layout(fig, yaxis = list(type = "log"))
-        fig
+        fig <- plot_ly(letal,type="bar")
+        fig <- fig %>% add_trace( x = ~pais, y = ~letalidad, name= "Letalidad COVID-19",
+                            color=~letalidad, text=~letalidad, textposition = 'auto',
+                            mode="lines", showlegend = FALSE, line = list(width = 5)) %>% 
+      layout(title="Letalidad por Covid-19",  xaxis = list(), yaxis=list(title="Letalidad"))
+         fig
+       
 
        
 ```

@@ -99,9 +99,10 @@ knitr::opts_chunk$set(echo = TRUE)
 <!-- # Departamental -->
 
 ## Distribución por Departamentos
-Gracias al aporte de reunir y disponibilizar los datos de [Sistemas Mapache](https://github.com/SistemasMapache/Covid19arData) y al aporte de muchos usuarios como [@ClariCardozoCas](https://twitter.com/ClariCardozoCas), [@juanjocorrea_ok](https://twitter.com/juanjocorrea_ok) se muestra la distribución de casos a nivel departamental de las provincias.
+Gracias al aporte de reunir y disponibilizar los datos de [Sistemas Mapache](https://github.com/SistemasMapache/Covid19arData) y al aporte de muchos usuarios como [\@ClariCardozoCas](https://twitter.com/ClariCardozoCas), [\@juanjocorrea_ok](https://twitter.com/juanjocorrea_ok), [Juan Vera](https://twitter.com/cervecerojj)
+  se muestra la distribución de casos a nivel departamental de las provincias.
 
-```{r dptoArg, echo=FALSE, message=FALSE, warning=FALSE, out.width='100%'}
+```{r dptoArg, echo=FALSE, message=FALSE, warning=FALSE, out.width='100%', out.height='850px'}
    
    casos_pronvincialesT <- casos_pronvinciales %>% 
          # filter(departamento != "TOTAL GENERAL") %>%  
@@ -149,7 +150,7 @@ Gracias al aporte de reunir y disponibilizar los datos de [Sistemas Mapache](htt
   
   deptos_covid$casos<- if_else(is.na(deptos_covid$casos), 0, deptos_covid$casos)
      
-  leaflet(data = deptos_covid) %>%
+  leaflet(data = deptos_covid) %>% #,  options =   leafletOptions(minZoom = 5)) %>%
          addTiles(urlTemplate = urlign, attribution="IGN") %>% 
     addPolygons( color = "#444444", weight = 1,
                  fillColor = color(deptos_covid$casos), fillOpacity = 0.6,
@@ -211,7 +212,7 @@ Gracias al aporte de reunir y disponibilizar los datos de [Sistemas Mapache](htt
   
 ```
 
-En la actualidad el Area Metropolitana concentra un `r round(tabla$casost/paisT$Detectados*100, 2)` % de los casos confirmados por COVID-19 en todo el país y un `r round(tabla$muertesT/paisT$Fallecidos*100, 2)` % de los fallecidos. Es por ello que a continuación se muestra aparte el mapa del AMBA.
+En la actualidad el Area Metropolitana concentra un `r round(tabla$casost/paisT$Detectados*100, 2)` % de los casos confirmados por COVID-19 en todo el país y entre la Ciudad Autónoma de Buenos Aires y la provincia de Buenos Aires representan un `r round(tabla$muertesT/paisT$Fallecidos*100, 2)` % de los fallecidos. Es por ello que a continuación se muestra aparte el mapa del AMBA.
 
 ```{r mapaAmba, echo=FALSE, message=FALSE, warning=FALSE}
  

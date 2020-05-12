@@ -6,7 +6,7 @@ output:
     toc_float: true
     collapsed: false
     number_sections: false
-    toc_depth: 4
+    toc_depth: 3
     #code_folding: hide
 ---
 
@@ -259,7 +259,7 @@ Las muertes por la pandemia alcanzan las **`r   sep.miles(as.integer(sum(covid19
       letal <- mundial_ambos %>% 
         group_by(pais) %>% 
          filter(dia==max(dia) & muertes>=100) %>%
-         mutate(letalidad = round(muertes/casos * 100, 2)) %>% unique() %>% arrange(desc(letalidad))
+         mutate(letalidad = round(muertes/casos * 100, 12)) %>% unique() %>% arrange(desc(letalidad))
       
         fig <- plot_ly(letal,type="bar")
         fig <- fig %>% add_trace( x = ~pais, y = ~letalidad, name= "Letalidad COVID-19",

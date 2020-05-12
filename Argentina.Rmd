@@ -6,7 +6,7 @@ output:
     toc_float: true
     collapsed: false
     number_sections: false
-    toc_depth: 4
+    toc_depth: 3
 ---
 
 
@@ -37,7 +37,7 @@ output:
   library(tmap)
   library(googlesheets4)
   library(readxl)
-
+  library(RcppRoll)
 
 sep.miles <- function(x){format(x,big.mark=".")}
  
@@ -45,18 +45,11 @@ sep.miles <- function(x){format(x,big.mark=".")}
   # Carga de Datos
   #################
 
- 
   ## Mapas y Poblaciones
-    {
       argentina <- fromJSON(file = "data/mapas/ar-all.geo.json")
       localidades <- read_csv("data/mapas/localidades.csv", 
                               locale = locale(encoding = "ISO-8859-1"))
-      
-    }  
-
-  ## Dataset Argentina
-    {  
-      ### Totales generales
+  ### Totales generales
       argCov <- read_delim("data/argentina_gral.csv", ";", 
                            escape_double = FALSE, trim_ws = TRUE, 
                            locale = locale(encoding = "ISO-8859-1"))
@@ -69,33 +62,28 @@ sep.miles <- function(x){format(x,big.mark=".")}
       poblacionArg <- read_delim("data/poblaciones/prov_argentina.csv", ";", escape_double = FALSE,
                                  locale = locale(decimal_mark = ",", grouping_mark = ".",
                                                  encoding = "ISO-8859-1"), trim_ws = TRUE)
-       
-      ### Detalle por provincias
+  ### Detalle por provincias
       covidArg <- read_delim("data/casos_provincias.csv", ";", 
                             escape_double = FALSE, trim_ws = TRUE, locale = locale(encoding = "ISO-8859-1"))
       covidArg$FECHA <- as.Date(covidArg$FECHA, '%d/%m/%Y')
     
-      ### Detalle fallecidos
+   ### Detalle fallecidos
       muertosArg <- read_delim("data/argentina_fallecidos.csv", ";", 
                                escape_double = FALSE, trim_ws = TRUE, locale = locale(encoding = "ISO-8859-1"))
-      
-   }
   
-  ## Dataset Provincias Argentinas
-    {
-    
-       casos_pronvinciales <- read_excel("data/covid_departamental.xlsx")
+   ### Departamental
+      casos_pronvinciales <- read_excel("data/covid_departamental.xlsx")
            names(casos_pronvinciales) <- c("provincia", "departamento",  "localidad","fecha",
                                        "cantidad", "recuperados", "fallecidos", "internados", 
                                        "uti", "enestudio", "aislados", "estudiados", "descartados")
- 
-       ### ENTRE RIOS
-       covid_er <- entre_rios_casos <- read_excel("data/entre_rios_casos.xlsx")
-       poblac_er <-  read_delim("data/poblaciones/poblacion_entre_rios.csv",  ";", escape_double = FALSE, 
-                           locale = locale(decimal_mark = ",", 
-                                           grouping_mark = ".", encoding = "ISO-8859-1"), trim_ws = TRUE)
-       names(poblac_er) <- c("departamento", "poblacion")
-    }
+
+       # ### ENTRE RIOS
+       # covid_er <- entre_rios_casos <- read_excel("data/entre_rios_casos.xlsx")
+       # poblac_er <-  read_delim("data/poblaciones/poblacion_entre_rios.csv",  ";", escape_double = FALSE,
+       #                     locale = locale(decimal_mark = ",",
+       #                                     grouping_mark = ".", encoding = "ISO-8859-1"), trim_ws = TRUE)
+       # names(poblac_er) <- c("departamento", "poblacion")
+    
   
      color <- function(d){
           c <- if_else(d==0, '#FFFFFF',
@@ -559,6 +547,7 @@ Los días transcurridos dese que el Ministerio de Salud de Nación no reporta ca
 
 
 
+
 ## Incidencia Acumulada
 
 La incidencia acumulada (IA) proporciona una estimación de la probabilidad o el riesgo de que un individuo, libre de una determinada enfermedad, la desarrolle durante un período específico de tiempo.
@@ -706,7 +695,7 @@ En base a las provincias de residencia de los fallecidos, informadas por el Mini
 ## Relación entre Letalidad y Recuperados
 En el siguiente gráfico se ilustra la relación entre la tasa de letalidad y el porcentaje de recuperados de cada provincia. El tamaño de las burbujas está dado por la cantidad de casos activos actualmente.
 
-```{r letRec, , echo=FALSE, fig.align='center', message=FALSE, warning=FALSE, out.width='100%' }
+```{r letRec,  echo=FALSE, fig.align='center', message=FALSE, warning=FALSE, out.width='100%' }
  
     fallecidos <- muertosArg %>% group_by(Provincia) %>% 
       mutate(cantidad = n()) %>%
@@ -762,6 +751,9 @@ En el siguiente gráfico se ilustra la relación entre la tasa de letalidad y el
   
   
 ```
+
+
+
 
 ## Distribución de Casos por Tipo
 Los tipos de Casos confirmados se clasifican en:

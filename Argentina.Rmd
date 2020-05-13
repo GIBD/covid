@@ -120,10 +120,20 @@ Los datos con los que se trabajarán son de procesamiento propio en base a los i
      select(dia, Detectados, Activos, Fallecidos, Recuperados) %>% 
      gather(tipo, cantidad, c(Detectados, Activos, Fallecidos, Recuperados), -dia)
    
-   pal <- c( '#8DA0CB', '#9BD92F','#FF8080',  '#66C2A5')
-   fig <- plot_ly(evolArg, x =~dia, y=~cantidad, split = ~tipo, color=~tipo,
-         colors=pal, alpha = 0.1, type='scatter', mode='lines', fill='tozeroy')
-   fig
+     m <- evolArg %>% filter(dia==max(dia)) 
+     a <- list( x = m$dia, y = m$cantidad, text = paste0(m$tipo, '\n',m$cantidad ),
+                xref = "x", yref = "y", showarrow = F, #arrowhead = 7,
+                ax = 30,
+                ay = -60
+                # ax = 20, # ay = -20
+                )
+  
+     
+     pal <- c( '#8DA0CB', '#9BD92F','#FF8080',  '#66C2A5')
+     fig <- plot_ly(evolArg, x =~dia, y=~cantidad, split = ~tipo, color=~tipo,
+           colors=pal, alpha = 0.1, type='scatter', mode='lines', fill='tozeroy')
+     fig %>% layout(title="Evolución de COVID-19 en Argentina",xaxis = list(title = "día"), yaxis = list(title = ""),
+                    annotations=a)
   
 ```
 
@@ -149,7 +159,7 @@ Situación de los casos detectados en la actualidad. Los casos Activos aquí se 
         text = ~paste( round((porc * 100), 1), ' %'),
         marker = list(colors = pal2,line = list(color = '#FFFFFF', width = 1)),
         showlegend = FALSE)
-  fig
+  fig 
   
 ```
 
@@ -832,8 +842,8 @@ A continuación se visualiará la evolución en la proporción de los casos dete
 ```{r test, echo=FALSE, fig.align='center', message=FALSE, warning=FALSE, out.width='100%'}
 
   test <- argCov %>% select(dia, DescTest, Detectados, Recuperados, MuestraD) %>%
-         # mutate(total = DescTest + Detectados)
-      mutate(total = DescTest + Detectados+ Recuperados)
+         mutate(total = DescTest + Detectados)
+      # mutate(total = DescTest + Detectados+ Recuperados)
   test <- test %>% filter(DescTest >= 0) %>%  mutate(prop= round(Detectados/total * 100, 2)) %>% arrange(dia)
  
   test$dia <-as.Date(test$dia, "%d/%m/%Y")

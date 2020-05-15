@@ -109,7 +109,8 @@ Gracias al aporte de reunir y disponibilizar los datos de [Sistemas Mapache](htt
                                     cuidado_intensivo, fallecido, fecha_cuidado_intensivo, asistencia_respiratoria_mecanica,
                                     asistencia_respiratoria_mecanica, origen_financiamiento, clasificacion_resumen)
    
-     falle <- covid19casos %>% filter(fallecido=="SI") %>% group_by(provincia_residencia, departamento_residencia) %>% 
+     falle <- covid19casos %>% filter(fallecido=="SI" & clasificacion_resumen=="Confirmado") %>%
+       group_by(provincia_residencia, departamento_residencia) %>% 
       mutate(cantidad=n()) %>% 
       select(provincia_residencia, departamento_residencia, cantidad) 
     

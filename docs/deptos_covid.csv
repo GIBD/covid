@@ -1,0 +1,502 @@
+ID;provincia_residencia;departamento_residencia;DeptoProv;Confirmado;Descartado;Notificado;Sospechoso;cantidad
+1;Buenos Aires;25 de Mayo;Buenos Aires, 25 de Mayo;0;13;0;2;0
+2;Buenos Aires;9 de Julio;Buenos Aires, 9 de Julio;4;72;0;5;0
+3;Buenos Aires;Adolfo Alsina;Buenos Aires, Adolfo Alsina;0;5;1;1;0
+4;Buenos Aires;Adolfo Gonzales Chaves;Buenos Aires, Adolfo Gonzales Chaves;0;12;0;1;0
+5;Buenos Aires;Alberti;Buenos Aires, Alberti;2;10;0;3;0
+6;Buenos Aires;Almirante Brown;Buenos Aires, Almirante Brown;78;983;11;187;3
+7;Buenos Aires;Arrecifes;Buenos Aires, Arrecifes;0;22;0;5;0
+8;Buenos Aires;Avellaneda;Buenos Aires, Avellaneda;73;778;9;152;5
+9;Buenos Aires;Ayacucho;Buenos Aires, Ayacucho;0;32;0;3;0
+10;Buenos Aires;Azul;Buenos Aires, Azul;2;34;0;4;0
+11;Buenos Aires;Bahía Blanca;Buenos Aires, Bahía Blanca;39;410;234;96;1
+12;Buenos Aires;Balcarce;Buenos Aires, Balcarce;0;46;0;3;0
+13;Buenos Aires;Baradero;Buenos Aires, Baradero;2;23;0;2;0
+14;Buenos Aires;Benito Juárez;Buenos Aires, Benito Juárez;0;16;0;0;0
+15;Buenos Aires;Berazategui;Buenos Aires, Berazategui;47;506;8;97;2
+16;Buenos Aires;Berisso;Buenos Aires, Berisso;3;162;1;40;0
+17;Buenos Aires;Bolívar;Buenos Aires, Bolívar;0;80;0;1;0
+18;Buenos Aires;Bragado;Buenos Aires, Bragado;3;51;0;2;0
+19;Buenos Aires;Brandsen;Buenos Aires, Brandsen;8;52;1;9;0
+20;Buenos Aires;Campana;Buenos Aires, Campana;7;212;2;30;3
+21;Buenos Aires;Ca?uelas;Buenos Aires, Ca?uelas;6;137;0;21;1
+22;Buenos Aires;Capitán Sarmiento;Buenos Aires, Capitán Sarmiento;0;14;0;0;0
+23;Buenos Aires;Carlos Casares;Buenos Aires, Carlos Casares;3;57;1;4;0
+24;Buenos Aires;Carlos Tejedor;Buenos Aires, Carlos Tejedor;1;7;0;0;0
+25;Buenos Aires;Carmen de Areco;Buenos Aires, Carmen de Areco;0;18;0;2;0
+26;Buenos Aires;Castelli;Buenos Aires, Castelli;0;5;0;0;0
+27;Buenos Aires;Chacabuco;Buenos Aires, Chacabuco;5;68;2;24;0
+28;Buenos Aires;Chascomús;Buenos Aires, Chascomús;2;23;0;20;0
+29;Buenos Aires;Chivilcoy;Buenos Aires, Chivilcoy;4;156;1;27;0
+30;Buenos Aires;Colón;Buenos Aires, Colón;3;12;1;1;0
+31;Buenos Aires;Coronel de Marina L. Rosales;Buenos Aires, Coronel de Marina L. Rosales;1;40;13;5;0
+32;Buenos Aires;Coronel Dorrego;Buenos Aires, Coronel Dorrego;1;12;1;2;0
+33;Buenos Aires;Coronel Pringles;Buenos Aires, Coronel Pringles;0;14;0;0;0
+34;Buenos Aires;Coronel Suárez;Buenos Aires, Coronel Suárez;0;32;0;1;0
+35;Buenos Aires;Daireaux;Buenos Aires, Daireaux;1;16;0;6;0
+36;Buenos Aires;Dolores;Buenos Aires, Dolores;3;10;0;3;0
+37;Buenos Aires;Ensenada;Buenos Aires, Ensenada;4;128;0;16;0
+38;Buenos Aires;Escobar;Buenos Aires, Escobar;73;467;18;130;7
+39;Buenos Aires;Esteban Echeverría;Buenos Aires, Esteban Echeverría;47;540;21;193;0
+40;Buenos Aires;Exaltación de la Cruz;Buenos Aires, Exaltación de la Cruz;3;47;0;8;2
+41;Buenos Aires;Ezeiza;Buenos Aires, Ezeiza;68;550;6;85;0
+42;Buenos Aires;Florencio Varela;Buenos Aires, Florencio Varela;57;656;8;168;4
+43;Buenos Aires;Florentino Ameghino;Buenos Aires, Florentino Ameghino;0;6;0;0;0
+44;Buenos Aires;General Alvarado;Buenos Aires, General Alvarado;0;27;0;3;0
+45;Buenos Aires;General Alvear;Buenos Aires, General Alvear;0;4;0;3;0
+46;Buenos Aires;General Arenales;Buenos Aires, General Arenales;0;7;0;1;0
+47;Buenos Aires;General Belgrano;Buenos Aires, General Belgrano;1;23;0;1;0
+48;Buenos Aires;General Guido;Buenos Aires, General Guido;0;2;0;0;0
+49;Buenos Aires;General Juan Madariaga;Buenos Aires, General Juan Madariaga;0;7;0;0;0
+50;Buenos Aires;General La Madrid;Buenos Aires, General La Madrid;0;37;0;4;0
+51;Buenos Aires;General Las Heras;Buenos Aires, General Las Heras;1;20;0;5;0
+52;Buenos Aires;General Lavalle;Buenos Aires, General Lavalle;0;1;0;1;0
+53;Buenos Aires;General Paz;Buenos Aires, General Paz;0;14;0;1;0
+54;Buenos Aires;General Pinto;Buenos Aires, General Pinto;0;8;0;0;0
+55;Buenos Aires;General Pueyrredón;Buenos Aires, General Pueyrredón;27;596;99;127;2
+56;Buenos Aires;General Rodríguez;Buenos Aires, General Rodríguez;9;219;1;59;0
+57;Buenos Aires;General San Martín;Buenos Aires, General San Martín;151;1247;51;265;16
+58;Buenos Aires;General Viamonte;Buenos Aires, General Viamonte;0;13;0;0;0
+59;Buenos Aires;General Villegas;Buenos Aires, General Villegas;0;13;0;3;0
+60;Buenos Aires;Guaminí;Buenos Aires, Guaminí;1;10;0;0;0
+61;Buenos Aires;Hipólito Yrigoyen;Buenos Aires, Hipólito Yrigoyen;0;9;1;1;0
+62;Buenos Aires;Hurlingham;Buenos Aires, Hurlingham;30;420;4;86;0
+63;Buenos Aires;Ituzaingó;Buenos Aires, Ituzaingó;37;349;3;81;5
+64;Buenos Aires;José C. Paz;Buenos Aires, José C. Paz;35;426;13;92;5
+65;Buenos Aires;Junín;Buenos Aires, Junín;2;110;0;6;0
+66;Buenos Aires;La Costa;Buenos Aires, La Costa;1;63;0;12;0
+67;Buenos Aires;La Matanza;Buenos Aires, La Matanza;256;2448;76;516;6
+68;Buenos Aires;La Plata;Buenos Aires, La Plata;65;1603;21;239;2
+69;Buenos Aires;Lanús;Buenos Aires, Lanús;72;990;10;147;1
+70;Buenos Aires;Laprida;Buenos Aires, Laprida;0;8;0;2;0
+71;Buenos Aires;Las Flores;Buenos Aires, Las Flores;0;17;0;1;0
+72;Buenos Aires;Leandro N. Alem;Buenos Aires, Leandro N. Alem;1;13;0;11;1
+73;Buenos Aires;Lincoln;Buenos Aires, Lincoln;1;33;0;6;0
+74;Buenos Aires;Lobería;Buenos Aires, Lobería;2;14;0;3;0
+75;Buenos Aires;Lobos;Buenos Aires, Lobos;1;20;0;4;0
+76;Buenos Aires;Lomas de Zamora;Buenos Aires, Lomas de Zamora;78;1181;18;233;2
+77;Buenos Aires;Luján;Buenos Aires, Luján;24;275;13;69;3
+78;Buenos Aires;Magdalena;Buenos Aires, Magdalena;0;10;1;2;0
+79;Buenos Aires;Maipú;Buenos Aires, Maipú;0;6;0;2;0
+80;Buenos Aires;Malvinas Argentinas;Buenos Aires, Malvinas Argentinas;66;762;29;162;9
+81;Buenos Aires;Mar Chiquita;Buenos Aires, Mar Chiquita;1;21;0;3;0
+82;Buenos Aires;Marcos Paz;Buenos Aires, Marcos Paz;6;71;3;7;0
+83;Buenos Aires;Mercedes;Buenos Aires, Mercedes;2;45;0;44;0
+84;Buenos Aires;Merlo;Buenos Aires, Merlo;140;928;15;229;15
+85;Buenos Aires;Monte;Buenos Aires, Monte;0;15;0;1;0
+86;Buenos Aires;Monte Hermoso;Buenos Aires, Monte Hermoso;1;11;1;1;0
+87;Buenos Aires;Moreno;Buenos Aires, Moreno;84;787;13;95;3
+88;Buenos Aires;Morón;Buenos Aires, Morón;86;744;6;167;6
+89;Buenos Aires;Navarro;Buenos Aires, Navarro;1;8;0;0;0
+90;Buenos Aires;Necochea;Buenos Aires, Necochea;3;92;1;8;0
+91;Buenos Aires;Olavarría;Buenos Aires, Olavarría;3;106;0;20;0
+92;Buenos Aires;Patagones;Buenos Aires, Patagones;1;18;46;4;1
+93;Buenos Aires;Pehuajó;Buenos Aires, Pehuajó;2;46;0;2;1
+94;Buenos Aires;Pellegrini;Buenos Aires, Pellegrini;0;1;0;0;0
+95;Buenos Aires;Pergamino;Buenos Aires, Pergamino;1;35;0;4;0
+96;Buenos Aires;Pila;Buenos Aires, Pila;0;2;0;0;0
+97;Buenos Aires;Pilar;Buenos Aires, Pilar;84;737;10;152;6
+98;Buenos Aires;Pinamar;Buenos Aires, Pinamar;1;16;0;1;0
+99;Buenos Aires;Presidente Perón;Buenos Aires, Presidente Perón;9;121;2;22;0
+100;Buenos Aires;Puán;Buenos Aires, Puán;1;11;0;3;0
+101;Buenos Aires;Punta Indio;Buenos Aires, Punta Indio;0;9;0;1;0
+102;Buenos Aires;Quilmes;Buenos Aires, Quilmes;133;1250;46;677;4
+103;Buenos Aires;Ramallo;Buenos Aires, Ramallo;1;13;0;0;0
+104;Buenos Aires;Rauch;Buenos Aires, Rauch;0;10;0;3;0
+105;Buenos Aires;Rivadavia;Buenos Aires, Rivadavia;0;13;0;0;0
+106;Buenos Aires;Rojas;Buenos Aires, Rojas;0;22;0;2;0
+107;Buenos Aires;Roque Pérez;Buenos Aires, Roque Pérez;0;17;0;2;0
+108;Buenos Aires;Saavedra;Buenos Aires, Saavedra;0;13;0;0;0
+109;Buenos Aires;Saladillo;Buenos Aires, Saladillo;2;24;0;7;0
+110;Buenos Aires;Salliqueló;Buenos Aires, Salliqueló;0;5;0;3;0
+111;Buenos Aires;Salto;Buenos Aires, Salto;1;14;0;0;0
+112;Buenos Aires;San Andrés de Giles;Buenos Aires, San Andrés de Giles;2;32;0;1;1
+113;Buenos Aires;San Antonio de Areco;Buenos Aires, San Antonio de Areco;3;37;1;2;1
+114;Buenos Aires;San Cayetano;Buenos Aires, San Cayetano;1;23;0;5;0
+115;Buenos Aires;San Fernando;Buenos Aires, San Fernando;39;375;16;64;1
+116;Buenos Aires;San Isidro;Buenos Aires, San Isidro;75;788;22;184;4
+117;Buenos Aires;San Miguel;Buenos Aires, San Miguel;53;564;4;89;6
+118;Buenos Aires;San Nicolás;Buenos Aires, San Nicolás;5;83;1;9;1
+119;Buenos Aires;San Pedro;Buenos Aires, San Pedro;1;76;0;0;0
+120;Buenos Aires;San Vicente;Buenos Aires, San Vicente;45;183;4;43;3
+121;Buenos Aires;Suipacha;Buenos Aires, Suipacha;0;18;1;2;0
+122;Buenos Aires;Tandil;Buenos Aires, Tandil;5;117;5;60;0
+123;Buenos Aires;Tapalqué;Buenos Aires, Tapalqué;0;2;0;1;0
+124;Buenos Aires;Tigre;Buenos Aires, Tigre;69;633;26;92;4
+125;Buenos Aires;Tornquist;Buenos Aires, Tornquist;0;8;2;1;0
+126;Buenos Aires;Trenque Lauquen;Buenos Aires, Trenque Lauquen;2;22;0;2;0
+127;Buenos Aires;Tres Arroyos;Buenos Aires, Tres Arroyos;1;51;14;6;0
+128;Buenos Aires;Tres de Febrero;Buenos Aires, Tres de Febrero;54;859;10;188;6
+129;Buenos Aires;Tres Lomas;Buenos Aires, Tres Lomas;0;5;0;1;0
+130;Buenos Aires;Vicente López;Buenos Aires, Vicente López;74;782;27;237;6
+131;Buenos Aires;Villa Gesell;Buenos Aires, Villa Gesell;0;25;0;0;0
+132;Buenos Aires;Villarino;Buenos Aires, Villarino;0;31;1;2;0
+133;Buenos Aires;Zárate;Buenos Aires, Zárate;6;143;8;80;1
+134;CABA;Comuna 1;CABA, Comuna 1;2035;8951;173;3616;89
+135;CABA;Comuna 10;CABA, Comuna 10;25;173;1;35;5
+136;CABA;Comuna 11;CABA, Comuna 11;16;123;0;38;1
+137;CABA;Comuna 12;CABA, Comuna 12;12;121;1;54;0
+138;CABA;Comuna 13;CABA, Comuna 13;48;146;9;84;3
+139;CABA;Comuna 14;CABA, Comuna 14;47;172;11;88;2
+140;CABA;Comuna 15;CABA, Comuna 15;14;143;4;53;0
+141;CABA;Comuna 2;CABA, Comuna 2;56;139;4;50;1
+142;CABA;Comuna 3;CABA, Comuna 3;32;145;7;91;1
+143;CABA;Comuna 4;CABA, Comuna 4;50;236;1;109;0
+144;CABA;Comuna 5;CABA, Comuna 5;17;148;3;60;2
+145;CABA;Comuna 6;CABA, Comuna 6;18;155;4;48;1
+146;CABA;Comuna 7;CABA, Comuna 7;218;263;5;125;8
+147;CABA;Comuna 8;CABA, Comuna 8;19;112;0;49;0
+148;CABA;Comuna 9;CABA, Comuna 9;12;95;3;25;1
+149;Catamarca;Andalgalá;Catamarca, Andalgalá;0;9;0;0;0
+150;Catamarca;Belén;Catamarca, Belén;0;8;0;2;0
+151;Catamarca;Capayán;Catamarca, Capayán;0;15;0;0;0
+152;Catamarca;Capital;Catamarca, Capital;0;101;0;1;0
+153;Catamarca;El Alto;Catamarca, El Alto;0;1;0;0;0
+154;Catamarca;Fray Mamerto Esquiú;Catamarca, Fray Mamerto Esquiú;0;5;0;0;0
+155;Catamarca;La Paz;Catamarca, La Paz;0;5;0;0;0
+156;Catamarca;Paclín;Catamarca, Paclín;0;1;0;0;0
+157;Catamarca;Pomán;Catamarca, Pomán;0;3;0;0;0
+158;Catamarca;Santa María;Catamarca, Santa María;0;20;0;0;0
+159;Catamarca;Santa Rosa;Catamarca, Santa Rosa;0;2;0;0;0
+160;Catamarca;Tinogasta;Catamarca, Tinogasta;0;8;0;0;0
+161;Catamarca;Valle Viejo;Catamarca, Valle Viejo;0;17;0;1;0
+162;Chaco;12 de Octubre;Chaco, 12 de Octubre;0;8;0;2;0
+163;Chaco;1º de Mayo;Chaco, 1º de Mayo;2;33;0;4;0
+164;Chaco;2 de Abril;Chaco, 2 de Abril;0;1;0;1;0
+165;Chaco;25 de Mayo;Chaco, 25 de Mayo;0;17;0;3;0
+166;Chaco;9 de Julio;Chaco, 9 de Julio;0;8;0;1;0
+167;Chaco;Almirante Brown;Chaco, Almirante Brown;0;10;0;0;0
+168;Chaco;Bermejo;Chaco, Bermejo;13;45;0;5;1
+169;Chaco;Chacabuco;Chaco, Chacabuco;2;16;0;5;0
+170;Chaco;Comandante Fernández;Chaco, Comandante Fernández;1;64;1;11;0
+171;Chaco;Fray Justo Santa María de Oro;Chaco, Fray Justo Santa María de Oro;0;4;0;0;0
+172;Chaco;General Belgrano;Chaco, General Belgrano;0;1;0;0;0
+173;Chaco;General Donovan;Chaco, General Donovan;1;23;0;3;0
+174;Chaco;General Güemes;Chaco, General Güemes;2;25;0;12;0
+175;Chaco;Independencia;Chaco, Independencia;0;9;0;2;0
+176;Chaco;Libertad;Chaco, Libertad;0;19;0;2;0
+177;Chaco;Libertador General San Martín;Chaco, Libertador General San Martín;3;41;1;3;0
+178;Chaco;Maipú;Chaco, Maipú;0;10;0;1;0
+179;Chaco;Mayor Luis J. Fontana;Chaco, Mayor Luis J. Fontana;1;43;1;3;0
+180;Chaco;O'Higgins;Chaco, O'Higgins;0;2;0;1;0
+181;Chaco;Presidencia de la Plaza;Chaco, Presidencia de la Plaza;0;3;0;1;0
+182;Chaco;Quitilipi;Chaco, Quitilipi;0;9;0;3;0
+183;Chaco;San Fernando;Chaco, San Fernando;489;2811;5;357;23
+184;Chaco;San Lorenzo;Chaco, San Lorenzo;0;1;0;1;0
+185;Chaco;Sargento Cabral;Chaco, Sargento Cabral;0;6;0;1;0
+186;Chaco;Tapenagá;Chaco, Tapenagá;0;2;0;0;0
+187;Chubut;Biedma;Chubut, Biedma;0;55;2;6;0
+188;Chubut;Cushamen;Chubut, Cushamen;0;7;0;0;0
+189;Chubut;Escalante;Chubut, Escalante;2;51;5;11;0
+190;Chubut;Futaleufú;Chubut, Futaleufú;0;16;0;0;0
+191;Chubut;Gaiman;Chubut, Gaiman;2;10;1;2;1
+192;Chubut;Rawson;Chubut, Rawson;2;65;19;5;0
+193;Chubut;Río Senguer;Chubut, Río Senguer;0;3;0;0;0
+194;Chubut;Sarmiento;Chubut, Sarmiento;0;6;5;0;0
+195;Chubut;Tehuelches;Chubut, Tehuelches;0;1;0;0;0
+196;Chubut;Telsen;Chubut, Telsen;0;1;0;0;0
+197;Córdoba;Calamuchita;Córdoba, Calamuchita;2;79;22;8;0
+198;Córdoba;Capital;Córdoba, Capital;169;4311;200;321;7
+199;Córdoba;Colón;Córdoba, Colón;84;735;98;59;10
+200;Córdoba;Cruz del Eje;Córdoba, Cruz del Eje;2;49;5;5;0
+201;Córdoba;General Roca;Córdoba, General Roca;2;91;1;15;1
+202;Córdoba;General San Martín;Córdoba, General San Martín;24;350;12;23;1
+203;Córdoba;Ischilín;Córdoba, Ischilín;0;31;4;3;0
+204;Córdoba;Juárez Celman;Córdoba, Juárez Celman;0;56;2;6;0
+205;Córdoba;Marcos Juárez;Córdoba, Marcos Juárez;4;100;4;10;0
+206;Córdoba;Minas;Córdoba, Minas;0;4;1;1;0
+207;Córdoba;Pocho;Córdoba, Pocho;0;0;0;2;0
+208;Córdoba;Presidente Roque Sáenz Pe?a;Córdoba, Presidente Roque Sáenz Pe?a;1;51;1;5;0
+209;Córdoba;Punilla;Córdoba, Punilla;24;700;168;56;3
+210;Córdoba;Río Cuarto;Córdoba, Río Cuarto;17;566;181;60;0
+211;Córdoba;Río Primero;Córdoba, Río Primero;0;94;15;33;0
+212;Córdoba;Río Seco;Córdoba, Río Seco;0;9;1;0;0
+213;Córdoba;Río Segundo;Córdoba, Río Segundo;0;131;9;4;0
+214;Córdoba;San Alberto;Córdoba, San Alberto;0;51;2;6;0
+215;Córdoba;San Javier;Córdoba, San Javier;0;50;3;4;0
+216;Córdoba;San Justo;Córdoba, San Justo;13;445;53;34;0
+217;Córdoba;Santa María;Córdoba, Santa María;16;694;169;44;1
+218;Córdoba;Tercero Arriba;Córdoba, Tercero Arriba;0;96;5;7;0
+219;Córdoba;Totoral;Córdoba, Totoral;0;14;0;1;0
+220;Córdoba;Tulumba;Córdoba, Tulumba;0;19;2;2;0
+221;Córdoba;Unión;Córdoba, Unión;9;113;8;5;0
+222;Corrientes;Bella Vista;Corrientes, Bella Vista;0;12;0;7;0
+223;Corrientes;Berón de Astrada;Corrientes, Berón de Astrada;0;0;0;1;0
+224;Corrientes;Capital;Corrientes, Capital;71;415;0;644;0
+225;Corrientes;Concepción;Corrientes, Concepción;0;0;0;1;0
+226;Corrientes;Curuzú Cuatiá;Corrientes, Curuzú Cuatiá;0;14;0;5;0
+227;Corrientes;Empedrado;Corrientes, Empedrado;0;10;0;40;0
+228;Corrientes;Esquina;Corrientes, Esquina;0;7;0;5;0
+229;Corrientes;General Alvear;Corrientes, General Alvear;0;5;0;1;0
+230;Corrientes;General Paz;Corrientes, General Paz;0;4;0;4;0
+231;Corrientes;Goya;Corrientes, Goya;0;17;0;10;0
+232;Corrientes;Itatí;Corrientes, Itatí;0;0;0;7;0
+233;Corrientes;Ituzaingó;Corrientes, Ituzaingó;0;9;0;14;0
+234;Corrientes;Lavalle;Corrientes, Lavalle;0;5;0;5;0
+235;Corrientes;Mburucuyá;Corrientes, Mburucuyá;0;2;0;1;0
+236;Corrientes;Mercedes;Corrientes, Mercedes;0;11;0;5;0
+237;Corrientes;Monte Caseros;Corrientes, Monte Caseros;0;2;0;6;0
+238;Corrientes;Paso de los Libres;Corrientes, Paso de los Libres;0;42;0;18;0
+239;Corrientes;Saladas;Corrientes, Saladas;0;3;0;13;0
+240;Corrientes;San Cosme;Corrientes, San Cosme;7;13;0;37;0
+241;Corrientes;San Luis del Palmar;Corrientes, San Luis del Palmar;2;5;0;21;0
+242;Corrientes;San Martín;Corrientes, San Martín;0;2;0;1;0
+243;Corrientes;San Miguel;Corrientes, San Miguel;0;0;0;1;0
+244;Corrientes;San Roque;Corrientes, San Roque;0;5;0;5;0
+245;Corrientes;Santo Tomé;Corrientes, Santo Tomé;0;14;0;9;0
+246;Corrientes;Sauce;Corrientes, Sauce;0;1;0;1;0
+247;Entre Ríos;Colón;Entre Ríos, Colón;3;38;0;1;0
+248;Entre Ríos;Concordia;Entre Ríos, Concordia;3;127;0;17;0
+249;Entre Ríos;Diamante;Entre Ríos, Diamante;2;30;0;3;0
+250;Entre Ríos;Federación;Entre Ríos, Federación;0;23;0;2;0
+251;Entre Ríos;Federal;Entre Ríos, Federal;0;1;0;2;0
+252;Entre Ríos;Feliciano;Entre Ríos, Feliciano;0;1;0;0;0
+253;Entre Ríos;Gualeguay;Entre Ríos, Gualeguay;2;29;0;33;0
+254;Entre Ríos;Gualeguaychú;Entre Ríos, Gualeguaychú;9;97;0;27;0
+255;Entre Ríos;Islas del Ibicuy;Entre Ríos, Islas del Ibicuy;1;8;0;4;0
+256;Entre Ríos;La Paz;Entre Ríos, La Paz;1;7;0;2;0
+257;Entre Ríos;Nogoyá;Entre Ríos, Nogoyá;1;13;0;0;0
+258;Entre Ríos;Paraná;Entre Ríos, Paraná;6;289;1;20;0
+259;Entre Ríos;San Salvador;Entre Ríos, San Salvador;0;3;0;0;0
+260;Entre Ríos;Tala;Entre Ríos, Tala;0;5;0;1;0
+261;Entre Ríos;Uruguay;Entre Ríos, Uruguay;0;64;0;2;0
+262;Entre Ríos;Victoria;Entre Ríos, Victoria;0;20;0;0;0
+263;Entre Ríos;Villaguay;Entre Ríos, Villaguay;2;28;5;24;0
+264;Formosa;Bermejo;Formosa, Bermejo;0;2;0;2;0
+265;Formosa;Formosa;Formosa, Formosa;0;57;0;126;0
+266;Formosa;Laishi;Formosa, Laishi;0;6;0;9;0
+267;Formosa;Matacos;Formosa, Matacos;0;1;0;6;0
+268;Formosa;Pati?o;Formosa, Pati?o;0;4;0;31;0
+269;Formosa;Pilagás;Formosa, Pilagás;0;4;1;8;0
+270;Formosa;Pilcomayo;Formosa, Pilcomayo;0;20;0;59;0
+271;Formosa;Pirané;Formosa, Pirané;0;6;0;22;0
+272;Formosa;Ramón Lista;Formosa, Ramón Lista;0;0;0;1;0
+273;Jujuy;Cochinoca;Jujuy, Cochinoca;0;44;0;0;0
+274;Jujuy;Dr. Manuel Belgrano;Jujuy, Dr. Manuel Belgrano;4;528;0;10;0
+275;Jujuy;El Carmen;Jujuy, El Carmen;0;316;0;3;0
+276;Jujuy;Humahuaca;Jujuy, Humahuaca;0;53;0;0;0
+277;Jujuy;Ledesma;Jujuy, Ledesma;0;98;0;3;0
+278;Jujuy;Palpalá;Jujuy, Palpalá;1;49;0;0;0
+279;Jujuy;San Antonio;Jujuy, San Antonio;0;5;0;1;0
+280;Jujuy;San Pedro;Jujuy, San Pedro;0;140;1;3;0
+281;Jujuy;Santa Bárbara;Jujuy, Santa Bárbara;0;15;0;3;0
+282;Jujuy;Santa Catalina;Jujuy, Santa Catalina;0;4;0;0;0
+283;Jujuy;Susques;Jujuy, Susques;0;2;0;0;0
+284;Jujuy;Tilcara;Jujuy, Tilcara;0;28;0;2;0
+285;Jujuy;Tumbaya;Jujuy, Tumbaya;0;4;0;0;0
+286;Jujuy;Valle Grande;Jujuy, Valle Grande;0;1;0;0;0
+287;Jujuy;Yavi;Jujuy, Yavi;0;27;0;1;0
+288;La Pampa;Atreucó;La Pampa, Atreucó;0;5;0;1;0
+289;La Pampa;Caleu Caleu;La Pampa, Caleu Caleu;0;2;0;0;0
+290;La Pampa;Capital;La Pampa, Capital;4;67;0;4;0
+291;La Pampa;Catriló;La Pampa, Catriló;0;5;0;1;0
+292;La Pampa;Chalileo;La Pampa, Chalileo;0;1;0;0;0
+293;La Pampa;Chapaleufú;La Pampa, Chapaleufú;0;3;0;0;0
+294;La Pampa;Conhelo;La Pampa, Conhelo;0;8;0;0;0
+295;La Pampa;Guatraché;La Pampa, Guatraché;0;2;0;1;0
+296;La Pampa;Hucal;La Pampa, Hucal;0;3;0;2;0
+297;La Pampa;Loventué;La Pampa, Loventué;0;3;0;1;0
+298;La Pampa;Maracó;La Pampa, Maracó;1;23;0;5;0
+299;La Pampa;Puelén;La Pampa, Puelén;0;2;0;0;0
+300;La Pampa;Quemú Quemú;La Pampa, Quemú Quemú;0;6;0;0;0
+301;La Pampa;Rancul;La Pampa, Rancul;0;6;0;0;0
+302;La Pampa;Realicó;La Pampa, Realicó;0;7;0;0;0
+303;La Pampa;Toay;La Pampa, Toay;0;8;0;0;0
+304;La Pampa;Trenel;La Pampa, Trenel;0;0;0;1;0
+305;La Pampa;Utracán;La Pampa, Utracán;0;3;1;0;0
+306;La Rioja;Arauco;La Rioja, Arauco;0;15;0;0;0
+307;La Rioja;Capital;La Rioja, Capital;59;682;0;12;6
+308;La Rioja;Castro Barros;La Rioja, Castro Barros;0;3;0;0;0
+309;La Rioja;Chamical;La Rioja, Chamical;0;16;0;0;0
+310;La Rioja;Chilecito;La Rioja, Chilecito;0;31;0;0;0
+311;La Rioja;Coronel Felipe Varela;La Rioja, Coronel Felipe Varela;0;2;0;0;0
+312;La Rioja;Famatina;La Rioja, Famatina;0;4;0;0;0
+313;La Rioja;General Angel V. Pe?aloza;La Rioja, General Angel V. Pe?aloza;1;11;0;0;1
+314;La Rioja;General Belgrano;La Rioja, General Belgrano;0;3;0;1;0
+315;La Rioja;General Juan F. Quiroga;La Rioja, General Juan F. Quiroga;0;8;0;0;0
+316;La Rioja;General Lamadrid;La Rioja, General Lamadrid;0;1;0;0;0
+317;La Rioja;General Ocampo;La Rioja, General Ocampo;0;1;0;0;0
+318;La Rioja;General San Martín;La Rioja, General San Martín;0;3;0;1;0
+319;La Rioja;Independencia;La Rioja, Independencia;0;1;0;0;0
+320;La Rioja;Rosario Vera Pe?aloza;La Rioja, Rosario Vera Pe?aloza;0;6;0;0;0
+321;La Rioja;San Blas de los Sauces;La Rioja, San Blas de los Sauces;0;4;0;0;0
+322;La Rioja;Sanagasta;La Rioja, Sanagasta;0;8;0;0;0
+323;La Rioja;Vinchina;La Rioja, Vinchina;0;1;0;0;0
+324;Mendoza;Capital;Mendoza, Capital;15;175;1;12;1
+325;Mendoza;General Alvear;Mendoza, General Alvear;1;40;0;26;0
+326;Mendoza;Godoy Cruz;Mendoza, Godoy Cruz;9;179;1;11;3
+327;Mendoza;Guaymallén;Mendoza, Guaymallén;25;224;0;18;0
+328;Mendoza;Junín;Mendoza, Junín;0;16;0;0;0
+329;Mendoza;La Paz;Mendoza, La Paz;0;2;0;0;0
+330;Mendoza;Las Heras;Mendoza, Las Heras;11;146;0;18;2
+331;Mendoza;Lavalle;Mendoza, Lavalle;1;23;0;2;0
+332;Mendoza;Luján de Cuyo;Mendoza, Luján de Cuyo;13;78;2;9;1
+333;Mendoza;Maipú;Mendoza, Maipú;5;95;1;15;0
+334;Mendoza;Malargüe;Mendoza, Malargüe;3;17;11;8;1
+335;Mendoza;Rivadavia;Mendoza, Rivadavia;0;17;0;0;0
+336;Mendoza;San Carlos;Mendoza, San Carlos;0;13;0;1;0
+337;Mendoza;San Martín;Mendoza, San Martín;0;53;0;1;0
+338;Mendoza;San Rafael;Mendoza, San Rafael;2;80;1;37;1
+339;Mendoza;Santa Rosa;Mendoza, Santa Rosa;0;5;0;1;0
+340;Mendoza;Tunuyán;Mendoza, Tunuyán;3;57;0;2;0
+341;Mendoza;Tupungato;Mendoza, Tupungato;1;18;0;1;0
+342;Misiones;25 de Mayo;Misiones, 25 de Mayo;0;3;0;0;0
+343;Misiones;Apóstoles;Misiones, Apóstoles;0;4;0;5;0
+344;Misiones;Cainguás;Misiones, Cainguás;0;7;0;0;0
+345;Misiones;Candelaria;Misiones, Candelaria;0;5;0;0;0
+346;Misiones;Capital;Misiones, Capital;18;326;3;6;0
+347;Misiones;Eldorado;Misiones, Eldorado;1;27;0;3;0
+348;Misiones;General Manuel Belgrano;Misiones, General Manuel Belgrano;0;5;1;0;0
+349;Misiones;Guaraní;Misiones, Guaraní;2;8;14;0;1
+350;Misiones;Iguazú;Misiones, Iguazú;4;139;21;3;0
+351;Misiones;Leandro N. Alem;Misiones, Leandro N. Alem;0;20;0;1;0
+352;Misiones;Libertador Grl. San Martín;Misiones, Libertador Grl. San Martín;0;42;0;0;0
+353;Misiones;Montecarlo;Misiones, Montecarlo;0;19;0;0;0
+354;Misiones;Oberá;Misiones, Oberá;0;32;0;1;0
+355;Misiones;San Ignacio;Misiones, San Ignacio;0;13;0;2;0
+356;Misiones;San Javier;Misiones, San Javier;0;6;0;0;0
+357;Misiones;San Pedro;Misiones, San Pedro;0;2;0;0;0
+358;Neuquén;Aluminé;Neuquén, Aluminé;0;20;0;3;0
+359;Neuquén;A?elo;Neuquén, A?elo;0;18;0;2;0
+360;Neuquén;Catán Lil;Neuquén, Catán Lil;0;1;0;0;0
+361;Neuquén;Chos Malal;Neuquén, Chos Malal;0;16;0;1;0
+362;Neuquén;Collón Curá;Neuquén, Collón Curá;0;3;0;1;0
+363;Neuquén;Confluencia;Neuquén, Confluencia;55;646;3;122;2
+364;Neuquén;Huiliches;Neuquén, Huiliches;0;20;0;2;0
+365;Neuquén;Lácar;Neuquén, Lácar;5;41;0;11;1
+366;Neuquén;Loncopué;Neuquén, Loncopué;34;46;5;80;2
+367;Neuquén;Los Lagos;Neuquén, Los Lagos;4;16;1;7;0
+368;Neuquén;Minas;Neuquén, Minas;0;3;0;1;0
+369;Neuquén;Ñorquín;Neuquén, Ñorquín;0;5;0;2;0
+370;Neuquén;Pehuenches;Neuquén, Pehuenches;0;13;0;1;0
+371;Neuquén;Picún Leufú;Neuquén, Picún Leufú;0;4;0;0;0
+372;Neuquén;Picunches;Neuquén, Picunches;12;42;0;36;0
+373;Neuquén;Zapala;Neuquén, Zapala;4;68;0;29;0
+374;Río Negro;25 de Mayo;Río Negro, 25 de Mayo;0;8;0;0;0
+375;Río Negro;Adolfo Alsina;Río Negro, Adolfo Alsina;1;52;14;7;0
+376;Río Negro;Avellaneda;Río Negro, Avellaneda;109;193;41;35;7
+377;Río Negro;Bariloche;Río Negro, Bariloche;104;494;2;83;0
+378;Río Negro;Conesa;Río Negro, Conesa;1;9;2;0;0
+379;Río Negro;El Cuy;Río Negro, El Cuy;0;3;0;1;0
+380;Río Negro;General Roca;Río Negro, General Roca;75;381;133;116;5
+381;Río Negro;Pichi Mahuida;Río Negro, Pichi Mahuida;2;12;1;5;0
+382;Río Negro;Pilcaniyeu;Río Negro, Pilcaniyeu;6;27;0;3;0
+383;Río Negro;San Antonio;Río Negro, San Antonio;0;22;0;1;0
+384;Río Negro;Valcheta;Río Negro, Valcheta;0;1;0;0;0
+385;Salta;Anta;Salta, Anta;0;6;2;17;0
+386;Salta;Cachi;Salta, Cachi;0;1;0;4;0
+387;Salta;Cafayate;Salta, Cafayate;0;7;0;3;0
+388;Salta;Capital;Salta, Capital;2;198;6;123;0
+389;Salta;Cerrillos;Salta, Cerrillos;0;11;0;6;0
+390;Salta;Chicoana;Salta, Chicoana;0;5;0;3;0
+391;Salta;General Güemes;Salta, General Güemes;0;17;0;12;0
+392;Salta;Grl. José de San Martín;Salta, Grl. José de San Martín;0;35;16;55;0
+393;Salta;Iruya;Salta, Iruya;0;7;0;22;0
+394;Salta;La Caldera;Salta, La Caldera;0;6;0;5;0
+395;Salta;La Vi?a;Salta, La Vi?a;0;1;1;6;0
+396;Salta;Los Andes;Salta, Los Andes;0;5;0;0;0
+397;Salta;Metán;Salta, Metán;0;35;0;33;0
+398;Salta;Molinos;Salta, Molinos;0;2;0;1;0
+399;Salta;Orán;Salta, Orán;1;29;0;70;0
+400;Salta;Rivadavia;Salta, Rivadavia;0;1;1;1;0
+401;Salta;Rosario de la Frontera;Salta, Rosario de la Frontera;0;7;0;1;0
+402;Salta;Rosario de Lerma;Salta, Rosario de Lerma;2;11;8;37;0
+403;Salta;San Carlos;Salta, San Carlos;0;0;0;3;0
+404;Salta;Santa Victoria;Salta, Santa Victoria;0;3;0;20;0
+405;San Juan;25 de Mayo;San Juan, 25 de Mayo;0;6;0;0;0
+406;San Juan;9 de Julio;San Juan, 9 de Julio;1;5;1;0;0
+407;San Juan;Albardón;San Juan, Albardón;0;10;0;0;0
+408;San Juan;Angaco;San Juan, Angaco;0;3;0;0;0
+409;San Juan;Calingasta;San Juan, Calingasta;0;1;0;1;0
+410;San Juan;Capital;San Juan, Capital;0;79;0;5;0
+411;San Juan;Caucete;San Juan, Caucete;0;19;0;1;0
+412;San Juan;Chimbas;San Juan, Chimbas;0;46;0;4;0
+413;San Juan;Jáchal;San Juan, Jáchal;0;2;0;0;0
+414;San Juan;Pocito;San Juan, Pocito;0;27;0;1;0
+415;San Juan;Rawson;San Juan, Rawson;1;79;0;14;0
+416;San Juan;Rivadavia;San Juan, Rivadavia;0;78;0;1;0
+417;San Juan;San Martín;San Juan, San Martín;0;8;0;1;0
+418;San Juan;Santa Lucía;San Juan, Santa Lucía;1;27;0;4;0
+419;San Juan;Sarmiento;San Juan, Sarmiento;0;5;0;0;0
+420;San Juan;Ullúm;San Juan, Ullúm;0;2;0;0;0
+421;San Juan;Valle Fértil;San Juan, Valle Fértil;0;6;0;0;0
+422;San Juan;Zonda;San Juan, Zonda;0;5;0;0;0
+423;San Luis;Ayacucho;San Luis, Ayacucho;0;26;0;19;0
+424;San Luis;Belgrano;San Luis, Belgrano;0;6;0;1;0
+425;San Luis;Chacabuco;San Luis, Chacabuco;0;24;0;7;0
+426;San Luis;Coronel Pringles;San Luis, Coronel Pringles;0;8;0;0;0
+427;San Luis;General Pedernera;San Luis, General Pedernera;5;74;0;27;0
+428;San Luis;Gobernador Dupuy;San Luis, Gobernador Dupuy;2;7;1;10;0
+429;San Luis;Junín;San Luis, Junín;0;21;0;4;0
+430;San Luis;La Capital;San Luis, La Capital;4;255;1;81;0
+431;San Luis;Libertador General San Martín;San Luis, Libertador General San Martín;0;1;0;1;0
+432;Santa Cruz;Corpen Aike;Santa Cruz, Corpen Aike;1;5;5;4;0
+433;Santa Cruz;Deseado;Santa Cruz, Deseado;7;73;0;8;0
+434;Santa Cruz;Güer Aike;Santa Cruz, Güer Aike;6;85;14;35;0
+435;Santa Cruz;Lago Argentino;Santa Cruz, Lago Argentino;34;67;21;51;0
+436;Santa Cruz;Lago Buenos Aires;Santa Cruz, Lago Buenos Aires;0;8;0;1;0
+437;Santa Cruz;Magallanes;Santa Cruz, Magallanes;1;36;2;4;0
+438;Santa Cruz;Río Chico;Santa Cruz, Río Chico;0;8;0;13;0
+439;Santa Fe;9 de Julio;Santa Fe, 9 de Julio;0;11;0;1;0
+440;Santa Fe;Belgrano;Santa Fe, Belgrano;4;46;0;1;0
+441;Santa Fe;Caseros;Santa Fe, Caseros;3;92;0;4;0
+442;Santa Fe;Castellanos;Santa Fe, Castellanos;22;179;0;10;1
+443;Santa Fe;Constitución;Santa Fe, Constitución;9;68;0;1;1
+444;Santa Fe;Garay;Santa Fe, Garay;3;25;0;2;0
+445;Santa Fe;General López;Santa Fe, General López;18;209;0;154;0
+446;Santa Fe;General Obligado;Santa Fe, General Obligado;0;69;0;6;0
+447;Santa Fe;Iriondo;Santa Fe, Iriondo;7;72;0;1;0
+448;Santa Fe;La Capital;Santa Fe, La Capital;37;809;1;38;0
+449;Santa Fe;Las Colonias;Santa Fe, Las Colonias;4;72;0;6;0
+450;Santa Fe;Rosario;Santa Fe, Rosario;109;3731;0;102;1
+451;Santa Fe;San Cristóbal;Santa Fe, San Cristóbal;0;33;1;2;0
+452;Santa Fe;San Javier;Santa Fe, San Javier;1;12;0;0;0
+453;Santa Fe;San Jerónimo;Santa Fe, San Jerónimo;10;62;0;2;0
+454;Santa Fe;San Justo;Santa Fe, San Justo;0;21;0;0;0
+455;Santa Fe;San Lorenzo;Santa Fe, San Lorenzo;16;290;0;10;0
+456;Santa Fe;San Martín;Santa Fe, San Martín;0;31;0;1;0
+457;Santa Fe;Vera;Santa Fe, Vera;1;26;0;1;0
+458;Santiago del Estero;Aguirre;Santiago del Estero, Aguirre;0;1;0;0;0
+459;Santiago del Estero;Alberdi;Santiago del Estero, Alberdi;0;4;0;0;0
+460;Santiago del Estero;Avellaneda;Santiago del Estero, Avellaneda;0;3;0;0;0
+461;Santiago del Estero;Banda;Santiago del Estero, Banda;1;26;0;3;0
+462;Santiago del Estero;Belgrano;Santiago del Estero, Belgrano;1;2;0;0;0
+463;Santiago del Estero;Capital;Santiago del Estero, Capital;8;133;5;4;0
+464;Santiago del Estero;Choya;Santiago del Estero, Choya;0;12;0;0;0
+465;Santiago del Estero;Copo;Santiago del Estero, Copo;0;7;0;1;0
+466;Santiago del Estero;Figueroa;Santiago del Estero, Figueroa;0;13;0;7;0
+467;Santiago del Estero;General Taboada;Santiago del Estero, General Taboada;0;11;0;0;0
+468;Santiago del Estero;Guasayán;Santiago del Estero, Guasayán;0;5;0;0;0
+469;Santiago del Estero;Jiménez;Santiago del Estero, Jiménez;0;4;0;2;0
+470;Santiago del Estero;Juan F. Ibarra;Santiago del Estero, Juan F. Ibarra;0;2;0;0;0
+471;Santiago del Estero;Loreto;Santiago del Estero, Loreto;0;2;2;1;0
+472;Santiago del Estero;Moreno;Santiago del Estero, Moreno;0;7;0;1;0
+473;Santiago del Estero;Ojo de Agua;Santiago del Estero, Ojo de Agua;0;3;2;0;0
+474;Santiago del Estero;Pellegrini;Santiago del Estero, Pellegrini;0;26;0;1;0
+475;Santiago del Estero;Quebrachos;Santiago del Estero, Quebrachos;0;1;0;0;0
+476;Santiago del Estero;Río Hondo;Santiago del Estero, Río Hondo;0;59;0;1;0
+477;Santiago del Estero;Rivadavia;Santiago del Estero, Rivadavia;2;9;4;1;0
+478;Santiago del Estero;Robles;Santiago del Estero, Robles;4;76;0;4;0
+479;Santiago del Estero;Salavina;Santiago del Estero, Salavina;0;5;0;0;0
+480;Santiago del Estero;San Martín;Santiago del Estero, San Martín;0;4;0;0;0
+481;Santiago del Estero;Sarmiento;Santiago del Estero, Sarmiento;0;1;0;0;0
+482;Santiago del Estero;Silípica;Santiago del Estero, Silípica;0;1;0;0;0
+483;Tierra del Fuego;Río Grande;Tierra del Fuego, Río Grande;10;229;0;6;0
+484;Tierra del Fuego;Ushuaia;Tierra del Fuego, Ushuaia;126;875;0;9;0
+485;Tucumán;Burruyacú;Tucumán, Burruyacú;0;18;0;5;0
+486;Tucumán;Capital;Tucumán, Capital;24;1206;0;55;3
+487;Tucumán;Chicligasta;Tucumán, Chicligasta;0;90;0;4;0
+488;Tucumán;Cruz Alta;Tucumán, Cruz Alta;2;209;0;6;0
+489;Tucumán;Famaillá;Tucumán, Famaillá;0;108;0;12;0
+490;Tucumán;Graneros;Tucumán, Graneros;0;5;0;2;0
+491;Tucumán;Juan Bautista Alberdi;Tucumán, Juan Bautista Alberdi;0;10;0;0;0
+492;Tucumán;La Cocha;Tucumán, La Cocha;0;15;0;0;0
+493;Tucumán;Leales;Tucumán, Leales;0;57;0;0;0
+494;Tucumán;Lules;Tucumán, Lules;0;65;0;2;0
+495;Tucumán;Monteros;Tucumán, Monteros;1;169;0;12;0
+496;Tucumán;Río Chico;Tucumán, Río Chico;1;41;0;2;0
+497;Tucumán;Simoca;Tucumán, Simoca;0;18;0;8;0
+498;Tucumán;Tafí del Valle;Tucumán, Tafí del Valle;0;9;0;0;0
+499;Tucumán;Tafí Viejo;Tucumán, Tafí Viejo;4;197;0;11;0
+500;Tucumán;Trancas;Tucumán, Trancas;0;4;0;1;0
+501;Tucumán;Yerba Buena;Tucumán, Yerba Buena;10;187;0;18;1

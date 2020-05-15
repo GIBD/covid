@@ -111,8 +111,8 @@ Gracias al aporte de reunir y disponibilizar los datos de [Sistemas Mapache](htt
    
      falle <- covid19casos %>% filter(fallecido=="SI" & clasificacion_resumen=="Confirmado") %>%
        group_by(provincia_residencia, departamento_residencia) %>% 
-      mutate(cantidad=n()) %>% 
-      select(provincia_residencia, departamento_residencia, cantidad) 
+      mutate(fallecidos=n()) %>% 
+      select(provincia_residencia, departamento_residencia, fallecidos) 
     
     Tdeptal <- deptal %>% group_by(provincia_residencia, departamento_residencia, clasificacion_resumen) %>% 
         mutate(cantidad= n()) %>%
@@ -134,6 +134,7 @@ Gracias al aporte de reunir y disponibilizar los datos de [Sistemas Mapache](htt
   deptos_covid$Descartado <- if_else(is.na(deptos_covid$Descartado ), 0, as.double(deptos_covid$Descartado))
   deptos_covid$Sospechoso <- if_else(is.na(deptos_covid$Sospechoso ), 0, as.double(deptos_covid$Sospechoso))
   deptos_covid$Notificado <- if_else(is.na(deptos_covid$Notificado ), 0, as.double(deptos_covid$Notificado))
+  deptos_covid$fallecidos <- if_else(is.na(deptos_covid$fallecidos ), 0, as.double(deptos_covid$fallecidos))
   
   leaflet(data = deptos_covid) %>% #,  options =   leafletOptions(minZoom = 5)) %>%
     addTiles(urlTemplate = urlign, attribution="IGN") %>% 
@@ -143,7 +144,7 @@ Gracias al aporte de reunir y disponibilizar los datos de [Sistemas Mapache](htt
                  
                  popup = paste0(deptos_covid$provincia, " <br/> ", deptos_covid$departamen,
                                " <br/>- confirmados: ", deptos_covid$Confirmado,
-                               " <br/>- Fallecidos: ", deptos_covid$cantidad,
+                               " <br/>- Fallecidos: ", deptos_covid$fallecidos,
                                " <br/>- Descartados: ",deptos_covid$Descartado,
                                " <br/>- Sospechosos: ",deptos_covid$Sospechoso),
                  highlightOptions = highlightOptions(color = "white", weight = 2,

@@ -99,8 +99,9 @@ knitr::opts_chunk$set(echo = TRUE)
 <!-- # Departamental -->
 
 ## Distribución por Departamentos
-Gracias al aporte de reunir y disponibilizar los datos de [Sistemas Mapache](https://github.com/SistemasMapache/Covid19arData) y al aporte de muchos usuarios como [\@ClariCardozoCas](https://twitter.com/ClariCardozoCas), [\@juanjocorrea_ok](https://twitter.com/juanjocorrea_ok), [Juan Vera](https://twitter.com/cervecerojj)
-  se muestra la distribución de casos a nivel departamental de las provincias.
+Los datos del siguiente mapa son extraídos del portal de datos abiertos del Ministerio de Salud Argentina. Para la localización se utiliza la provincia y el partido de residencia cargado en el Sistema Nacional de Vigilancia en Salud.
+
+Se muestra la distribución de casos a nivel departamental de las provincias.
 
 ```{r dptoArg, echo=FALSE, message=FALSE, warning=FALSE, out.width='100%', out.height='850px'}
 
@@ -140,7 +141,11 @@ Gracias al aporte de reunir y disponibilizar los datos de [Sistemas Mapache](htt
     addTiles(urlTemplate = urlign, attribution="IGN") %>% 
     addPolygons( color = "#444444", weight = 1,
                  fillColor = color(deptos_covid$Confirmado), fillOpacity = 0.6,
-                 label = paste0("Confirmados: ", deptos_covid$Confirmado),
+                 label = paste0(deptos_covid$provincia, " <br/> ", deptos_covid$departamen,
+                               " <br/>- confirmados: ", deptos_covid$Confirmado,
+                               " <br/>- Fallecidos: ", deptos_covid$fallecidos,
+                               " <br/>- Descartados: ",deptos_covid$Descartado,
+                               " <br/>- Sospechosos: ",deptos_covid$Sospechoso),
                  
                  popup = paste0(deptos_covid$provincia, " <br/> ", deptos_covid$departamen,
                                " <br/>- confirmados: ", deptos_covid$Confirmado,

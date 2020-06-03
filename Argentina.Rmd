@@ -50,9 +50,10 @@ sep.miles <- function(x){format(x,big.mark=".")}
       localidades <- read_csv("data/mapas/localidades.csv", 
                               locale = locale(encoding = "ISO-8859-1"))
   ### Totales generales
-      argCov <- read_delim("data/argentina_gral.csv", ";", 
-                           escape_double = FALSE, trim_ws = TRUE, 
-                           locale = locale(encoding = "ISO-8859-1"))
+      # argCov <- read_delim("data/argentina_gral.csv", ";", 
+      #                      escape_double = FALSE, trim_ws = TRUE, 
+      #                      locale = locale(encoding = "ISO-8859-1"))
+      argCov <- read_excel("data/argentina_gral.xlsx")
       names(argCov) <- c("dia", "casosD", "Detectados", "muertesD", "Fallecidos", "Recuperados",
                       "UTI","MuestraD","TotalPruebas","DescEpidemiologia", "DescTest", "Descartados", 
                     #  "Mujeres", "Hombres", 
@@ -63,17 +64,20 @@ sep.miles <- function(x){format(x,big.mark=".")}
                                  locale = locale(decimal_mark = ",", grouping_mark = ".",
                                                  encoding = "ISO-8859-1"), trim_ws = TRUE)
   ### Detalle por provincias
-      covidArg <- read_delim("data/casos_provincias.csv", ";", 
-                            escape_double = FALSE, trim_ws = TRUE, locale = locale(encoding = "ISO-8859-1"))
+      # covidArg <- read_delim("data/casos_provincias.csv", ";", 
+      #                       escape_double = FALSE, trim_ws = TRUE, locale = locale(encoding = "ISO-8859-1"))
+      
+      covidArg <- read_excel("data/casos_provincias.xlsx")
       covidArg$FECHA <- as.Date(covidArg$FECHA, '%d/%m/%Y')
-    
+      
    ### Detalle fallecidos
-      muertosArg <- read_delim("data/argentina_fallecidos.csv", ";", 
-                               escape_double = FALSE, trim_ws = TRUE, locale = locale(encoding = "ISO-8859-1"))
+      # muertosArg <- read_delim("data/argentina_fallecidos.csv", ";", 
+      #                          escape_double = FALSE, trim_ws = TRUE, locale = locale(encoding = "ISO-8859-1"))
+      muertosArg <- read_excel("data/argentina_fallecidos.xlsx")
   
    ### Departamental
       casos_pronvinciales <- read_excel("data/covid_departamental.xlsx")
-           names(casos_pronvinciales) <- c("provincia", "departamento",  "localidad","fecha",
+      names(casos_pronvinciales) <- c("provincia", "departamento",  "localidad","fecha",
                                        "cantidad", "recuperados", "fallecidos", "internados", 
                                        "uti", "enestudio", "aislados", "estudiados", "descartados")
 
@@ -542,7 +546,9 @@ Los días transcurridos dese que el Ministerio de Salud de Nación no reporta ca
 
    fig <- plot_ly(dias, type="bar", colors = ~unique(col)) 
    fig <- fig %>% add_trace( x = ~sincasos, y = ~provincia, name= "Días",
-                            color=~col, text=~sincasos, textposition = 'auto',
+                            color=~col, text=~sincasos, textposition = 'auto', 
+                            textfont = list(color = 'rgb(0,0,0)'), 
+                            #  hoverinfo = 'text',
                             mode="lines",
                                showlegend = FALSE,
                                line = list(width = 15)) %>% 

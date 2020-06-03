@@ -33,57 +33,25 @@ knitr::opts_chunk$set(echo = TRUE)
   library(googlesheets4)
   library(readxl)
 
+  
+   localidades <- read_csv("data/mapas/localidades.csv", locale = locale(encoding = "ISO-8859-1"))
+   deptos <- st_read(dsn ="data/mapas/departamentos.shp") 
+   amba_dptos <- st_read(dsn ="data/mapas/AMBA_dptos.shp")
+   amba_loc <-read_delim("data/poblaciones/AMBA.csv", ";", escape_double = FALSE, 
+                         locale = locale(encoding = "ISO-8859-1"), trim_ws = TRUE)
+   # covidArg <- read_excel("data/casos_provincias.xlsx")
+   # covidArg$FECHA <- as.Date(covidArg$FECHA, '%d/%m/%Y')
+   
+   ## Datos abiertos Nación
+   # covid19casos <- read_excel("data/covid19casos.xlsx")
+   
+   ## Datos departamental nuestros
+   casos_pronvinciales <- read_excel("data/covid_departamental.xlsx")
+           names(casos_pronvinciales) <- c("provincia", "departamento",  "localidad","fecha",
+                                       "cantidad", "recuperados", "fallecidos", "internados",
+                                       "uti", "enestudio", "aislados", "estudiados", "descartados")
 
- localidades <- read_csv("data/mapas/localidades.csv", locale = locale(encoding = "ISO-8859-1"))
- deptos <- st_read(dsn ="data/mapas/departamentos.shp") 
- amba_dptos <- st_read(dsn ="data/mapas/AMBA_dptos.shp")
- amba_loc <-read_delim("data/poblaciones/AMBA.csv", ";", escape_double = FALSE, 
-                       locale = locale(encoding = "ISO-8859-1"), trim_ws = TRUE)
-  covid19casos <- read_csv("data/covid19casos.csv")
-  # ## Dataset Argentina
-  #   {  
-  #     ### Totales generales
-  #     argCov <- read_delim("data/argentina_gral.csv", ";", 
-  #                          escape_double = FALSE, trim_ws = TRUE, 
-  #                          locale = locale(encoding = "ISO-8859-1"))
-  #     names(argCov) <- c("dia", "casosD", "Detectados", "muertesD", "Fallecidos", "Recuperados",
-  #                     "UTI","MuestraD","TotalPruebas","DescEpidemiologia", "DescTest", "Descartados", 
-  #                   #  "Mujeres", "Hombres", 
-  #                   "Importados", "Estrecho", "Comunitaria", "Investigacion", "InicioSint")
-  #     argCov$dia <- as.Date(argCov$dia, '%d/%m/%Y')
-  #     
-  #     poblacionArg <- read_delim("data/poblaciones/prov_argentina.csv", ";", escape_double = FALSE,
-  #                                locale = locale(decimal_mark = ",", grouping_mark = ".",
-  #                                                encoding = "ISO-8859-1"), trim_ws = TRUE)
-  #      
-  #     ### Detalle por provincias
-  #     covidArg <- read_delim("data/casos_provincias.csv", ";", 
-  #                           escape_double = FALSE, trim_ws = TRUE, locale = locale(encoding = "ISO-8859-1"))
-  #     covidArg$FECHA <- as.Date(covidArg$FECHA, '%d/%m/%Y')
-  #   
-  #     ### Detalle fallecidos
-  #     muertosArg <- read_delim("data/argentina_fallecidos.csv", ";", 
-  #                              escape_double = FALSE, trim_ws = TRUE, locale = locale(encoding = "ISO-8859-1"))
-  #     
-  #  }
-  # 
-  # ## Dataset Provincias Argentinas
-  #   {
-  #      casos_pronvinciales <- read_excel("data/covid_departamental.xlsx")
-  #          names(casos_pronvinciales) <- c("provincia", "departamento",  "localidad","fecha",
-  #                                      "cantidad", "recuperados", "fallecidos", "internados", 
-  #                                      "uti", "enestudio", "aislados", "estudiados", "descartados")
-  # 
-  #      ### ENTRE RIOS
-  #      covid_er <- entre_rios_casos <- read_excel("data/entre_rios_casos.xlsx")
-  #      poblac_er <-  read_delim("data/poblaciones/poblacion_entre_rios.csv",  ";", escape_double = FALSE, 
-  #                          locale = locale(decimal_mark = ",", 
-  #                                          grouping_mark = ".", encoding = "ISO-8859-1"), trim_ws = TRUE)
-  #      names(poblac_er) <- c("departamento", "poblacion")
-  #      
-  #   }
-  # 
-        color <- function(d){
+    color <- function(d){
           c <- if_else(d==0, '#FFFFFF',
                if_else(d < 25, '#fdd49e',
                if_else(d < 50, '#fc8d59',
@@ -91,8 +59,16 @@ knitr::opts_chunk$set(echo = TRUE)
                if_else(d < 100, '#b30000',
                        "#7f0000")))))
          return(c)}
-  
-         urlign <- "https://wms.ign.gob.ar/geoserver/gwc/service/tms/1.0.0/capabaseargenmap@EPSG%3A3857@png/{z}/{x}/{-y}.png"
+           
+      color2 <- function(d){
+          c <- if_else(d==0, '#FFFFFF',
+               if_else(d < 50, '#fdd49e',
+               if_else(d < 100, '#fc8d59',
+               if_else(d < 150, '#d7301f',
+               if_else(d < 200, '#b30000',
+                       "#7f0000")))))
+         return(c)}
+    urlign <- "https://wms.ign.gob.ar/geoserver/gwc/service/tms/1.0.0/capabaseargenmap@EPSG%3A3857@png/{z}/{x}/{-y}.png"
       
 ```
 
@@ -105,118 +81,123 @@ Se muestra la distribución de casos a nivel departamental de las provincias.
 
 ```{r dptoArg, echo=FALSE, message=FALSE, warning=FALSE, out.width='100%', out.height='850px'}
 
-   deptal <- covid19casos %>% select(fecha_apertura,fecha_fis, provincia_residencia, departamento_residencia,
-                                    edad, edad_años_meses, sexo,
-                                    cuidado_intensivo, fallecido, fecha_cuidado_intensivo, asistencia_respiratoria_mecanica,
-                                    asistencia_respiratoria_mecanica, origen_financiamiento, clasificacion_resumen)
-   
-     falle <- covid19casos %>% filter(fallecido=="SI" & clasificacion_resumen=="Confirmado") %>%
-       group_by(provincia_residencia, departamento_residencia) %>% 
-      mutate(fallecidos=n()) %>% 
-      select(provincia_residencia, departamento_residencia, fallecidos) 
-    
-    Tdeptal <- deptal %>% group_by(provincia_residencia, departamento_residencia, clasificacion_resumen) %>% 
-        mutate(cantidad= n()) %>%
-        select(provincia_residencia, departamento_residencia, clasificacion_resumen, cantidad) %>%   unique() %>% 
-      spread(clasificacion_resumen, cantidad) %>% 
-      left_join(falle, by=c("provincia_residencia"="provincia_residencia","departamento_residencia"="departamento_residencia" ))
-    
-    deptos$provincia <- if_else( deptos$provincia=="Ciudad Autónoma de Buenos Aires", "CABA",  
-                                 as.character(deptos$provincia))
-    
-    Tdeptal$departamento_residencia <- gsub("COMUNA", "Comuna", Tdeptal$departamento_residencia)
-    Tdeptal$departamento_residencia <- gsub("ñ", "?", Tdeptal$departamento_residencia)
-    
-  deptos_covid <- deptos %>%  
-    left_join(Tdeptal, by=c("departamen" = "departamento_residencia", "provincia"="provincia_residencia")) %>% 
-    unique()
-  
-  deptos_covid$Confirmado <- if_else(is.na(deptos_covid$Confirmado ), 0, as.double(deptos_covid$Confirmado))
-  deptos_covid$Descartado <- if_else(is.na(deptos_covid$Descartado ), 0, as.double(deptos_covid$Descartado))
-  deptos_covid$Sospechoso <- if_else(is.na(deptos_covid$Sospechoso ), 0, as.double(deptos_covid$Sospechoso))
-  deptos_covid$Notificado <- if_else(is.na(deptos_covid$Notificado ), 0, as.double(deptos_covid$Notificado))
-  deptos_covid$fallecidos <- if_else(is.na(deptos_covid$fallecidos ), 0, as.double(deptos_covid$fallecidos))
-  
-  leaflet(data = deptos_covid) %>% #,  options =   leafletOptions(minZoom = 5)) %>%
-    addTiles(urlTemplate = urlign, attribution="IGN") %>% 
-    addPolygons( color = "#444444", weight = 1,
-                 fillColor = color(deptos_covid$Confirmado), fillOpacity = 0.6,
-                 label = paste0(deptos_covid$provincia, " <br/> ", deptos_covid$departamen,
-                               " <br/>- confirmados: ", deptos_covid$Confirmado,
-                               " <br/>- Fallecidos: ", deptos_covid$fallecidos,
-                               " <br/>- Descartados: ",deptos_covid$Descartado,
-                               " <br/>- Sospechosos: ",deptos_covid$Sospechoso),
-                 
-                 popup = paste0(deptos_covid$provincia, " <br/> ", deptos_covid$departamen,
-                               " <br/>- confirmados: ", deptos_covid$Confirmado,
-                               " <br/>- Fallecidos: ", deptos_covid$fallecidos,
-                               " <br/>- Descartados: ",deptos_covid$Descartado,
-                               " <br/>- Sospechosos: ",deptos_covid$Sospechoso),
-                 highlightOptions = highlightOptions(color = "white", weight = 2,
-                                                     bringToFront = TRUE))  %>% 
-    addLegend(colors = c('#FFFFFF','#fdd49e', '#fc8d59', '#d7301f', '#b30000', '#7f0000'), 
-              labels= c("0", "1-24", "25-49", "50-74", "75 - 99", "100 o más"), position ="bottomright") 
-  
-  #  casos_pronvincialesT <- casos_pronvinciales %>% 
-  #        # filter(departamento != "TOTAL GENERAL") %>%  
-  #        select(provincia, localidad, cantidad, recuperados, fallecidos) 
+  #  deptal <- covid19casos %>% select(fecha_diagnostico,fecha_fis, provincia_residencia, departamento_residencia,
+  #                                   edad, edad_años_meses, sexo,
+  #                                   cuidado_intensivo, fallecido, fecha_cuidado_intensivo, asistencia_respiratoria_mecanica,
+  #                                   asistencia_respiratoria_mecanica, origen_financiamiento, clasificacion_resumen)
   # 
-  # casos_pronvinciales$cantidad <- if_else(is.na(casos_pronvinciales$cantidad), 0, casos_pronvinciales$cantidad)
-  #     
-  # casos_pronvincialesT$localidad <- str_to_title(casos_pronvincialesT$localidad)
-  # localidades$nombre <-str_to_title(localidades$nombre) 
+  #    falle <- covid19casos %>% filter(fallecido=="SI" & clasificacion_resumen=="Confirmado") %>%
+  #      group_by(provincia_residencia, departamento_residencia) %>%
+  #     mutate(fallecidos=n()) %>%
+  #     select(provincia_residencia, departamento_residencia, fallecidos)
   # 
-  # casos_pronvincialesT <- casos_pronvincialesT %>% 
-  #   left_join(localidades, by=c("localidad"="nombre", "provincia"="provincia")) %>% unique()
+  #   Tdeptal <- deptal %>% group_by(provincia_residencia, departamento_residencia, clasificacion_resumen) %>%
+  #       mutate(cantidad= n()) %>%
+  #       select(provincia_residencia, departamento_residencia, clasificacion_resumen, cantidad) %>%   unique() %>%
+  #     spread(clasificacion_resumen, cantidad) %>%
+  #     left_join(falle, by=c("provincia_residencia"="provincia_residencia","departamento_residencia"="departamento_residencia" ))
   # 
-  # casos_pronvincialesT$departamen <- if_else(is.na(casos_pronvincialesT$departamen)&
-  #                                             casos_pronvincialesT$provincia=="Buenos Aires",
-  #                                           casos_pronvincialesT$localidad, casos_pronvincialesT$departamen)
+  #   deptos$provincia <- if_else( deptos$provincia=="Ciudad Autónoma de Buenos Aires", "CABA",
+  #                                as.character(deptos$provincia))
   # 
-  # casos_pronvincialesT$departamen <- if_else(is.na(casos_pronvincialesT$departamen)&
-  #                                             casos_pronvincialesT$provincia=="Ciudad Autónoma de Buenos Aires",
-  #                                           casos_pronvincialesT$localidad, casos_pronvincialesT$departamen)
-  # casos_pronvincialesT$departamen <- if_else(is.na(casos_pronvincialesT$departamen)&
-  #                                             casos_pronvincialesT$provincia=="Tucumán",
-  #                                           casos_pronvincialesT$localidad, casos_pronvincialesT$departamen)
-  # casos_pronvincialesT$departamen <- if_else(is.na(casos_pronvincialesT$departamen)&
-  #                                             casos_pronvincialesT$provincia=="Santiago del Estero",
-  #                                           casos_pronvincialesT$localidad, casos_pronvincialesT$departamen)
+  #   Tdeptal$departamento_residencia <- gsub("COMUNA", "Comuna", Tdeptal$departamento_residencia)
+  #   Tdeptal$departamento_residencia <- gsub("ñ", "?", Tdeptal$departamento_residencia)
   # 
-  # # vacios <- casos_pronvincialesT %>% filter(is.na(departamen))
-  # 
-  # casos_pronvincialesT <- casos_pronvincialesT %>%
-  #   group_by(provincia, departamen) %>% 
-  #   dplyr::mutate(casos = sum(cantidad), recuperadosT=sum(recuperados), fallecidosT=sum(fallecidos)) %>% 
-  #   select(provincia, departamen, casos, recuperadosT, fallecidosT)
-  # 
-  # names(casos_pronvincialesT) <- c("provincia", "departamento", "casos", "recuperados", "fallecidos")
-  # 
-  #   # casos_pronvincialesT$provincia <- gsub("Santa Fe", "Santa Fe", casos_pronvincialesT$provincia)
-  # provincias_casos <- casos_pronvincialesT %>% group_by(provincia) %>% 
-  #    select(provincia) %>% unique() %>% ungroup()
-  # deptos <- deptos %>%  right_join(provincias_casos , by=c("provincia"="provincia"))
-  # 
-  # deptos_covid <- deptos %>%  
-  #   left_join(casos_pronvincialesT, by=c("departamen" = "departamento", "provincia"="provincia")) %>% 
+  # deptos_covid <- deptos %>%
+  #   left_join(Tdeptal, by=c("departamen" = "departamento_residencia", "provincia"="provincia_residencia")) %>%
   #   unique()
   # 
-  # deptos_covid$casos<- if_else(is.na(deptos_covid$casos), 0, deptos_covid$casos)
-  #    
+  # deptos_covid$Confirmado <- if_else(is.na(deptos_covid$Confirmado ), 0, as.double(deptos_covid$Confirmado))
+  # deptos_covid$Descartado <- if_else(is.na(deptos_covid$Descartado ), 0, as.double(deptos_covid$Descartado))
+  # deptos_covid$Sospechoso <- if_else(is.na(deptos_covid$Sospechoso ), 0, as.double(deptos_covid$Sospechoso))
+  # deptos_covid$Notificado <- if_else(is.na(deptos_covid$Notificado ), 0, as.double(deptos_covid$Notificado))
+  # deptos_covid$fallecidos <- if_else(is.na(deptos_covid$fallecidos ), 0, as.double(deptos_covid$fallecidos))
+  # 
   # leaflet(data = deptos_covid) %>% #,  options =   leafletOptions(minZoom = 5)) %>%
-  #        addTiles(urlTemplate = urlign, attribution="IGN") %>% 
+  #   addTiles(urlTemplate = urlign, attribution="IGN") %>%
   #   addPolygons( color = "#444444", weight = 1,
-  #                fillColor = color(deptos_covid$casos), fillOpacity = 0.6,
-  #                label = paste(deptos_covid$provincia, ", ",
-  #                              deptos_covid$departamen, ": ", 
-  #                              deptos_covid$casos),
-  #                popup = paste(deptos_covid$provincia, " <br/> ", deptos_covid$departamen,
-  #                              " <br/>- confirmados ", deptos_covid$casos,
-  #                              " <br/>- recuperados ",deptos_covid$recuperados,
-  #                              " <br/>- fallecidos ",deptos_covid$fallecidos),
-  #                highlightOptions = highlightOptions(color = "white", weight = 2, bringToFront = TRUE))  %>% 
-  #    addLegend(colors = c('#FFFFFF','#fdd49e', '#fc8d59', '#d7301f', '#b30000', '#7f0000'), 
-  #                   labels= c("0", "1-24", "25-49", "50-74", "75 - 99", "100 o más"), position ="bottomright") 
+  #                fillColor = color(deptos_covid$Confirmado), fillOpacity = 0.6,
+  #                label = paste0(deptos_covid$provincia, " \n ", deptos_covid$departamen),
+  #                              # "\n- confirmados: ", deptos_covid$Confirmado,
+  #                              # "\n- Fallecidos: ", deptos_covid$fallecidos,
+  #                              # " \n- Descartados: ",deptos_covid$Descartado,
+  #                              # " \n- Sospechosos: ",deptos_covid$Sospechoso),
+  # 
+  #                popup = paste0(deptos_covid$provincia, " <br/> ", deptos_covid$departamen,
+  #                              " <br/>- confirmados: ", deptos_covid$Confirmado,
+  #                              " <br/>- Fallecidos: ", deptos_covid$fallecidos,
+  #                              " <br/>- Descartados: ",deptos_covid$Descartado,
+  #                              " <br/>- Sospechosos: ",deptos_covid$Sospechoso),
+  #                highlightOptions = highlightOptions(color = "white", weight = 2,
+  #                                                    bringToFront = TRUE))  %>%
+  #   addLegend(colors = c('#FFFFFF','#fdd49e', '#fc8d59', '#d7301f', '#b30000', '#7f0000'),
+  #             labels= c("0", "1-24", "25-49", "50-74", "75 - 99", "100 o más"), position ="bottomright")
+  # 
+  
+  # CON ARCHIVO DEPARTAMENTAL
+  casos_pronvincialesT <- casos_pronvinciales %>%
+         # filter(departamento != "TOTAL GENERAL") %>%
+         select(provincia, localidad, cantidad, recuperados, fallecidos)
+
+  casos_pronvinciales$cantidad <- if_else(is.na(casos_pronvinciales$cantidad), 0, casos_pronvinciales$cantidad)
+
+  casos_pronvincialesT$localidad <- str_to_title(casos_pronvincialesT$localidad)
+  localidades$nombre <-str_to_title(localidades$nombre)
+
+  casos_pronvincialesT <- casos_pronvincialesT %>%
+    left_join(localidades, by=c("localidad"="nombre", "provincia"="provincia")) %>% unique()
+
+  casos_pronvincialesT$departamen <- if_else(is.na(casos_pronvincialesT$departamen)&
+                                              casos_pronvincialesT$provincia=="Buenos Aires",
+                                            casos_pronvincialesT$localidad, casos_pronvincialesT$departamen)
+
+  casos_pronvincialesT$departamen <- if_else(is.na(casos_pronvincialesT$departamen)&
+                                              casos_pronvincialesT$provincia=="Ciudad Autónoma de Buenos Aires",
+                                            casos_pronvincialesT$localidad, casos_pronvincialesT$departamen)
+  casos_pronvincialesT$departamen <- if_else(is.na(casos_pronvincialesT$departamen)&
+                                              casos_pronvincialesT$provincia=="Tucumán",
+                                            casos_pronvincialesT$localidad, casos_pronvincialesT$departamen)
+  casos_pronvincialesT$departamen <- if_else(is.na(casos_pronvincialesT$departamen)&
+                                              casos_pronvincialesT$provincia=="Santiago del Estero",
+                                            casos_pronvincialesT$localidad, casos_pronvincialesT$departamen)
+  
+  casos_pronvincialesT$departamen <- gsub(" De ", " de ", casos_pronvincialesT$departamen)
+  casos_pronvincialesT$departamen <- gsub(" Del ", " del ", casos_pronvincialesT$departamen)
+  casos_pronvincialesT$departamen <- gsub(" La ", " la ", casos_pronvincialesT$departamen)
+  
+ # vacios<- casos_pronvincialesT %>% filter(is.na(departamen))
+  
+  casos_pronvincialesT <- casos_pronvincialesT %>%
+    group_by(provincia, departamen) %>%
+    dplyr::mutate(casos = sum(cantidad), recuperadosT=sum(recuperados), fallecidosT=sum(fallecidos)) %>%
+    select(provincia, departamen, casos, recuperadosT, fallecidosT)
+  names(casos_pronvincialesT) <- c("provincia", "departamento", "casos", "recuperados", "fallecidos")
+  
+  provincias_casos <- casos_pronvincialesT %>% group_by(provincia) %>%
+     select(provincia) %>% unique() %>% ungroup()
+  deptos <- deptos %>%  right_join(provincias_casos , by=c("provincia"="provincia"))
+
+  deptos_covid <- deptos %>%
+    left_join(casos_pronvincialesT, by=c("departamen" = "departamento", "provincia"="provincia")) %>%
+    unique()
+
+  deptos_covid$casos<- if_else(is.na(deptos_covid$casos), 0, deptos_covid$casos)
+
+  leaflet(data = deptos_covid) %>% #,  options =   leafletOptions(minZoom = 5)) %>%
+         addTiles(urlTemplate = urlign, attribution="IGN") %>%
+    addPolygons( color = "#444444", weight = 1,
+                 fillColor = color2(deptos_covid$casos), fillOpacity = 0.6,
+                 label = paste(deptos_covid$provincia, ", ",
+                               deptos_covid$departamen, ": ",
+                               deptos_covid$casos),
+                 popup = paste(deptos_covid$provincia, " <br/> ", deptos_covid$departamen,
+                               " <br/>- confirmados ", deptos_covid$casos,
+                               " <br/>- recuperados ",deptos_covid$recuperados,
+                               " <br/>- fallecidos ",deptos_covid$fallecidos),
+                 highlightOptions = highlightOptions(color = "white", weight = 2, bringToFront = TRUE))  %>%
+     addLegend(colors = c('#FFFFFF','#fdd49e', '#fc8d59', '#d7301f', '#b30000', '#7f0000'),
+                    labels= c("0", "1-24", "25-49", "50-74", "75 - 99", "100 o más"), position ="bottomright")
+
   
              
 ```

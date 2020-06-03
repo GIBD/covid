@@ -137,7 +137,7 @@ output:
       }
     
   ## Dataset Paises mas afectados y Arg
-    { mayores <- c('China', 'France', 'US', 'Spain', 'United States of America', 'Italy',  'Germany', 'Argentina')#, 'Korea, South')
+    { mayores <- c('China', 'France', 'US', 'Spain', 'United States of America', 'Italy',  'Germany', "Brazil", 'Argentina', 'Chile')#, 'Korea, South')
       
       afectados <- mundial_ambos %>% 
         filter(pais %in% mayores) %>% 

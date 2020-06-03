@@ -160,14 +160,7 @@ sep.miles <- function(x){format(x,big.mark=".")}
       
       sudamerica <- sudamerica %>% group_by(pais) %>% 
         mutate(semanal = roll_sum(nuevos, n=7, na.rm = T, fill = NA, align = "right"))
-        # 
-        # for(p in sudamerica$pais){
-        #   for(i in 8:max(sudamerica$dia[sudamerica$pais==p])){
-        #     semanal <- sum(sudamerica$nuevos[((sudamerica[,"pais"]==p)&
-        #                                         (sudamerica[,"dia"]<=i)&(sudamerica[,"dia"]>=(i-6)))])
-        #     sudamerica$semanal[((sudamerica[,"pais"]==p) & 
-        #                           (sudamerica[,"dia"]==i))] <- if_else(semanal >0, semanal, 0)
-        #   }}
+        
 
     sudamerica$muertes <- if_else(is.na(sudamerica$muertes), 0, sudamerica$muertes)
     sudamerica$recuperados <- if_else(is.na(sudamerica$recuperados), 0, sudamerica$recuperados)

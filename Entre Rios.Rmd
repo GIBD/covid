@@ -59,9 +59,9 @@ knitr::opts_chunk$set(echo = TRUE)
      select(residencia_provincia_nombre, residencia_departamento_nombre, altas) %>% unique()
   
   covid19ER_Sosp <- covid19ER %>% filter(clasificacion_resumen=="Sospechoso") %>%
-     group_by(residencia_provincia_nombre, residencia_departamento_nombre) %>%
+     group_by(residencia_provincia_nombre, residencia_departamento_nombre, Clasificacion) %>%
      mutate(sospechosos=n()) %>%
-     select(residencia_provincia_nombre, residencia_departamento_nombre, sospechosos) %>% unique()
+     select(residencia_provincia_nombre, residencia_departamento_nombre,Clasificacion, sospechosos) %>% unique()
   
   covid19ER_Desc <- covid19ER %>% filter(clasificacion_resumen=="Descartado") %>%
      group_by(residencia_provincia_nombre, residencia_departamento_nombre) %>%
@@ -284,8 +284,57 @@ Para simplificar la lectura se graficará la cantidad de casos confirmados y des
                       '</br> Confirmados: ', conf,
                       '</br> Descartados: ', cant)) %>% 
     add_trace(y = ~conf, name = "Confirmados", color = I("indianred3")) %>%
-    layout(xaxis = list(title="Semana Epidemiológica" ), 
+    layout(  title = "Casos Confirmados y Descartados en Entre Ríos", 
+             xaxis = list(title="Semana Epidemiológica" ), 
            yaxis = list(title = "Estudiados"), 
+           barmode = "stack",
+           legend = list(font = list(size = 10)))
+
+
+```
+
+
+
+## Casos Sospechosos
+En la base de datos nacional figuran al día `r as.Date(max(covid19ER$ultima_actualizacion), "%d/%m/%Y")`, un total de `r sum(covid19ER_Sosp$sospechosos)` casos sospechosos de COVID-19 cargados en el Sistema Nacional de Vigilancia.
+
+Entre estos casos hay algunos a los que ta se ha tomado la muestra y aún esperan resultados y otros a los que aún no se les ha realizado la muestra.
+
+A continuación se graficará la cantidad de casos sospechosos por departamento y su clasificación
+
+<!-- ### {.tabset  .tabset-fade .tabset-pills} -->
+#### Casos Sospechosos
+```{r sospechosos, echo=FALSE, message=FALSE, warning=FALSE, paged.print=FALSE}
+
+  sospechosos <- covid19ER_Sosp %>%  group_by(residencia_departamento_nombre) %>% 
+  spread(Clasificacion, sospechosos) %>% arrange(residencia_departamento_nombre)
+
+  names(sospechosos) <- c("provincia", "departamento", "Con muestra sin resultado", "Muestra no apta",
+                          "Sin muestra")
+  
+  sospechosos$`Sin muestra` <- if_else(is.na(sospechosos$`Sin muestra`), 0, as.double(sospechosos$`Sin muestra`))
+  sospechosos$`Muestra no apta` <- if_else(is.na(sospechosos$`Muestra no apta`), 0, as.double(sospechosos$`Muestra no apta`))
+  sospechosos$`Con muestra sin resultado` <- if_else(is.na(sospechosos$`Con muestra sin resultado`), 0, as.double(sospechosos$`Con muestra sin resultado`))
+    
+  plot_ly(sospechosos, x = ~departamento, y = ~`Con muestra sin resultado`, type = "bar", 
+          name = "Con muestra sin resultado",  color =I("orchid3"), 
+          hoverinfo = 'text',
+          text = ~paste('</br> Departamento: ', departamento,
+                        '</br> Con muestra sin resultado: ', `Con muestra sin resultado`)) %>% 
+    add_trace(y = ~`Sin muestra`, 
+              name = "Sin muestra", color = I("indianred3"),
+              hoverinfo = 'text',
+          text = ~paste('</br> Departamento: ', departamento,
+                         '</br> Sin muestra: ',`Sin muestra`)) %>%
+    add_trace(y = ~`Muestra no apta`,
+               name = "Muestra no apta", color =I("olivedrab3"),
+              hoverinfo = 'text',
+          text = ~paste('</br> Departamento: ', departamento,
+                        '</br> Muestra no apta: ', `Muestra no apta`)) %>%
+    
+    layout(title = "Casos sospechosos en Entre Ríos", 
+           xaxis = list(title="Departamento" ), 
+           yaxis = list(title = "Sospechosos"), 
            barmode = "stack",
            legend = list(font = list(size = 10)))
 

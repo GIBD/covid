@@ -165,6 +165,10 @@ sep.miles <- function(x){format(x,big.mark=".")}
     sudamerica$muertes <- if_else(is.na(sudamerica$muertes), 0, sudamerica$muertes)
     sudamerica$recuperados <- if_else(is.na(sudamerica$recuperados), 0, sudamerica$recuperados)
     
+     # porc_rec_sud <- sum(sudamerica$recuperados)/sum(sudamerica$casos)*100
+     #  letal_sud <- sum(sudamerica$muertes)/sum(sudamerica$casos)*100
+      
+    
   }
     
  

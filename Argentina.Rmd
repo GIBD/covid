@@ -63,11 +63,7 @@ sep.miles <- function(x){format(x,big.mark=".")}
       poblacionArg <- read_delim("data/poblaciones/prov_argentina.csv", ";", escape_double = FALSE,
                                  locale = locale(decimal_mark = ",", grouping_mark = ".",
                                                  encoding = "ISO-8859-1"), trim_ws = TRUE)
-  ### Detalle por provincias
-      # covidArg <- read_delim("data/casos_provincias.csv", ";", 
-      #                       escape_double = FALSE, trim_ws = TRUE, locale = locale(encoding = "ISO-8859-1"))
-      
-      covidArg <- read_excel("data/casos_provincias.xlsx")
+    covidArg <- read_excel("data/casos_provincias.xlsx")
       covidArg$FECHA <- as.Date(covidArg$FECHA, '%d/%m/%Y')
       
    ### Detalle fallecidos
@@ -81,14 +77,6 @@ sep.miles <- function(x){format(x,big.mark=".")}
                                        "cantidad", "recuperados", "fallecidos", "internados", 
                                        "uti", "enestudio", "aislados", "estudiados", "descartados")
 
-       # ### ENTRE RIOS
-       # covid_er <- entre_rios_casos <- read_excel("data/entre_rios_casos.xlsx")
-       # poblac_er <-  read_delim("data/poblaciones/poblacion_entre_rios.csv",  ";", escape_double = FALSE,
-       #                     locale = locale(decimal_mark = ",",
-       #                                     grouping_mark = ".", encoding = "ISO-8859-1"), trim_ws = TRUE)
-       # names(poblac_er) <- c("departamento", "poblacion")
-    
-  
      color <- function(d){
           c <- if_else(d==0, '#FFFFFF',
                if_else(d < 25, '#fdd49e',
@@ -222,37 +210,37 @@ La composición de la siguiente pirámide poblacional de los casos confirmados f
 
 #### Fallecidos
 ```{r piramideFall}
-   edades_m <- muertosArg  %>% group_by(genero, edad) %>% mutate(n=n())%>% 
-      select(genero, edad, n) 
-   edades_m$grupo <- if_else(edades_m$edad < 10, "0 a 9", 
-                   if_else(edades_m$edad < 20, "10 a 19", 
-                   if_else(edades_m$edad < 30, "20 a 29", 
-                   if_else(edades_m$edad < 40, "30 a 39", 
-                   if_else(edades_m$edad < 50, "40 a 49", 
-                   if_else(edades_m$edad < 60, "50 a 59", 
-                   if_else(edades_m$edad < 70, "60 a 69", 
-                   if_else(edades_m$edad < 80, "70 a 79", "80 o mas"))))))))
-
-      edades_m <- edades_m %>% group_by(grupo, genero) %>% mutate(total = n()) %>% 
-         select(grupo, genero, total) %>% unique() %>% ungroup() %>% 
-         mutate(prop = round(total/sum(total)*100, 2)) %>% 
-         select(grupo, genero, total, prop)
-      
-      edades_m$prop <- if_else(edades_m$genero=="Hombre", edades_m$prop*-1, edades_m$prop)
-
-plot_ly(edades_m, x = ~prop, y = ~grupo, color = ~genero) %>%
-  add_bars(orientation = "h",
-        hoverinfo = "y+text+name", text = ~paste(abs(prop), " %", '\n Cant.: (', total,')'), 
-        colors = c("#2c7fb8", "#fa9fb5")) %>%
-  layout(bargap = 0.1, barmode = "overlay", 
-         title = "Piramide Poblaciónal de Personas Fallecidas", 
-         xaxis = list(tickmode = "array",
-                      tickvals = c(-100, -50, -25, -20, -15, -10, -5, 0, 
-                                   5, 10, 15, 20, 25, 50, 100),
-                      ticktext = c("100", "50%", "25%", "20%", "15%", "10%","5%", "0",
-                                   "5%", "10%", "15%","20%", "25%", "50%", "100%"),
-                      title = "Fallecidos"),
-         yaxis = list(title = "Grupo Edad"))
+     edades_m <- muertosArg  %>% group_by(genero, edad) %>% mutate(n=n())%>% 
+        select(genero, edad, n) 
+     edades_m$grupo <- if_else(edades_m$edad < 10, "0 a 9", 
+                     if_else(edades_m$edad < 20, "10 a 19", 
+                     if_else(edades_m$edad < 30, "20 a 29", 
+                     if_else(edades_m$edad < 40, "30 a 39", 
+                     if_else(edades_m$edad < 50, "40 a 49", 
+                     if_else(edades_m$edad < 60, "50 a 59", 
+                     if_else(edades_m$edad < 70, "60 a 69", 
+                     if_else(edades_m$edad < 80, "70 a 79", "80 o mas"))))))))
+  
+        edades_m <- edades_m %>% group_by(grupo, genero) %>% mutate(total = n()) %>% 
+           select(grupo, genero, total) %>% unique() %>% ungroup() %>% 
+           mutate(prop = round(total/sum(total)*100, 2)) %>% 
+           select(grupo, genero, total, prop)
+        
+        edades_m$prop <- if_else(edades_m$genero=="Hombre", edades_m$prop*-1, edades_m$prop)
+  
+  plot_ly(edades_m, x = ~prop, y = ~grupo, color = ~genero) %>%
+    add_bars(orientation = "h",
+          hoverinfo = "y+text+name", text = ~paste(abs(prop), " %", '\n Cant.: (', total,')'), 
+          colors = c("#2c7fb8", "#fa9fb5")) %>%
+    layout(bargap = 0.1, barmode = "overlay", 
+           title = "Piramide Poblaciónal de Personas Fallecidas", 
+           xaxis = list(tickmode = "array",
+                        tickvals = c(-100, -50, -25, -20, -15, -10, -5, 0, 
+                                     5, 10, 15, 20, 25, 50, 100),
+                        ticktext = c("100", "50%", "25%", "20%", "15%", "10%","5%", "0",
+                                     "5%", "10%", "15%","20%", "25%", "50%", "100%"),
+                        title = "Fallecidos"),
+           yaxis = list(title = "Grupo Edad"))
 
    
 
@@ -480,7 +468,8 @@ A continuación se muestra la evolución de casos detectados por provincias y la
     group_by(provincia) %>% arrange(fecha) %>% mutate(dia1 = row_number()) 
   
   fig <- plot_ly(p, x = ~fecha, y = ~cant, color = ~provincia, type = "scatter", mode='lines+markers') 
-  fig <- layout(fig, title="Evolución de casos confirmados por Provincia",xaxis = list(title = "día"), yaxis = list(title = "casos"))
+  fig <- layout(fig, title="Evolución de casos confirmados por Provincia",
+                xaxis = list(title = "día"), yaxis = list(title = "casos"))
   fig
 
 ```
@@ -587,6 +576,8 @@ Al día de la fecha las incidencias acumuladas por cada 100.000 habitantes en la
     mutate(ia= round(cant/poblacion * 100000, 2)) %>%
     arrange(desc(ia))
 
+  ia_prov$provincia <- gsub("Tucumán", "Tucuman", ia_prov$provincia)
+  
   highchart() %>%
     hc_title(text = "<i>Incidencia Acumulada COVID-19 en Argentina</i> ",
              margin = 20, align = "center", style = list(color = "#780000", useHTML = TRUE)) %>%

@@ -133,6 +133,8 @@ output:
       names(mundial_ambos) <- c("pais", "fecha", "dia", "casos", "muertes", "recuperados")
       mundial_ambos$fecha <-as.Date(mundial_ambos$fecha ,"%m/%d/%Y")
       
+     
+      
       rm(mundial_m, mundial, mundial_r)
       }
     

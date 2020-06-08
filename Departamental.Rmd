@@ -131,7 +131,8 @@ deptal <- covid19casos %>% select(fecha_apertura,fecha_inicio_sintomas,  fecha_d
    
    altas <- covid19casos %>% filter(fallecido=="NO" & clasificacion_resumen=="Confirmado" & 
                                       Clasificacion %in% c("Caso confirmado - No activo (por laboratorio y tiempo de evolución)",
-                                                           "Caso confirmado - No Activo por criterio de laboratorio")) %>%
+                                                           "Caso confirmado - No Activo por criterio de laboratorio", 
+                                                           "Caso confirmado - No activo (por tiempo de evolución)")) %>%
      group_by(residencia_provincia_nombre, residencia_departamento_nombre) %>%
      mutate(altas=n()) %>%
      select(residencia_provincia_nombre, residencia_departamento_nombre, altas) %>% unique()

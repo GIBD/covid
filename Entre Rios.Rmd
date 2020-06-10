@@ -44,24 +44,33 @@ knitr::opts_chunk$set(echo = TRUE)
      
   ### Base Nación
   covid19ER <- read_excel("data/covid19casos.xlsx")
-  names(covid19ER) <- c("id_evento_caso", "sexo", "edad", 	"edad_anos_meses", 	"residencia_pais_nombre", 	"residencia_provincia_nombre", 	"residencia_departamento_nombre", 	"carga_provincia_nombre", 	"fecha_inicio_sintomas", 	"fecha_apertura", 	"sepi_apertura", 	"fecha_internacion", 	"cuidado_intensivo", 	"fecha_cui_intensivo", "fallecido", 	"fecha_fallecimiento",	"asistencia_respiratoria_mecanica",	"carga_provincia_id",	"origen_financiamiento",	"Clasificacion", 	"clasificacion_resumen",	"residencia_provincia_id", 	"fecha_diagnostico", 	"residencia_departamento_id",	"ultima_actualizacion")
-
+  names(covid19ER) <- c("id_evento_caso", "sexo", "edad", "edad_anos_meses", "residencia_pais_nombre",
+                        "residencia_provincia_nombre", 	"residencia_departamento_nombre",
+                        "carga_provincia_nombre", 	"fecha_inicio_sintomas", 	"fecha_apertura",
+                        "sepi_apertura", 	"fecha_internacion", 	"cuidado_intensivo", 	"fecha_cui_intensivo",
+                        "fallecido", 	"fecha_fallecimiento",	"asistencia_respiratoria_mecanica",
+                        "carga_provincia_id",	"origen_financiamiento",	"Clasificacion",
+                        "clasificacion_resumen",	"residencia_provincia_id", 	"fecha_diagnostico",
+                        "residencia_departamento_id",	"ultima_actualizacion")
   covid19ER <- covid19ER %>% filter(residencia_provincia_nombre=="Entre Ríos")
   
-  covid19ER_Conf <- covid19ER %>% filter(clasificacion_resumen=="Confirmado" & carga_provincia_nombre=="Entre Ríos")
+  covid19ER_Conf <- covid19ER %>%
+    filter(clasificacion_resumen=="Confirmado" & carga_provincia_nombre=="Entre Ríos")
   
-  covid19ER_Rec <- covid19ER %>% filter(fallecido=="NO" & clasificacion_resumen=="Confirmado" & 
-                                      Clasificacion %in% c("Caso confirmado - No activo (por laboratorio y tiempo de evolución)",
-                                                           "Caso confirmado - No Activo por criterio de laboratorio", 
-                                                           "Caso confirmado - No activo (por tiempo de evolución)")) %>%
+  covid19ER_Rec <- covid19ER %>% 
+    filter(fallecido=="NO" & clasificacion_resumen=="Confirmado" &
+             Clasificacion %in% c("Caso confirmado - No activo (por laboratorio y tiempo de evolución)",
+                                  "Caso confirmado - No Activo por criterio de laboratorio", 
+                                  "Caso confirmado - No activo (por tiempo de evolución)")) %>%
      group_by(residencia_provincia_nombre, residencia_departamento_nombre) %>%
      mutate(altas=n()) %>%
      select(residencia_provincia_nombre, residencia_departamento_nombre, altas) %>% unique()
   
-  covid19ER_Sosp <- covid19ER %>% filter(clasificacion_resumen=="Sospechoso") %>%
-     group_by(residencia_provincia_nombre, residencia_departamento_nombre, Clasificacion) %>%
-     mutate(sospechosos=n()) %>%
-     select(residencia_provincia_nombre, residencia_departamento_nombre,Clasificacion, sospechosos) %>% unique()
+  covid19ER_Sosp <- covid19ER %>% 
+    filter(clasificacion_resumen=="Sospechoso" & carga_provincia_nombre=="Entre Ríos") %>%
+    group_by(residencia_provincia_nombre, residencia_departamento_nombre, Clasificacion) %>%
+    mutate(sospechosos=n()) %>%
+    select(residencia_provincia_nombre, residencia_departamento_nombre,Clasificacion, sospechosos) %>% unique()
   
   covid19ER_Desc <- covid19ER %>% filter(clasificacion_resumen=="Descartado") %>%
      group_by(residencia_provincia_nombre, residencia_departamento_nombre) %>%
@@ -297,6 +306,10 @@ Para simplificar la lectura se graficará la cantidad de casos confirmados y des
 
 ## Casos Sospechosos
 En la base de datos nacional figuran al día `r as.Date(max(covid19ER$ultima_actualizacion), "%d/%m/%Y")`, un total de `r sum(covid19ER_Sosp$sospechosos)` casos sospechosos de COVID-19 cargados en el Sistema Nacional de Vigilancia.
+
+La definición de caso es dinámica y puede variar según situación epidemiológica [Definición de Caso](https://www.argentina.gob.ar/salud/coronavirus-COVID-19/definicion-de-caso)
+
+En Argentina sólo se procesan muestras que cumplen con la definición de caso sospechoso. La muestra enviada debe estar acompañada con los datos completos según Ficha de notificación, investigación epidemiológica y pedido de estudios de laboratorio. 
 
 Entre estos casos hay algunos a los que ta se ha tomado la muestra y aún esperan resultados y otros a los que aún no se les ha realizado la muestra.
 

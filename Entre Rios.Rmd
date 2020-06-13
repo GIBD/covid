@@ -56,7 +56,8 @@ knitr::opts_chunk$set(echo = TRUE)
   
   covid19ER_Conf <- covid19ER %>%
     filter(clasificacion_resumen=="Confirmado" & carga_provincia_nombre=="Entre Ríos")
-  
+  # table(covid19ER_Conf$sexo)
+    
   covid19ER_Rec <- covid19ER %>% 
     filter(fallecido=="NO" & clasificacion_resumen=="Confirmado" &
              Clasificacion %in% c("Caso confirmado - No activo (por laboratorio y tiempo de evolución)",
@@ -143,14 +144,16 @@ A continuación se muestran la cantidad de casos Activos de COVID-19. Los casos 
 #### Departamental
 ```{r mapaERAct, echo=FALSE, message=FALSE, warning=FALSE, paged.print=FALSE}
 
-  activos <- covid19ER_Conf %>% 
-  group_by(residencia_provincia_nombre, residencia_departamento_nombre) %>% mutate(conf=n()) %>% 
-    select(residencia_provincia_nombre, residencia_departamento_nombre, conf) %>% unique() %>% 
-    left_join(covid19ER_Rec, by=c("residencia_provincia_nombre"="residencia_provincia_nombre", 
-                                  "residencia_departamento_nombre"="residencia_departamento_nombre"))
+  # activos <- covid19ER_Conf %>% 
+  # group_by(residencia_provincia_nombre, residencia_departamento_nombre) %>% mutate(conf=n()) %>% 
+  covider$provincia <- "Entre Ríos"
+  activos <- covider %>% 
+  # select(residencia_provincia_nombre, residencia_departamento_nombre, conf) %>% unique() %>% 
+    left_join(covid19ER_Rec, by=c("provincia"="residencia_provincia_nombre", 
+                                  "DEPARTAMENTO"="residencia_departamento_nombre"))
 
   activos$altas <- if_else(is.na(activos$altas), 0, as.double(activos$altas))  
-  activos$activos <- activos$conf-activos$altas
+  activos$activos <- activos$cantidad-activos$altas
   
   colors <- c("#ffffcc", "#ffeda0", "#fed976", "#feb24c", "#fd8d3c", "#fc4e2a", "#e31a1c", "#bd0026", "#800026")
 
@@ -160,7 +163,7 @@ A continuación se muestran la cantidad de casos Activos de COVID-19. Los casos 
              style = list(color = "#bd0026", useHTML = TRUE, fontWeight = "bold")) %>% 
     hc_tooltip(followPointer =  FALSE) %>%
     hc_add_series_map(entrerios, activos, name = "Activos", value = "activos",
-                      joinBy = c("nam", "residencia_departamento_nombre"),
+                      joinBy = c("nam", "DEPARTAMENTO"),
                       dataLabels = list(enabled = TRUE,
                                         format = '{point.properties.nam}: {point.value}')) %>%
     hc_colorAxis(stops=color_stops(n=length(colors), colors = colors)) %>%

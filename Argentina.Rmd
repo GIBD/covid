@@ -803,6 +803,7 @@ La evolución y distribución de los casos según el tipo en Argentina es:
            barmode = "stack",
            legend = list(orientation = 'h', font = list(size = 10)))
   
+  
 ```
 
 

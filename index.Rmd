@@ -31,6 +31,11 @@ Este trabajo fue realizado con el objetivo de aportar información sobre la pand
 3. Los datos a nivel departamental son recopilados de los informes brindados por los Ministerios de Salud provinciales.
 
 
+## Recomendaciones
+
+[Recomendaciones del Ministerio de Salud de Argentina](https://www.argentina.gob.ar/coronavirus/cuidarnos)
+
+
 
 
 </div>
@@ -46,8 +51,10 @@ Este trabajo fue realizado con el objetivo de aportar información sobre la pand
 
 
 
-## Recomendaciones
 
-[Recomendaciones del Ministerio de Salud de Argentina](https://www.argentina.gob.ar/coronavirus/cuidarnos)
+
+<!-- ## Recomendaciones -->
+
+<!-- [Recomendaciones del Ministerio de Salud de Argentina](https://www.argentina.gob.ar/coronavirus/cuidarnos) -->
 
 

@@ -67,16 +67,87 @@ sep.miles <- function(x){format(x,big.mark=".")}
       
    ### Detalle fallecidos
       # muertosArg <- read_excel("data/argentina_fallecidos.xlsx")
-       muertosArg <- read_excel("data/argentina.xlsx", "argentina_fallecidos")
+       muertosArg <- read_excel("data/argentina.xlsx", "argentina_fallecidos") %>%
+         filter(genero != "ND" & !is.na(genero))
   
    ### Departamental
-      casos_pronvinciales <- read_excel("data/covid_departamental.xlsx")
-      names(casos_pronvinciales) <- c("provincia", "departamento",  "localidad","fecha",
-                                       "cantidad", "recuperados", "fallecidos", "internados", 
-                                       "uti", "enestudio", "aislados", "estudiados", "descartados")
+      # casos_pronvinciales <- read_excel("data/covid_departamental.xlsx")
+      # names(casos_pronvinciales) <- c("provincia", "departamento",  "localidad","fecha",
+      #                                  "cantidad", "recuperados", "fallecidos", "internados", 
+      #                                  "uti", "enestudio", "aislados", "estudiados", "descartados")
+       
+      casos_pronvinciales <- read_excel("data/covid19casos.xlsx")
+      
+      edades <-  casos_pronvinciales %>% 
+        filter(clasificacion_resumen=="Confirmado") %>% group_by(sexo, edad, edad_años_meses) %>%
+        mutate(cantidad=n()) %>% 
+        select(sexo, edad, edad_años_meses, cantidad) %>% unique() 
+      
+      edades$edad <- if_else(edades$edad_años_meses=="Meses", 1, edades$edad)
+      
+      edades <-  edades %>% 
+        group_by(sexo, edad) %>%
+        mutate(cantidad=sum(cantidad)) %>% 
+        select(sexo, edad, cantidad) %>% unique() 
+      
+       edades$grupo <- if_else(edades$edad < 10, "0 a 9", 
+                     if_else(edades$edad < 20, "10 a 19", 
+                     if_else(edades$edad < 30, "20 a 29", 
+                     if_else(edades$edad < 40, "30 a 39", 
+                     if_else(edades$edad < 50, "40 a 49", 
+                     if_else(edades$edad < 60, "50 a 59", 
+                     if_else(edades$edad < 70, "60 a 69", 
+                     if_else(edades$edad < 80, "70 a 79", "80 o mas"))))))))
+       
+      edades <- edades %>% group_by(sexo, grupo) %>% mutate(cantidad=sum(cantidad)) %>% 
+        select(sexo, grupo, cantidad) %>% unique()
+       
+      
+      confirmados <- casos_pronvinciales %>% filter(carga_provincia_nombre== residencia_provincia_nombre & 
+                                                      clasificacion_resumen=="Confirmado") %>% 
+        group_by(carga_provincia_nombre, fecha_apertura) %>% mutate(confirmados = n()) %>% 
+        select(carga_provincia_nombre, fecha_apertura, confirmados) %>% unique()
+      
+      recuperados <- casos_pronvinciales %>% filter(carga_provincia_nombre== residencia_provincia_nombre & 
+                                                      clasificacion_resumen=="Confirmado" & 
+                                                      CLASIFICACION %in% 
+                                                      c("Caso confirmado - No activo (por laboratorio y tiempo de evolución)",
+                                                           "Caso confirmado - No Activo por criterio de laboratorio", 
+                                                           "Caso confirmado - No activo (por tiempo de evolución)") ) %>% 
+        group_by(carga_provincia_nombre, fecha_apertura) %>% mutate(altas = n()) %>% 
+        select(carga_provincia_nombre, fecha_apertura, altas) %>% unique()
+        
+      descartados <- casos_pronvinciales %>% filter(carga_provincia_nombre== residencia_provincia_nombre & 
+                                                      clasificacion_resumen=="Descartado") %>% 
+        group_by(carga_provincia_nombre, fecha_apertura) %>% mutate(descartados = n()) %>% 
+        select(carga_provincia_nombre, fecha_apertura, descartados) %>% unique()
+      
+      fallecidos <- casos_pronvinciales %>% filter(carga_provincia_nombre== residencia_provincia_nombre & 
+                                                      clasificacion_resumen=="Confirmado" &
+                                                     fallecido=="SI") %>% 
+        group_by(carga_provincia_nombre, fecha_apertura) %>% mutate(fallecidos = n()) %>% 
+        select(carga_provincia_nombre, fecha_apertura, fallecidos) %>% unique()
+      
+      casos_pronvinciales <- confirmados %>% left_join(descartados, by=c("carga_provincia_nombre"="carga_provincia_nombre",
+                                                                         "fecha_apertura"="fecha_apertura")) %>% 
+        left_join(recuperados, by=c("carga_provincia_nombre"="carga_provincia_nombre",
+                                                                         "fecha_apertura"="fecha_apertura")) %>% 
+        left_join(fallecidos, by=c("carga_provincia_nombre"="carga_provincia_nombre",
+                                                                         "fecha_apertura"="fecha_apertura"))
+        
+      casos_pronvinciales$positividad <- round(casos_pronvinciales$confirmados/(casos_pronvinciales$confirmados + casos_pronvinciales$descartados)*100, 1)
+      
+      casos_pronvinciales$confirmados <- if_else(is.na(casos_pronvinciales$confirmados), 0, as.double(casos_pronvinciales$confirmados))
+      casos_pronvinciales$altas <- if_else(is.na(casos_pronvinciales$altas), 0, as.double(casos_pronvinciales$altas))
+      casos_pronvinciales$descartados <- if_else(is.na(casos_pronvinciales$descartados), 0, as.double(casos_pronvinciales$descartados))
+      casos_pronvinciales$fallecidos <- if_else(is.na(casos_pronvinciales$fallecidos), 0, as.double(casos_pronvinciales$fallecidos))
+      casos_pronvinciales$positividad <- if_else(is.na(casos_pronvinciales$positividad), 0, as.double(casos_pronvinciales$positividad))
+      
+      casos_pronvinciales$activos <- casos_pronvinciales$confirmados- casos_pronvinciales$altas - casos_pronvinciales$fallecidos
+
    ### Edades
        # edades <- read_delim("data/edades_arg.csv", ";", escape_double = FALSE, locale = locale(decimal_mark = ","), trim_ws = TRUE)
-      edades <- read_excel("data/argentina.xlsx", "edades_arg")
+      # edades <- read_excel("data/argentina.xlsx", "edades_arg")
   
      color <- function(d){
           c <- if_else(d==0, '#FFFFFF',
@@ -115,7 +186,7 @@ Los datos con los que se trabajarán son de procesamiento propio en base a los i
    
      m <- evolArg %>% filter(dia==max(dia)) 
      a <- list( x = m$dia, y = m$cantidad, text = paste0(m$tipo, '\n',m$cantidad ),
-                xref = "x", yref = "y", showarrow = F, ax = 30, ay = -60  )
+                xref = "x", yref = "y", showarrow = F, ax = 40, ay = -60  )
   
      pal <- c( '#8DA0CB', '#9BD92F','#FF8080',  '#66C2A5')
      
@@ -124,7 +195,7 @@ Los datos con los que se trabajarán son de procesamiento propio en base a los i
      
      fig %>% layout(title="Evolución de COVID-19 en Argentina",
                     xaxis = list(title = "día"), yaxis = list(title = ""),
-                    annotations=a)
+                    annotations=a) %>% layout(showlegend = FALSE)
     # savePlot(device = fig,filename = "curvas.jpg", type = "jpg")
 ```
 
@@ -176,24 +247,26 @@ La composición de la siguiente pirámide poblacional de los casos confirmados f
 ### {.tabset  .tabset-fade .tabset-pills}
 #### Casos confirmados
 ```{r piramide}
-
-  
-   edades <- edades %>% gather(sexo, prop, c("mujeres", "varones"), -c(1:2, 5:13))
-   edades$prop <- as.double(edades$prop)
-   edades$fecha <- as.Date(edades$fecha, "%d/%m/%Y")
-   edades <- edades %>% gather(edad, cant, c(3:11), -c(1:2, 12:13))
-   edades<- edades %>%  mutate(n= round((cant * prop/100), 0)) %>% 
-      group_by(fecha) %>% mutate(porcent=round(n/sum(n)*100,2) ) %>% ungroup()
+    
+   edades <- edades %>% filter(!is.na(grupo) & sexo %in% c("F", "M"))
+   edades$sexo <- if_else(edades$sexo=="M", "Hombre", "Mujer")  
    
-   edades$sexo <- if_else(edades$sexo=="varones",  "Hombre", "Mujer")
+   edades <- edades %>%  ungroup() %>% mutate(prop = round(cantidad/sum(cantidad)*100, 2))
+   edades$porcent <- if_else(edades$sexo=="Hombre",  edades$prop*-1, edades$prop)   
    
-   edades$porcent <- if_else(edades$sexo=="Hombre",  edades$porcent*-1, edades$porcent)
+   # edades <- edades %>% gather(sexo, prop, c("mujeres", "varones"), -c(1:2, 5:13))
+   # edades$prop <- as.double(edades$prop)
+   # edades$fecha <- as.Date(edades$fecha, "%d/%m/%Y")
+   # edades <- edades %>% gather(edad, cant, c(3:11), -c(1:2, 12:13))
+   # edades<- edades %>%  mutate(n= round((cant * prop/100), 0)) %>% 
+   #    group_by(fecha) %>% mutate(porcent=round(n/sum(n)*100,2) ) %>% ungroup()
+   # 
+   # edades$sexo <- if_else(edades$sexo=="varones",  "Hombre", "Mujer")
+   # edadesHoy <- edades %>%  filter(fecha==max(fecha))
    
-   edadesHoy <- edades %>%  filter(fecha==max(fecha))
-   
-   plot_ly(edadesHoy, x = ~porcent, y = ~edad, color = ~sexo) %>%
+   plot_ly(edades, x = ~porcent, y = ~grupo, color = ~sexo) %>%
      add_bars(orientation = "h",
-           hoverinfo = "y+text+name", text =  ~paste(abs(porcent), " %", '\n Cant.: (', n,')'),  
+           hoverinfo = "y+text+name", text =  ~paste(abs(porcent), " %", '\n Cant.: (', cantidad,')'),  
            colors = c("#2c7fb8", "#fa9fb5")) %>%
      layout(bargap = 0.1, barmode = "overlay", 
             title = "Piramide Poblaciónal de Casos Confirmados", 
@@ -212,6 +285,7 @@ La composición de la siguiente pirámide poblacional de los casos confirmados f
 ```{r piramideFall}
      edades_m <- muertosArg  %>% group_by(genero, edad) %>% mutate(n=n())%>% 
         select(genero, edad, n) 
+
      edades_m$grupo <- if_else(edades_m$edad < 10, "0 a 9", 
                      if_else(edades_m$edad < 20, "10 a 19", 
                      if_else(edades_m$edad < 30, "20 a 29", 
@@ -248,11 +322,14 @@ La composición de la siguiente pirámide poblacional de los casos confirmados f
 
 #### Letalidad por Grupo
 ```{r let_Edad}
+# 
+#    let_edad <- edadesHoy %>% left_join(edades_m, by=c("sexo"="genero", "edad"="grupo")) %>% 
+#    mutate(let = round(total/n*100, 1)) 
 
-   let_edad <- edadesHoy %>% left_join(edades_m, by=c("sexo"="genero", "edad"="grupo")) %>% 
-   mutate(let = round(total/n*100, 1)) 
+  let_edad <- edades %>% left_join(edades_m, by=c("sexo"="genero", "grupo"="grupo")) %>% 
+   mutate(let = round(total/cantidad*100, 1))
 
-   plot_ly(let_edad, x=~let, y=~edad, color=~sexo) %>% 
+   plot_ly(let_edad, x=~let, y=~grupo, color=~sexo) %>% 
        add_bars(orientation = "h",
         hoverinfo = "y+text", text = ~paste('Género: ', sexo, '\n Letalidad: ', let, ' %'), 
         colors = c("#2c7fb8", "#fa9fb5")) %>% 
@@ -278,14 +355,17 @@ La cantidad de casos Activos se ha calculado en base a los informes provinciales
 Debido a que no todas las provincias lo informan diariamente pueden existir algunas diferencias con las situaciones actuales.
 
 ```{r mapaActivos, echo=FALSE, message=FALSE, warning=FALSE, fig.align='center',  out.height='100%'}
- activos <- casos_pronvinciales %>%filter(departamento == "TOTAL GENERAL") %>%  mutate(activos = cantidad-recuperados-fallecidos) %>%  
-   select(provincia, activos, cantidad, recuperados, fallecidos) 
-
-   activos$activos <- if_else(is.na(activos$activos), 0, activos$activos)
- 
-   activos$recuperados <- if_else(is.na(activos$recuperados), 0, activos$recuperados)
-   activos$provincia <- if_else(activos$provincia=="Tierra del Fuego, Antártida e Islas del Atlántico Sur", "Tierra del Fuego", activos$provincia)
-   activos$provincia <- if_else(activos$provincia=="Ciudad Autónoma de Buenos Aires", "Ciudad de Buenos Aires", activos$provincia)
+ activos <- casos_pronvinciales %>% group_by(carga_provincia_nombre) %>% 
+  mutate(activos=sum(activos)) %>% select(carga_provincia_nombre, activos) %>% unique()
+  
+  # %>% filter(departamento == "TOTAL GENERAL") %>%  mutate(activos = cantidad-recuperados-fallecidos) %>%  
+  #  select(provincia, activos, cantidad, recuperados, fallecidos) 
+  # 
+  #  activos$activos <- if_else(is.na(activos$activos), 0, activos$activos)
+  # 
+  #  activos$recuperados <- if_else(is.na(activos$recuperados), 0, activos$recuperados)
+  #  activos$provincia <- if_else(activos$provincia=="Tierra del Fuego, Antártida e Islas del Atlántico Sur", "Tierra del Fuego", activos$provincia)
+   activos$carga_provincia_nombre <- if_else(activos$carga_provincia_nombre=="CABA", "Ciudad de Buenos Aires", activos$carga_provincia_nombre)
    
   colors <- c("#ffffcc", "#ffeda0", "#fed976", "#feb24c", "#fd8d3c", "#fc4e2a", "#e31a1c", "#bd0026", "#800026")
 
@@ -294,7 +374,7 @@ Debido a que no todas las provincias lo informan diariamente pueden existir algu
               margin = 5, align = "center", style = list(color = "#bd0026", useHTML = TRUE, fontWeight = "bold")) %>% 
           hc_tooltip(followPointer =  FALSE) %>%
           hc_add_series_map(argentina, activos, name = "Activos",
-                            value = "activos", joinBy = c("name", "provincia"),
+                            value = "activos", joinBy = c("name", "carga_provincia_nombre"),
                             dataLabels = list(enabled = TRUE, format = '{point.properties.woe-name}')) %>%
          hc_colorAxis(stops=color_stops(n=length(colors), colors = colors)) %>%
           hc_legend(align = "center", x = 0, y = -10) %>%
@@ -369,7 +449,8 @@ Debido a que no todas las provincias lo informan diariamente pueden existir algu
 ```{r tabProv, echo=FALSE, message=FALSE, warning=FALSE}
    
    tabla <- covidArg_hoy %>% left_join(muertosArg_hoy, by=c("PROVINCIA"="Provincia")) %>% 
-      left_join(activos,  by=c("PROVINCIA"="provincia")) %>% select(PROVINCIA, total.x, total.y, recuperados)
+      left_join(activos,  by=c("PROVINCIA"="carga_provincia_nombre")) %>% 
+  select(PROVINCIA, total.x, total.y, activos)
    names(tabla) <- c("Provincia", "Confirmados", "Fallecidos", "Recuperados") 
    tabla$Fallecidos <- if_else(is.na(tabla$Fallecidos), 0, as.double(tabla$Fallecidos))
   
@@ -418,12 +499,13 @@ Los porcentajes que representa cada provincia de casos confirmados, fallecidos y
 
 #### Activos
 ```{r distrProvAct}
-   tabla$Activos <- tabla$Confirmados-tabla$Recuperados-tabla$Fallecidos
-   tabla$parents <- "Activos"
-   plot_ly(data = tabla,
+
+   # tabla$Activos <- tabla$Confirmados-tabla$Recuperados-tabla$Fallecidos
+   activos$parents <- "Activos"
+   plot_ly(data = activos,
         type= "treemap",
-        values = ~Activos,
-        labels= ~Provincia,
+        values = ~activos,
+        labels= ~carga_provincia_nombre,
         parents=  ~parents,
         domain = list(column=0),
         name = "Activos",
@@ -700,65 +782,65 @@ En base a las provincias de residencia de los fallecidos, informadas por el Mini
 
 
 
-## Relación entre Letalidad y Recuperados
-En el siguiente gráfico se ilustra la relación entre la tasa de letalidad y el porcentaje de recuperados de cada provincia. El tamaño de las burbujas está dado por la cantidad de casos activos actualmente.
+<!-- ## Relación entre Letalidad y Recuperados -->
+<!-- En el siguiente gráfico se ilustra la relación entre la tasa de letalidad y el porcentaje de recuperados de cada provincia. El tamaño de las burbujas está dado por la cantidad de casos activos actualmente. -->
 
-```{r letRec,  echo=FALSE, fig.align='center', message=FALSE, warning=FALSE, out.width='100%' }
- 
-    fallecidos <- muertosArg %>% group_by(Provincia) %>% 
-      mutate(cantidad = n()) %>%
-      select(Provincia, cantidad) %>% unique()
+<!--  ```{r letRec,  echo=FALSE, fig.align='center', message=FALSE, warning=FALSE, out.width='100%' } -->
 
-    casos <- tabla_prov %>%
-      filter(tipo == "acumulados") %>%
-      group_by(provincia) %>%
-      filter(fecha == max(fecha)) %>%
-      select(provincia, cant)
-    
-    recuperados <- casos_pronvinciales %>% 
-      filter(departamento=="TOTAL GENERAL") %>%  
-      select(provincia, recuperados)
-    recuperados$provincia <- gsub("Tierra del Fuego, Antártida e Islas del Atlántico Sur", 
-                                "Tierra del Fuego", recuperados$provincia)
-    recuperados$provincia <- gsub("Ciudad Autónoma de Buenos Aires", 
-                                  "Ciudad de Buenos Aires", recuperados$provincia)
-  
-    totalesProv <- casos %>% left_join(fallecidos, by=c("provincia"="Provincia")) 
-    totalesProv <-totalesProv %>% left_join(recuperados, by=c("provincia"="provincia"))
-    names(totalesProv) <- c("provincia", "cantidad", "fallecidos", "recuperados")
-    
-    totalesProv$fallecidos <- if_else(is.na(totalesProv$fallecidos), 0, as.double(totalesProv$fallecidos))
-    totalesProv$recuperados <- if_else(is.na(totalesProv$recuperados), 0, as.double(totalesProv$recuperados))
-    totalesProv$porcRec <- round(totalesProv$recuperados/totalesProv$cantidad *100, 1)
-    totalesProv$porcFall <- round(totalesProv$fallecidos/totalesProv$cantidad *100, 1)
-    totalesProv$activos <- totalesProv$cantidad - totalesProv$recuperados - totalesProv$fallecidos
-    totalesProv$porcAct <- round(totalesProv$activos/totalesProv$cantidad *100, 1)
-    totalesProv$provincia <- gsub("Ciudad Autónoma de Buenos Aires", "CABA", totalesProv$provincia)
-    
-    totalesProv$provincia <- gsub("Tierra del Fuego, Antártida e Islas del Atlántico Sur", 
-                                "Tierra del Fuego", totalesProv$provincia)
-    totalesProv <- totalesProv %>% filter(!is.na(porcAct))
-    
-    fig <- plot_ly(totalesProv, x = ~porcFall, y = ~porcRec, hoverinfo='text',
-                   texttemplate = '%{y:.2s}', textposition = 'inside',
-                   text = ~paste('</br> Provincia: ', provincia ,
-                                 '</br> Letalidad: ', porcFall, '%',
-                                 '</br> Recuperados: ', porcRec,'%',
-                                 '</br> Activos: ',activos),
-                   color = ~provincia,
-                   type = 'scatter', mode = 'markers',
-                   marker = list(size= ~porcAct, opacity = 0.7, symbol = 'circle', sizemode = 'diameter',
-                                 line = list(width = 1, color = '#FFFFFF')))
-    
-    fig <- fig %>% layout(title = 'Relación entre Recuperados y Fallecidos por Provincia',
-                          xaxis = list(title="% de Fallecidos", showgrid = FALSE ),
-                          yaxis = list(title="% de Recuperados", showgrid = FALSE),
-                          paper_bgcolor = 'rgb(243, 243, 243)',
-                          plot_bgcolor = 'rgb(243, 243, 243)')
-    fig
-  
-  
-```
+<!--     fallecidos <- muertosArg %>% group_by(Provincia) %>%  -->
+<!--       mutate(cantidad = n()) %>% -->
+<!--       select(Provincia, cantidad) %>% unique() -->
+
+<!--     casos <- tabla_prov %>% -->
+<!--       filter(tipo == "acumulados") %>% -->
+<!--       group_by(provincia) %>% -->
+<!--       filter(fecha == max(fecha)) %>% -->
+<!--       select(provincia, cant) -->
+
+<!--     recuperados <- casos_pronvinciales %>%  -->
+<!--       filter(departamento=="TOTAL GENERAL") %>%   -->
+<!--       select(provincia, recuperados) -->
+<!--     recuperados$provincia <- gsub("Tierra del Fuego, Antártida e Islas del Atlántico Sur",  -->
+<!--                                 "Tierra del Fuego", recuperados$provincia) -->
+<!--     recuperados$provincia <- gsub("Ciudad Autónoma de Buenos Aires",  -->
+<!--                                   "Ciudad de Buenos Aires", recuperados$provincia) -->
+
+<!--     totalesProv <- casos %>% left_join(fallecidos, by=c("provincia"="Provincia"))  -->
+<!--     totalesProv <-totalesProv %>% left_join(recuperados, by=c("provincia"="provincia")) -->
+<!--     names(totalesProv) <- c("provincia", "cantidad", "fallecidos", "recuperados") -->
+
+<!--     totalesProv$fallecidos <- if_else(is.na(totalesProv$fallecidos), 0, as.double(totalesProv$fallecidos)) -->
+<!--     totalesProv$recuperados <- if_else(is.na(totalesProv$recuperados), 0, as.double(totalesProv$recuperados)) -->
+<!--     totalesProv$porcRec <- round(totalesProv$recuperados/totalesProv$cantidad *100, 1) -->
+<!--     totalesProv$porcFall <- round(totalesProv$fallecidos/totalesProv$cantidad *100, 1) -->
+<!--     totalesProv$activos <- totalesProv$cantidad - totalesProv$recuperados - totalesProv$fallecidos -->
+<!--     totalesProv$porcAct <- round(totalesProv$activos/totalesProv$cantidad *100, 1) -->
+<!--     totalesProv$provincia <- gsub("Ciudad Autónoma de Buenos Aires", "CABA", totalesProv$provincia) -->
+
+<!--     totalesProv$provincia <- gsub("Tierra del Fuego, Antártida e Islas del Atlántico Sur",  -->
+<!--                                 "Tierra del Fuego", totalesProv$provincia) -->
+<!--     totalesProv <- totalesProv %>% filter(!is.na(porcAct)) -->
+
+<!--     fig <- plot_ly(totalesProv, x = ~porcFall, y = ~porcRec, hoverinfo='text', -->
+<!--                    texttemplate = '%{y:.2s}', textposition = 'inside', -->
+<!--                    text = ~paste('</br> Provincia: ', provincia , -->
+<!--                                  '</br> Letalidad: ', porcFall, '%', -->
+<!--                                  '</br> Recuperados: ', porcRec,'%', -->
+<!--                                  '</br> Activos: ',activos), -->
+<!--                    color = ~provincia, -->
+<!--                    type = 'scatter', mode = 'markers', -->
+<!--                    marker = list(size= ~porcAct, opacity = 0.7, symbol = 'circle', sizemode = 'diameter', -->
+<!--                                  line = list(width = 1, color = '#FFFFFF'))) -->
+
+<!--     fig <- fig %>% layout(title = 'Relación entre Recuperados y Fallecidos por Provincia', -->
+<!--                           xaxis = list(title="% de Fallecidos", showgrid = FALSE ), -->
+<!--                           yaxis = list(title="% de Recuperados", showgrid = FALSE), -->
+<!--                           paper_bgcolor = 'rgb(243, 243, 243)', -->
+<!--                           plot_bgcolor = 'rgb(243, 243, 243)') -->
+<!--     fig -->
+
+
+<!-- ``` -->
 
 
 
@@ -865,23 +947,19 @@ A continuación se visualiará la evolución en la proporción de los casos dete
 ```
 
 
-##### Test por Habitantes
-```{r tesHab}
-   testHab <- argCov %>%
-      mutate(porHab = round(TotalPruebas/45376763*1000000, 1)) %>% select(dia, porHab) 
+#### Positividad por Provincia
+```{r positProv, out.width='100%'}
+   testProv <- casos_pronvinciales %>% 
+            group_by(carga_provincia_nombre)%>% arrange(fecha_apertura) %>% 
+            filter(fecha_apertura > "2020-04-30" & fecha_apertura!=max(fecha_apertura)) %>% 
+            select(carga_provincia_nombre, fecha_apertura, positividad) 
+      
+      fig <- plot_ly(testProv, x = ~fecha_apertura, y = ~positividad, 
+                    color = ~carga_provincia_nombre, type = "scatter", mode='lines+markers') 
+      fig <- layout(fig, title="Evolución de la Tasa de Positividad por Provincia",
+                    xaxis = list(title = "día"), yaxis = list(title = "% Posit."))
+      fig
+
   
-    testHab$dia <- as.Date(testHab$dia, "%d/%m/%Y")
-    plot_ly(testHab, x = ~dia, y = ~(porHab), type = "bar", name = "Tasa de Positividad",
-           texttemplate = '%{y:.4s}', 
-         textposition = 'outside') %>% 
-    layout(title="Test x Millón de Habitantes", xaxis=list(title=""), yaxis = list(title = "Test x millón de Habitantes"))
 
 ```
-
-
-
-
-
-
-
-

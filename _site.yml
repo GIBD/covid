@@ -13,6 +13,8 @@ navbar:
       href: Argentina.html  
     - text: "Departamental"
       href: Departamental.html
+    - text: "Amba"
+      href: Amba.html  
     - text: "Entre Rios"
       href: Entre-Rios.html  
 output_dir: "docs"

@@ -35,8 +35,9 @@ knitr::opts_chunk$set(echo = TRUE)
   library("tidyverse")
   library("ggTimeSeries")
  
-    theme_elegante_std <- function(base_family) {}
-  # }
+
+  theme_elegante_std <- function(base_family) {}
+
 
   entrerios <- fromJSON(file="data/mapas/entrerios_dpto.geo.json")
   deptos_er <- st_read(dsn ="data/mapas/departamentos_entrerios.shp") 
@@ -96,7 +97,7 @@ knitr::opts_chunk$set(echo = TRUE)
 
   datos_mov <- movement %>% left_join(poligonosMovil, by=c("polygon_id" = "GID_2")) %>% 
     filter(NAME_1 =="Entre Ríos")
-  
+   
   datos_mov$polygon_name <- gsub("Col-n", "Colón", datos_mov$polygon_name )
   datos_mov$polygon_name <- gsub("Nogoy-", "Nogoyá", datos_mov$polygon_name )
   datos_mov$polygon_name <- gsub("Federaci-n", "Federación", datos_mov$polygon_name )
@@ -177,7 +178,6 @@ A continuación se muestran la cantidad de casos de COVID-19 confirmados por el 
   leaflet() %>% addTiles() %>% 
       addProviderTiles(providers$OpenStreetMap) %>% 
       addPolygons(data=deptos_er, fill=FALSE, weight = 1, color = "#000")  %>% 
-      # addLayersControl()
       addFullscreenControl()  %>%  
   addMarkers(data=covid_er, lng =  as.double(covid_er$Long), lat = as.double(covid_er$Lat), 
              clusterOptions = markerClusterOptions(), clusterId = "pointsCluster") %>%
@@ -200,11 +200,6 @@ A continuación se muestran la cantidad de casos de COVID-19 confirmados por el 
       )))
 
   
-      # addCircleMarkers(data=localidades_er,  
-      #                  lat = as.double(localidades_er$Lat), lng = as.double(localidades_er$Long), 
-      #                  radius = ~cant*2, weight = 1, color = "blue", 
-      #                  popup = paste(localidades_er$LOCALIDAD, ": ",localidades_er$cant)) 
-    
 ```
 
 
@@ -289,7 +284,7 @@ La incidencia acumulada (IA) a nivel departamental, considerando la población p
 #### Tabla
 ```{r tablaIAER, echo=FALSE, message=FALSE, warning=FALSE, paged.print=FALSE}
  tabiaprov_er <- covid_er_ia %>% select(DEPARTAMENTO, poblacion, cantidad, ia) %>% arrange(desc(ia))
-  tabiaprov_er %>% kable(col.names = c("Departemento","Población",  "Casos", "Tasa Incidencia"),
+  tabiaprov_er %>% kable(col.names = c("Departamento","Población",  "Casos", "Tasa Incidencia"),
                       format.args = list( big.mark=".", decimal.mark = ","),
             align=c('l', 'c', 'c', 'c')) %>%
   kable_styling()
@@ -439,10 +434,13 @@ A continuación se graficará la cantidad de casos sospechosos por departamento 
 A continuación se grafica el cambio en la movilidad de cada departamento tomando como linea de base la movilidad al mes de Febrero. Los datos utilizados son medidos por Facebook.
 
 ```{r movilidad, echo=FALSE, message=FALSE, warning=FALSE, paged.print=FALSE, out.width='100%'}
-
- datos_mov %>% 
+  
+  datos_mov$movilidad <- round(-datos_mov$all_day_ratio_single_tile_users*100, 0)
+  datos_mov$fecha <- datos_mov$ds
+  
+  p<- datos_mov %>% 
     # filter(NAME_1 =="Entre Ríos") %>%
-    ggplot(mapping=aes(x=ds, y=-all_day_ratio_single_tile_users*100)) +
+    ggplot(mapping=aes(x=fecha, y=movilidad)) +
     geom_line(color="#67a9cf") +
     geom_point(color="#67a9cf") +
     geom_smooth(method = 'loess',
@@ -452,9 +450,12 @@ A continuación se grafica el cambio en la movilidad de cada departamento tomand
          caption = "Fuente: https://data.humdata.org/group/arg", 
          y = "Movilidad", 
          x = "Fecha") +
-    facet_wrap(~ polygon_name, scales = "free_y") +
+    facet_wrap(~ polygon_name, scales = "free_y", ncol = 3) +
     theme_elegante_std(base_family = "Assistant") 
 
+  # p$ hoverinfo<- "name+x" #hover options for 'average'
+  # p$data[[2]]$hoverinfo <- "name+x" #hover options for 'median'
+  ggplotly(p, name="Movilidad",  height = 800)
 
 ```
 

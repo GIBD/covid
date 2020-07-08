@@ -1,0 +1,288 @@
+---
+title: "AMBA"
+output:
+  html_document:
+    toc: true
+    toc_float: true
+    collapsed: false
+    number_sections: false
+    toc_depth: 3
+---
+
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+```{r carga, message=FALSE, warning=FALSE, include=FALSE, paged.print=FALSE}
+
+library(readr)
+library(dplyr)
+library(tidyr)
+library(ggplot2)
+library(lubridate)
+library(knitr)
+library(kableExtra)
+library(highcharter)
+library(rjson)
+library(plotly)
+library(gganimate)
+library(stringr)
+library(leaflet)
+library(leaflet.extras)
+library(sf)
+library(tmap)
+library(googlesheets4)
+library(readxl)
+library(RcppRoll)
+library(tidyverse)
+
+
+  # theme_elegante_std <- function(base_family)
+
+  cordones <- read_excel("data/argentina.xlsx", "POBLAC_AMBA")
+  amba <- read_excel("data/argentina.xlsx", "GBA")
+    
+  amba$fecha <- as.Date(amba$fecha,"%d/%m/%Y")
+  last_date <- last(amba$fecha)
+  
+  amba <- amba %>% left_join(cordones, by=c("Partido"="Partido"))
+  
+  poligonosMovil <- read_csv("data/poligonosMovil.csv",  locale = locale(encoding = "ISO-8859-1"))
+  
+  movement <- read_delim("data/movement-range.txt", 
+                         "\t", escape_double = FALSE, locale = locale(encoding = "ISO-8859-1"), 
+                         trim_ws = TRUE) %>% filter(country=="ARG") 
+  
+  datos_mov <- movement %>% left_join(poligonosMovil, by=c("polygon_id" = "GID_2")) %>% 
+    filter(NAME_1 %in% c("Ciudad de Buenos Aires", "Buenos Aires") & 
+    NAME_2 %in%  c("Distrito Federal",  "Avellaneda", "General San Martín", "La Matanza", "Lanús", "Lomas de Zamora", "Morón",  
+                   "San Isidro",  "Tres de Febrero", "Vicente López", 
+                   "Almirante Brown", "Berazategui", "Esteban Echeverría", "Ezeiza",  "Florencio Varela", "Hurlingham",
+                   "Ituzaingó","José C. Paz",  "Malvinas Argentinas",  "Merlo", "Moreno",  "Quilmes", "San Fernando", 
+                   "San Miguel", "Tigre",
+                  "Beriso",   "Ensenada", "Escobar", "General Rodríguez", "La Plata",  "Marcos Paz",  "Pilar", 
+                  "Presidente Perón",  "San Vicente"))
+ 
+   primer <- c("Distrito Federal",  "Avellaneda", "General San Martín", "La Matanza", "Lanús", "Lomas de Zamora", 
+               "Morón",  "San Isidro",  "Tres de Febrero", "Vicente López")
+   segundo <- c("Almirante Brown", "Berazategui", "Esteban Echeverría", "Ezeiza",  "Florencio Varela", "Hurlingham",
+                   "Ituzaingó","José C. Paz",  "Malvinas Argentinas",  "Merlo", "Moreno",  "Quilmes", "San Fernando", 
+                   "San Miguel", "Tigre")
+   tercer <- c("Beriso",   "Ensenada", "Escobar", "General Rodríguez", "La Plata",  "Marcos Paz",  "Pilar", 
+                  "Presidente Perón",  "San Vicente")
+   
+   color <- function(d){ c <- if_else(d==0, '#FFFFFF', 
+                                     if_else(d < 250, '#fdd49e',
+                                             if_else(d < 500, '#fc8d59',
+                                                     if_else(d < 750, '#d7301f',
+                                                             if_else(d < 1000, '#b30000', "#7f0000")))))  
+   return(c)}
+   
+  urlign <- "https://wms.ign.gob.ar/geoserver/gwc/service/tms/1.0.0/capabaseargenmap@EPSG%3A3857@png/{z}/{x}/{-y}.png"
+     
+  deptos <- st_read(dsn ="data/mapas/AMBA_dptos.shp")
+  
+  deptos$departam_1 <- if_else( deptos$departam_1=="Ciudad Autónoma de Buenos Aires", "CABA",
+                               as.character(deptos$departam_1))
+ 
+  casos_hoy <- amba %>% filter(fecha==max(fecha)) %>% mutate(incidencia = round(CASOS/POBLACION*100000, 1)) %>% 
+     select(Partido, CASOS, incidencia) %>% unique()
+  # casos_hoy$incidencia
+  casos_hoy$Partido <- gsub("Tres De Febrero", "Tres de Febrero", casos_hoy$Partido)
+  casos_hoy$Partido <- gsub("Lomas De Zamora", "Lomas de Zamora", casos_hoy$Partido)
+  
+  deptos_covid <- deptos %>% left_join(casos_hoy, by=c("departam_1" = "Partido"))
+  # deptos_covid$departam_1
+
+  primer <- gsub("Distrito Federal", "CABA", primer)
+
+  deptos_covid1 <- deptos_covid %>% filter(departam_1 %in% primer)
+  deptos_covid2 <- deptos_covid %>% filter(departam_1 %in% segundo)
+  deptos_covid3 <- deptos_covid %>% filter(departam_1 %in% tercer)
+    
+  
+```
+
+
+
+Dado que en Argentina la mayoría de los casos de COVID-19 detectados se concentran en la región denominada Area Metropolitana Buenos Aires, se tratarán en forma particular los valores de la misma.
+
+
+## CABA y 1er Cordón
+
+### Curva de Casos
+A continuación se graficarán los casos acumulados de Covid en CABA y el primer cordón del Gran Buenos Aires.
+
+
+```{r primer, echo=FALSE, fig.align='center', message=FALSE, warning=FALSE, paged.print=FALSE, out.width='100%'}
+
+  amba %>% filter(CORDON=="1er") %>% select(cordon=CORDON, dia=fecha, distrito=Partido, cantidad=CASOS) -> plot_data_n
+
+    p <- plot_data_n %>% 
+      ggplot(mapping=aes(x=dia, color=distrito, y=cantidad)) +
+      geom_line(show.legend = F) + geom_point(show.legend = F) + 
+      # geom_smooth(method = 'loess', formula = 'y ~ x', alpha = 0.2, size = 1, span = .3, se=FALSE) +
+      labs(title = paste("COVID-19- Casos acumulados en CABA y 1° cordón GBA (", last_date, ")"), 
+           subtitle = paste0("Casos acumulados en CABA y 1° cordón GBA (al: ", last_date, ")") , 
+           y = "Casos",  x = "Fecha") +
+      # theme_elegante_std(base_family = "Assistant") +
+       facet_wrap(~ distrito, scales = "free_y", ncol = 3) 
+  
+  ggplotly(p,   height = 800) %>% layout(showlegend=F)
+  
+```
+
+
+### Movilidad CABA y 1° Cordón
+
+
+```{r movilidad1, echo=FALSE, fig.align='center', message=FALSE, warning=FALSE, paged.print=FALSE, out.width='100%'}
+ 
+  ### NORTE
+  datos <- datos_mov %>% filter(NAME_2 %in% primer) %>% 
+  select(polygon_name=NAME_2, ds, all_day_bing_tiles_visited_relative_change) %>% unique() 
+
+  datos$polygon_name <- gsub("Distrito Federal", "CABA", datos$polygon_name )
+  # unique(datos_mov$NAME_2)
+  datos$movilidad <- round(datos$all_day_bing_tiles_visited_relative_change*100, 1)
+  datos$fecha <- datos$ds
+  
+  uno <-  datos %>% ggplot(mapping=aes(x=fecha, y=movilidad)) +
+    geom_line(color="#67a9cf") +
+    geom_point(color="#67a9cf") +
+    geom_smooth(method = 'loess',
+                formula = 'y ~ x', alpha = 0.2, size = 1, span = .3, se=FALSE, color="#ef8a62") +
+    labs(title = paste("COVID-19: Variación de la movilidad en CABA y 1° cordón de PBA "), 
+         y = "Movilidad", 
+         x = "Fecha") +
+    facet_wrap(~ polygon_name, scales = "free_y", ncol = 3) #+ theme_elegante_std(base_family = "Assistant")
+  
+  ggplotly(uno, name="Movilidad",  height = 600)%>% layout(showlegend=F)
+  
+  
+```
+
+
+
+### Mapa de Incidencia
+
+La incidencia se calcula en base a los datos reportados por los Ministerios de Salud de la Ciudad de Buenos Aires y de la provincia de Buenos Aires. 
+Como población se considera la proyectada por INDEC para el 2020.
+
+```{r inc1, echo=FALSE, fig.align='center', message=FALSE, warning=FALSE, paged.print=FALSE, out.width='100%'}
+ 
+# deptos_covid$departam_1
+  leaflet(data = deptos_covid1) %>% 
+    addTiles(urlTemplate = urlign, attribution="IGN") %>%
+    addPolygons( color = "#444444", weight = 1,
+                 fillColor = color(deptos_covid1$incidencia), fillOpacity = 0.6,
+                 label = paste0(deptos_covid1$departam_1, ": ", deptos_covid1$CASOS),
+                 popup = paste0(deptos_covid1$departam_1,
+                               " <br/> Casos: ", deptos_covid1$CASOS,
+                               " <br/>- Incidencia: ", deptos_covid1$incidencia),
+                 highlightOptions = highlightOptions(color = "white", weight = 2, bringToFront = TRUE))  %>%
+        addFullscreenControl()  %>%     
+    addLegend(colors = c('#FFFFFF','#fdd49e', '#fc8d59', '#d7301f', '#b30000', '#7f0000'),
+              labels= c("0", "1-249", "250-499", "500-999", "1000 - 1499", "1500 o más"), position ="bottomright") 
+
+```
+
+
+## PBA: 2° Cordón
+
+You can also embed plots, for example:
+
+```{r segundo, echo=FALSE, fig.align='center', message=FALSE, warning=FALSE, paged.print=FALSE, out.width='100%'}
+
+  amba %>% filter(CORDON=="2do") %>% select(cordon=CORDON, dia=fecha, distrito=Partido, cantidad=CASOS) -> plot_data_n
+
+    p <- plot_data_n %>% 
+      ggplot(mapping=aes(x=dia, color=distrito, y=cantidad)) +
+      geom_line(show.legend = F) + geom_point(show.legend = F) + 
+      # geom_smooth(method = 'loess', formula = 'y ~ x', alpha = 0.2, size = 1, span = .3, se=FALSE) +
+      labs(title = paste("COVID-19- Casos acumulados en CABA y 2° cordón GBA (", last_date, ")"), 
+           # subtitle = paste0("Casos acumulados en CABA y 1° cordón GBA (al: ", last_date, ")") , 
+           y = "Casos",  x = "Fecha") +
+      # theme_elegante_std(base_family = "Assistant") +
+       facet_wrap(~ distrito, scales = "free_y", ncol = 4) 
+  
+  ggplotly(p,   height = 800) %>% layout(showlegend=F)
+  
+```
+
+
+### Movilidad 2° Cordón
+
+```{r movilidad2, echo=FALSE, fig.align='center', message=FALSE, warning=FALSE, paged.print=FALSE, out.width='100%'}
+
+  datos <- datos_mov %>% filter(NAME_2 %in% segundo) %>% 
+  select(polygon_name=NAME_2, ds, all_day_bing_tiles_visited_relative_change) %>% unique() 
+
+  datos$movilidad <- round(datos$all_day_bing_tiles_visited_relative_change*100, 1)
+  datos$fecha <- datos$ds
+  
+  dos <-  datos %>% ggplot(mapping=aes(x=fecha, y=movilidad)) +
+    geom_line(color="#67a9cf") +
+    geom_point(color="#67a9cf") +
+    geom_smooth(method = 'loess',
+                formula = 'y ~ x', alpha = 0.2, size = 1, span = .3, se=FALSE, color="#ef8a62") +
+    labs(title = paste("COVID-19: Variación de la movilidad en el 2° cordón de PBA "), 
+         y = "Movilidad", 
+         x = "Fecha") +
+    facet_wrap(~ polygon_name, scales = "free_y", ncol = 3) #+ theme_elegante_std(base_family = "Assistant")
+  
+  ggplotly(dos, name="Movilidad",  height = 600)%>% layout(showlegend=F)
+  
+  
+```
+
+
+
+## PBA: 3° Cordón
+
+You can also embed plots, for example:
+
+```{r tercer, echo=FALSE, fig.align='center', message=FALSE, warning=FALSE, paged.print=FALSE, out.width='100%'}
+
+  amba %>% filter(CORDON=="3ro") %>% select(cordon=CORDON, dia=fecha, distrito=Partido, cantidad=CASOS) -> plot_data_n
+
+    p <- plot_data_n %>% 
+      ggplot(mapping=aes(x=dia, color=distrito, y=cantidad)) +
+      geom_line(show.legend = F) + geom_point(show.legend = F) + 
+      # geom_smooth(method = 'loess', formula = 'y ~ x', alpha = 0.2, size = 1, span = .3, se=FALSE) +
+      labs(title = paste("COVID-19- Casos acumulados en CABA y 3° cordón GBA (", last_date, ")"), 
+           # subtitle = paste0("Casos acumulados en CABA y 1° cordón GBA (al: ", last_date, ")") , 
+           y = "Casos",  x = "Fecha") +
+      # theme_elegante_std(base_family = "Assistant") +
+       facet_wrap(~ distrito, scales = "free_y", ncol = 3) 
+  
+  ggplotly(p, name="Tercer",  height = 800) %>% layout(showlegend=F)
+  
+```
+
+
+### Movilidad 3° Cordón
+
+```{r movilidad3, echo=FALSE, fig.align='center', message=FALSE, warning=FALSE, paged.print=FALSE, out.width='100%'}
+
+  datos <- datos_mov %>% filter(NAME_2 %in% tercer) %>% 
+  select(polygon_name=NAME_2, ds, all_day_bing_tiles_visited_relative_change) %>% unique() 
+
+  datos$movilidad <- round(datos$all_day_bing_tiles_visited_relative_change*100, 1)
+  datos$fecha <- datos$ds
+  
+  tres <-  datos %>% ggplot(mapping=aes(x=fecha, y=movilidad)) +
+    geom_line(color="#67a9cf") +
+    geom_point(color="#67a9cf") +
+    geom_smooth(method = 'loess',
+                formula = 'y ~ x', alpha = 0.2, size = 1, span = .3, se=FALSE, color="#ef8a62") +
+    labs(title = paste("COVID-19: Variación de la movilidad en el 2° cordón de PBA "), 
+         y = "Movilidad", 
+         x = "Fecha") +
+    facet_wrap(~ polygon_name, scales = "free_y", ncol = 3) #+ theme_elegante_std(base_family = "Assistant")
+  
+  ggplotly(tres, name="Movilidad",  height = 600)%>% layout(showlegend=F)
+  
+  
+```

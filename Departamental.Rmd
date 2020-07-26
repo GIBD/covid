@@ -121,6 +121,7 @@ deptos_covid <- deptos %>%
   deptos_covid$altas <- if_else(is.na(deptos_covid$altas ), 0, as.double(deptos_covid$altas))
   deptos_covid$activos <- deptos_covid$Confirmado - deptos_covid$fallecidos - deptos_covid$altas
 
+ 
 leaflet(data = deptos_covid) %>% 
   addTiles(urlTemplate = urlign, attribution="IGN") %>%
   addPolygons( color = "#444444", weight = 1,
@@ -140,6 +141,27 @@ leaflet(data = deptos_covid) %>%
             labels= c("0", "1-24", "25-49", "50-74", "75 - 99", "100 o más"), position ="bottomright")
 
  
+# 
+# jujuy <-  deptos_covid %>% filter(provincia=="Jujuy")
+#  jujuy <-  deptos_covid %>% filter(provincia=="La Rioja")
+# leaflet(data = jujuy) %>% 
+#   addTiles(urlTemplate = urlign, attribution="IGN") %>%
+#   addPolygons( color = "#444444", weight = 1,
+#                fillColor = color(jujuy$Confirmado), fillOpacity = 0.6,
+#                # fillColor = color(deptos_covid$activos), fillOpacity = 0.6,
+#                label = paste0(jujuy$provincia, " \n ", jujuy$departamen),
+#                popup = paste0(jujuy$provincia, " <br/> ", jujuy$departamen,
+#                              " <br/>- Confirmados: ", jujuy$Confirmado,
+#                              " <br/>- Recuperados: ", jujuy$altas,
+#                              " <br/>- Fallecidos: ", jujuy$fallecidos,
+#                              " <br/>- Descartados: ",jujuy$Descartado,
+#                              " <br/>- Sospechosos: ",jujuy$Sospechoso),
+#                highlightOptions = highlightOptions(color = "white", weight = 2,
+#                                                    bringToFront = TRUE))  %>%
+#       addFullscreenControl()  %>%     
+#   addLegend(colors = c('#FFFFFF','#fdd49e', '#fc8d59', '#d7301f', '#b30000', '#7f0000'),
+#             labels= c("0", "1-24", "25-49", "50-74", "75 - 99", "100 o más"), position ="bottomright")
+
 ```
 
 

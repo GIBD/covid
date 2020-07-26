@@ -36,35 +36,105 @@ library(googlesheets4)
 library(readxl)
 library(RcppRoll)
 library(tidyverse)
-
+library(latticeExtra)
+library(DT)
 
   # theme_elegante_std <- function(base_family)
-
-  cordones <- read_excel("data/argentina.xlsx", "POBLAC_AMBA")
-  amba <- read_excel("data/argentina.xlsx", "GBA")
-    
-  amba$fecha <- as.Date(amba$fecha,"%d/%m/%Y")
-  last_date <- last(amba$fecha)
+   color <- function(d){ 
+     c <- if_else(d==0, '#FFFFFF',
+          if_else(d < 250, '#fdd49e', if_else(d < 500, '#fc8d59',
+          if_else(d < 750, '#d7301f',if_else(d < 1000, '#b30000', "#7f0000")))))  
+    return(c)}
+   
+  urlign <- "https://wms.ign.gob.ar/geoserver/gwc/service/tms/1.0.0/capabaseargenmap@EPSG%3A3857@png/{z}/{x}/{-y}.png"
   
-  amba <- amba %>% left_join(cordones, by=c("Partido"="Partido"))
+      
+  deptos <- st_read(dsn ="data/mapas/AMBA_dptos.shp")
+  # amba <- read_excel("data/argentina.xlsx", "GBA")
+  
   
   poligonosMovil <- read_csv("data/poligonosMovil.csv",  locale = locale(encoding = "ISO-8859-1"))
   
   movement <- read_delim("data/movement-range.txt", 
                          "\t", escape_double = FALSE, locale = locale(encoding = "ISO-8859-1"), 
                          trim_ws = TRUE) %>% filter(country=="ARG") 
+  # datos_mov <- movement %>% left_join(poligonosMovil, by=c("polygon_id" = "GID_2"))
   
+  # write.csv2(datos_mov, "datos_mov.csv")
+  
+  cordones <- read_excel("data/argentina.xlsx", "POBLAC_AMBA")
+    
+  covid19casos <- read_excel("data/covid19casos.xlsx")
+  names(covid19casos) <- c("id_evento_caso", "sexo", "edad", 	"edad_anos_meses", 	"residencia_pais_nombre", 	"residencia_provincia_nombre", 	"residencia_departamento_nombre", 	"carga_provincia_nombre", 	"fecha_inicio_sintomas", 	"fecha_apertura", 	"sepi_apertura", 	"fecha_internacion", 	"cuidado_intensivo", 	"fecha_cui_intensivo", "fallecido", 	"fecha_fallecimiento",	"asistencia_respiratoria_mecanica",	"carga_provincia_id",	"origen_financiamiento",	"clasificacion", 	"clasificacion_resumen",	"residencia_provincia_id", 	"fecha_diagnostico", 	"residencia_departamento_id",	"ultima_actualizacion")
+
+  
+  amba <- covid19casos %>%  
+    filter(#residencia_provincia_nombre==carga_provincia_nombre & 
+             residencia_provincia_nombre %in% c("Buenos Aires", "CABA")) %>% 
+    select(fecha_apertura,fecha_inicio_sintomas,  fecha_diagnostico, residencia_provincia_nombre, residencia_departamento_nombre,
+           edad, edad_anos_meses, sexo, fecha_internacion, cuidado_intensivo,
+           fecha_cui_intensivo, asistencia_respiratoria_mecanica, fallecido, fecha_fallecimiento, 
+           origen_financiamiento,  clasificacion_resumen, clasificacion) 
+  
+  amba$residencia_departamento_nombre <- if_else( amba$residencia_provincia_nombre=="CABA", "CABA",
+                                                as.character(amba$residencia_departamento_nombre))
+  
+  falle <- amba %>% filter(fallecido=="SI" & clasificacion_resumen=="Confirmado") %>%
+          group_by(residencia_provincia_nombre, residencia_departamento_nombre, fecha_fallecimiento) %>%
+          mutate(fallecidos=n()) %>%
+          select(residencia_provincia_nombre, residencia_departamento_nombre, fecha_fallecimiento, fallecidos)
+  
+  altas <- amba %>% filter(fallecido=="NO" & clasificacion_resumen=="Confirmado" & 
+                                     clasificacion %in% c("Caso confirmado - No activo (por laboratorio y tiempo de evolución)",
+                                                           "Caso confirmado - No Activo por criterio de laboratorio", 
+                                                           "Caso confirmado - No activo (por tiempo de evolución)")) %>%
+    group_by(residencia_provincia_nombre, residencia_departamento_nombre) %>%
+    mutate(altas=n()) %>%
+    select(residencia_provincia_nombre, residencia_departamento_nombre, altas) %>% unique()
+  
+  Tdeptal <- amba %>% 
+          group_by(residencia_provincia_nombre, residencia_departamento_nombre, fecha_apertura, clasificacion_resumen) %>%
+          mutate(cantidad= n()) %>%
+          select(residencia_provincia_nombre, residencia_departamento_nombre, fecha_apertura, clasificacion_resumen, cantidad) %>%
+          unique() %>%  spread(clasificacion_resumen, cantidad) %>%
+    left_join(falle, by=c("residencia_provincia_nombre"="residencia_provincia_nombre",
+                          "residencia_departamento_nombre"="residencia_departamento_nombre",
+                          "fecha_apertura"="fecha_fallecimiento")) %>% unique()
+  
+  Tdeptal$fecha_apertura <- as.Date(Tdeptal$fecha_apertura,  '%d/%m/%Y')
+  Tdeptal$Confirmado <- if_else(is.na(Tdeptal$Confirmado), 0, as.double(Tdeptal$Confirmado))
+  
+  Tdeptal <- Tdeptal %>% group_by(residencia_provincia_nombre, residencia_departamento_nombre) %>% 
+    mutate(acumulados= cumsum(as.integer(Confirmado)))
+  
+  # amba$fecha <- as.Date(amba$fecha,"%d/%m/%Y")
+  last_date <- last(Tdeptal$fecha_apertura)
+  Tdeptal$residencia_departamento_nombre <-  if_else( Tdeptal$residencia_departamento_nombre=="CABA", "CABA",
+                                                as.character(Tdeptal$residencia_departamento_nombre))
+    
+  amba <- Tdeptal %>% left_join(cordones, by=c("residencia_departamento_nombre"="Partido")) %>% 
+    select(provincia=residencia_provincia_nombre, Partido=residencia_departamento_nombre, fecha=fecha_apertura,
+           CASOS=acumulados, descartados=Descartado, sospechosos=Sospechoso, fallecidos, zona=ZONA, CORDON, POBLACION)
+  
+    # amba2 <- read_excel("data/argentina.xlsx", "GBA")
+    
   datos_mov <- movement %>% left_join(poligonosMovil, by=c("polygon_id" = "GID_2")) %>% 
     filter(NAME_1 %in% c("Ciudad de Buenos Aires", "Buenos Aires") & 
-    NAME_2 %in%  c("Distrito Federal",  "Avellaneda", "General San Martín", "La Matanza", "Lanús", "Lomas de Zamora", "Morón",  
-                   "San Isidro",  "Tres de Febrero", "Vicente López", 
-                   "Almirante Brown", "Berazategui", "Esteban Echeverría", "Ezeiza",  "Florencio Varela", "Hurlingham",
-                   "Ituzaingó","José C. Paz",  "Malvinas Argentinas",  "Merlo", "Moreno",  "Quilmes", "San Fernando", 
+    NAME_2 %in%  c("Distrito Federal",  "Avellaneda", "General San Martín", 
+                   "La Matanza", "Lanús", "Lomas de Zamora", 
+                   "Morón", "San Isidro",  "Tres de Febrero", "Vicente López", 
+                   
+                   "Almirante Brown", "Berazategui", "Esteban Echeverría", 
+                   "Ezeiza",  "Florencio Varela", "Hurlingham",
+                   "Ituzaingó","José C. Paz",  "Malvinas Argentinas",  
+                   "Merlo", "Moreno",  "Quilmes", "San Fernando", 
                    "San Miguel", "Tigre",
-                  "Beriso",   "Ensenada", "Escobar", "General Rodríguez", "La Plata",  "Marcos Paz",  "Pilar", 
-                  "Presidente Perón",  "San Vicente"))
- 
-   primer <- c("Distrito Federal",  "Avellaneda", "General San Martín", "La Matanza", "Lanús", "Lomas de Zamora", 
+                   
+                  "Beriso", "Ensenada", "Escobar",
+                  "General Rodríguez", "La Plata",  "Marcos Paz",  
+                  "Pilar",  "Presidente Perón",  "San Vicente"))
+ # unique(datos_mov$NAME_2)
+   primer <- c("CABA","Ciudad de Buenos Aires", "Distrito Federal",  "Avellaneda", "General San Martín", "La Matanza", "Lanús", "Lomas de Zamora", 
                "Morón",  "San Isidro",  "Tres de Febrero", "Vicente López")
    segundo <- c("Almirante Brown", "Berazategui", "Esteban Echeverría", "Ezeiza",  "Florencio Varela", "Hurlingham",
                    "Ituzaingó","José C. Paz",  "Malvinas Argentinas",  "Merlo", "Moreno",  "Quilmes", "San Fernando", 
@@ -72,30 +142,23 @@ library(tidyverse)
    tercer <- c("Beriso",   "Ensenada", "Escobar", "General Rodríguez", "La Plata",  "Marcos Paz",  "Pilar", 
                   "Presidente Perón",  "San Vicente")
    
-   color <- function(d){ c <- if_else(d==0, '#FFFFFF', 
-                                     if_else(d < 250, '#fdd49e',
-                                             if_else(d < 500, '#fc8d59',
-                                                     if_else(d < 750, '#d7301f',
-                                                             if_else(d < 1000, '#b30000', "#7f0000")))))  
-   return(c)}
-   
-  urlign <- "https://wms.ign.gob.ar/geoserver/gwc/service/tms/1.0.0/capabaseargenmap@EPSG%3A3857@png/{z}/{x}/{-y}.png"
-     
-  deptos <- st_read(dsn ="data/mapas/AMBA_dptos.shp")
-  
   deptos$departam_1 <- if_else( deptos$departam_1=="Ciudad Autónoma de Buenos Aires", "CABA",
                                as.character(deptos$departam_1))
  
-  casos_hoy <- amba %>% filter(fecha==max(fecha)) %>% mutate(incidencia = round(CASOS/POBLACION*100000, 1)) %>% 
-     select(Partido, CASOS, incidencia) %>% unique()
-  # casos_hoy$incidencia
-  casos_hoy$Partido <- gsub("Tres De Febrero", "Tres de Febrero", casos_hoy$Partido)
-  casos_hoy$Partido <- gsub("Lomas De Zamora", "Lomas de Zamora", casos_hoy$Partido)
+  # amba <- amba %>% group_by(provincia, Partido) %>% mutate(casos=cumsum(CASOS))
   
+  casos_hoy <- amba %>% group_by(Partido) %>% filter(!is.na(fecha) & fecha==max(fecha)) %>% 
+    mutate(incidencia = round(CASOS/POBLACION*100000, 1)) %>% 
+     select(Partido, CASOS=CASOS, incidencia) %>% unique()
+  
+  # unique(amba$Partido)
+  # casos_hoy$Partido <- gsub("Tres De Febrero", "Tres de Febrero", casos_hoy$Partido)
+  # casos_hoy$Partido <- gsub("Lomas De Zamora", "Lomas de Zamora", casos_hoy$Partido)
+  # write.csv(casos_hoy, "casos_hoy.csv")
   deptos_covid <- deptos %>% left_join(casos_hoy, by=c("departam_1" = "Partido"))
   # deptos_covid$departam_1
 
-  primer <- gsub("Distrito Federal", "CABA", primer)
+  # primer <- gsub("Distrito Federal", "CABA", primer)
 
   deptos_covid1 <- deptos_covid %>% filter(departam_1 %in% primer)
   deptos_covid2 <- deptos_covid %>% filter(departam_1 %in% segundo)
@@ -108,11 +171,13 @@ library(tidyverse)
 
 Dado que en Argentina la mayoría de los casos de COVID-19 detectados se concentran en la región denominada Area Metropolitana Buenos Aires, se tratarán en forma particular los valores de la misma.
 
+Se analizarán considerando a la Ciudad de Buenos Aires y los cordones de la Provincia de Buenos Aires
+
 
 ## CABA y 1er Cordón
 
 ### Curva de Casos
-A continuación se graficarán los casos acumulados de Covid en CABA y el primer cordón del Gran Buenos Aires.
+A continuación se grafica la evolución de los casos acumulados de Covid en CABA y el primer cordón del Gran Buenos Aires en base a la jurisdicción de residencia del paciente.
 
 
 ```{r primer, echo=FALSE, fig.align='center', message=FALSE, warning=FALSE, paged.print=FALSE, out.width='100%'}
@@ -136,6 +201,7 @@ A continuación se graficarán los casos acumulados de Covid en CABA y el primer
 
 ### Movilidad CABA y 1° Cordón
 
+Los datos de movilidad son obtenidos por Facebook tomando la movilidad existente en febrero como base para comparar la de los días posteriores.  
 
 ```{r movilidad1, echo=FALSE, fig.align='center', message=FALSE, warning=FALSE, paged.print=FALSE, out.width='100%'}
  
@@ -149,8 +215,8 @@ A continuación se graficarán los casos acumulados de Covid en CABA y el primer
   datos$fecha <- datos$ds
   
   uno <-  datos %>% ggplot(mapping=aes(x=fecha, y=movilidad)) +
-    geom_line(color="#67a9cf") +
-    geom_point(color="#67a9cf") +
+    # geom_line(color="#67a9cf") +
+    # geom_point(color="#67a9cf") +
     geom_smooth(method = 'loess',
                 formula = 'y ~ x', alpha = 0.2, size = 1, span = .3, se=FALSE, color="#ef8a62") +
     labs(title = paste("COVID-19: Variación de la movilidad en CABA y 1° cordón de PBA "), 
@@ -159,6 +225,8 @@ A continuación se graficarán los casos acumulados de Covid en CABA y el primer
     facet_wrap(~ polygon_name, scales = "free_y", ncol = 3) #+ theme_elegante_std(base_family = "Assistant")
   
   ggplotly(uno, name="Movilidad",  height = 600)%>% layout(showlegend=F)
+  
+
   
   
 ```
@@ -172,7 +240,8 @@ Como población se considera la proyectada por INDEC para el 2020.
 
 ```{r inc1, echo=FALSE, fig.align='center', message=FALSE, warning=FALSE, paged.print=FALSE, out.width='100%'}
  
-# deptos_covid$departam_1
+# incidencia <- deptos_covid %>% select(departam_1, incidencia)
+# write.csv(incidencia, "incidencia.csv")
   leaflet(data = deptos_covid1) %>% 
     addTiles(urlTemplate = urlign, attribution="IGN") %>%
     addPolygons( color = "#444444", weight = 1,
@@ -219,6 +288,7 @@ You can also embed plots, for example:
   datos <- datos_mov %>% filter(NAME_2 %in% segundo) %>% 
   select(polygon_name=NAME_2, ds, all_day_bing_tiles_visited_relative_change) %>% unique() 
 
+# unique(datos_mov$NAME_2)
   datos$movilidad <- round(datos$all_day_bing_tiles_visited_relative_change*100, 1)
   datos$fecha <- datos$ds
   
@@ -230,12 +300,36 @@ You can also embed plots, for example:
     labs(title = paste("COVID-19: Variación de la movilidad en el 2° cordón de PBA "), 
          y = "Movilidad", 
          x = "Fecha") +
-    facet_wrap(~ polygon_name, scales = "free_y", ncol = 3) #+ theme_elegante_std(base_family = "Assistant")
+    facet_wrap(~ polygon_name, scales = "free_y", ncol = 2) #+ theme_elegante_std(base_family = "Assistant")
   
   ggplotly(dos, name="Movilidad",  height = 600)%>% layout(showlegend=F)
   
   
 ```
+
+### Mapa de Incidencia
+
+La incidencia se calcula en base a los datos reportados por los Ministerios de Salud de la Ciudad de Buenos Aires y de la provincia de Buenos Aires. 
+Como población se considera la proyectada por INDEC para el 2020.
+
+```{r inc2, echo=FALSE, fig.align='center', message=FALSE, warning=FALSE, paged.print=FALSE, out.width='100%'}
+ 
+# deptos_covid$departam_1
+  leaflet(data = deptos_covid2) %>% 
+    addTiles(urlTemplate = urlign, attribution="IGN") %>%
+    addPolygons( color = "#444444", weight = 1,
+                 fillColor = color(deptos_covid2$incidencia), fillOpacity = 0.6,
+                 label = paste0(deptos_covid2$departam_1, ": ", deptos_covid2$CASOS),
+                 popup = paste0(deptos_covid2$departam_1,
+                               " <br/> Casos: ", deptos_covid2$CASOS,
+                               " <br/>- Incidencia: ", deptos_covid2$incidencia),
+                 highlightOptions = highlightOptions(color = "white", weight = 2, bringToFront = TRUE))  %>%
+        addFullscreenControl()  %>%     
+    addLegend(colors = c('#FFFFFF','#fdd49e', '#fc8d59', '#d7301f', '#b30000', '#7f0000'),
+              labels= c("0", "1-249", "250-499", "500-999", "1000 - 1499", "1500 o más"), position ="bottomright") 
+
+```
+
 
 
 
@@ -285,4 +379,29 @@ You can also embed plots, for example:
   ggplotly(tres, name="Movilidad",  height = 600)%>% layout(showlegend=F)
   
   
+```
+
+
+
+### Mapa de Incidencia
+
+La incidencia se calcula en base a los datos reportados por los Ministerios de Salud de la Ciudad de Buenos Aires y de la provincia de Buenos Aires. 
+Como población se considera la proyectada por INDEC para el 2020.
+
+```{r inc3, echo=FALSE, fig.align='center', message=FALSE, warning=FALSE, paged.print=FALSE, out.width='100%'}
+ 
+# deptos_covid$departam_1
+  leaflet(data = deptos_covid3) %>% 
+    addTiles(urlTemplate = urlign, attribution="IGN") %>%
+    addPolygons( color = "#444444", weight = 1,
+                 fillColor = color(deptos_covid3$incidencia), fillOpacity = 0.6,
+                 label = paste0(deptos_covid3$departam_1, ": ", deptos_covid3$CASOS),
+                 popup = paste0(deptos_covid3$departam_1,
+                               " <br/> Casos: ", deptos_covid3$CASOS,
+                               " <br/>- Incidencia: ", deptos_covid3$incidencia),
+                 highlightOptions = highlightOptions(color = "white", weight = 2, bringToFront = TRUE))  %>%
+        addFullscreenControl()  %>%     
+    addLegend(colors = c('#FFFFFF','#fdd49e', '#fc8d59', '#d7301f', '#b30000', '#7f0000'),
+              labels= c("0", "1-249", "250-499", "500-999", "1000 - 1499", "1500 o más"), position ="bottomright") 
+
 ```

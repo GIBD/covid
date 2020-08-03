@@ -179,8 +179,10 @@ A continuación se muestran la cantidad de casos de COVID-19 confirmados por el 
       addProviderTiles(providers$OpenStreetMap) %>% 
       addPolygons(data=deptos_er, fill=FALSE, weight = 1, color = "#000")  %>% 
       addFullscreenControl()  %>%  
-  addMarkers(data=covid_er, lng =  as.double(covid_er$Long), lat = as.double(covid_er$Lat), 
-             clusterOptions = markerClusterOptions(), clusterId = "pointsCluster") %>%
+  # addCircleMarkers(data=covid_er, lng =  as.double(covid_er$Long), lat = as.double(covid_er$Lat), 
+  #            clusterOptions = markerClusterOptions(maxClusterRadius=30), clusterId = "pointsCluster") %>%
+  addMarkers(data=covid_er, lng =  as.double(covid_er$Long), lat = as.double(covid_er$Lat),
+             clusterOptions = markerClusterOptions(singleMarkerMode= T), clusterId = "pointsCluster") %>%
   addEasyButton(
     easyButton(states =  list(easyButtonState( 
       stateName="unfrozen-markers", icon="ion-toggle",
@@ -219,12 +221,19 @@ A continuación se muestran la cantidad de casos Activos de COVID-19. Los casos 
   # activos <- covid19ER_Conf %>% 
   # group_by(residencia_provincia_nombre, residencia_departamento_nombre) %>% mutate(conf=n()) %>% 
   covider$provincia <- "Entre Ríos"
+
   activos <- covider %>% 
   # select(residencia_provincia_nombre, residencia_departamento_nombre, conf) %>% unique() %>% 
     left_join(covid_er_altas, by=c("DEPARTAMENTO"="DEPARTAMENTO"))
 
+  # covider
+  
   activos$altas <- if_else(is.na(activos$ALTAS), 0, as.double(activos$ALTAS))  
-  activos$activos <- activos$cantidad-activos$altas
+  activos$FALLECIDOS <- if_else(is.na(activos$FALLECIDOS), 0, as.double(activos$FALLECIDOS))  
+  
+  activos$activos <- activos$cantidad - activos$altas - activos$FALLECIDOS
+  
+  
   
   colors <- c("#ffffcc", "#ffeda0", "#fed976", "#feb24c", "#fd8d3c", "#fc4e2a", "#e31a1c", "#bd0026", "#800026")
 
@@ -246,6 +255,53 @@ A continuación se muestran la cantidad de casos Activos de COVID-19. Los casos 
   
 ```
 
+
+
+
+
+## Fallecidos
+A continuación se muestra el mapa departamental de los fallecidos COVID-19 en la provincia de Entre Ríos.
+
+###  {.tabset  .tabset-fade .tabset-pills}
+#### Mapa
+```{r mapaERFall, echo=FALSE, message=FALSE, warning=FALSE, paged.print=FALSE}
+  
+  # activos <- covid19ER_Conf %>% 
+  # group_by(residencia_provincia_nombre, residencia_departamento_nombre) %>% mutate(conf=n()) %>% 
+  # covider$provincia <- "Entre Ríos"
+
+  fallecidos <- covider %>% 
+  # select(residencia_provincia_nombre, residencia_departamento_nombre, conf) %>% unique() %>% 
+    left_join(covid_er_altas, by=c("DEPARTAMENTO"="DEPARTAMENTO"))
+
+  # covider
+  
+  # fallecidos$altas <- if_else(is.na(activos$ALTAS), 0, as.double(activos$ALTAS))  
+  fallecidos$FALLECIDOS <- if_else(is.na(fallecidos$FALLECIDOS), 0, as.double(fallecidos$FALLECIDOS))  
+  
+  # activos$activos <- activos$cantidad-activos$altas - activos$FALLECIDOS
+  
+  
+  
+  colors <- c("#ffffcc", "#ffeda0", "#fed976", "#feb24c", "#fd8d3c", "#fc4e2a", "#e31a1c", "#bd0026", "#800026")
+
+  highchart() %>%
+    hc_title(text = "<i>COVID-19 - Fallecidos por Departamento en Entre Ríos</i> - <b>GIBD</b>",
+             margin = 5, align = "center", 
+             style = list(color = "#bd0026", useHTML = TRUE, fontWeight = "bold")) %>% 
+    hc_tooltip(followPointer =  FALSE) %>%
+    hc_add_series_map(entrerios, fallecidos, name = "Fallecidos", value = "FALLECIDOS",
+                      joinBy = c("nam", "DEPARTAMENTO"),
+                      dataLabels = list(enabled = TRUE,
+                                        format = '{point.properties.nam}: {point.value}')) %>%
+    hc_colorAxis(stops=color_stops(n=length(colors), colors = colors)) %>%
+    hc_legend(align = "center", x = 0, y = -10) %>%
+    hc_mapNavigation(enabled = TRUE) %>%
+    hc_add_theme(hc_theme_ffx()) %>% 
+    hc_add_annotation(xValue = 0, yValue = 0, title = list(text = 'Fuente: Ministerios de Salud Nación')) %>% 
+    hc_chart(borderColor = "#bd0026", borderRadius = 10, borderWidth = 2)
+  
+```
 
 
 ## Incidencia Acumulada

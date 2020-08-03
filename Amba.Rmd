@@ -215,8 +215,8 @@ Los datos de movilidad son obtenidos por Facebook tomando la movilidad existente
   datos$fecha <- datos$ds
   
   uno <-  datos %>% ggplot(mapping=aes(x=fecha, y=movilidad)) +
-    # geom_line(color="#67a9cf") +
-    # geom_point(color="#67a9cf") +
+    geom_line(color="#67a9cf") +
+    geom_point(color="#67a9cf") +
     geom_smooth(method = 'loess',
                 formula = 'y ~ x', alpha = 0.2, size = 1, span = .3, se=FALSE, color="#ef8a62") +
     labs(title = paste("COVID-19: Variación de la movilidad en CABA y 1° cordón de PBA "), 
@@ -260,7 +260,7 @@ Como población se considera la proyectada por INDEC para el 2020.
 
 ## PBA: 2° Cordón
 
-You can also embed plots, for example:
+
 
 ```{r segundo, echo=FALSE, fig.align='center', message=FALSE, warning=FALSE, paged.print=FALSE, out.width='100%'}
 

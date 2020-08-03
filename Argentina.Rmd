@@ -205,8 +205,8 @@ Los datos con los que se trabajarán son de procesamiento propio en base a los i
      gather(tipo, cantidad, c(Detectados, Activos, Fallecidos, Recuperados), -dia)
    
      m <- evolArg %>% filter(dia==max(dia)) 
-     a <- list( x = m$dia, y = m$cantidad, text = paste0(m$tipo, '\n',m$cantidad ),
-                xref = "x", yref = "y", showarrow = F, ax = 40, ay = -60  )
+     a <- list( x = m$dia+1, y = m$cantidad+100, text = paste0('<br>', m$tipo, '\n',m$cantidad, '</br>'),
+                xref = "x", yref = "y", showarrow = F, ax = 60, ay = -40  )
      
      b <- list(yref = "y", xref = "x", x="2020-03-20", y= 1, text="ASPO",   showarrow = T)
      
@@ -261,6 +261,26 @@ A continuación se grafica la evolución de la cantidad de casos internados en U
  totalesArg %>% kable( col.names =  c("Fecha", "Casos Detectados", "Fallecidos", "Recuperados"),
                        format.args = list( big.mark=".", decimal.mark = ","),
             align =  c('l', 'c', 'c', 'c') ) %>%  kable_styling()
+```
+
+
+
+#### Casos del día
+```{r casosDia, echo=FALSE, message=FALSE, warning=FALSE}
+ covidArg_hoy <- covidArg %>% 
+      group_by(PROVINCIA) %>% filter(FECHA==max(FECHA)) %>% select(PROVINCIA,FECHA, CASOS) %>% unique()
+  
+  covidArg_hoy$parents <- "Confirmados"
+  plot_ly(data = covidArg_hoy,
+          type= "treemap",
+          values = ~CASOS,
+          labels= ~PROVINCIA,
+          parents=  ~parents,
+          domain = list(column=0),
+          name = "Confirmados",
+          textinfo="label+value+percent parent") %>%
+    layout(title = paste("Covid19 - Distribución de casos Confirmados el día ", max(covidArg_hoy$FECHA)))
+
 ```
 
 
@@ -561,7 +581,7 @@ A continuación se muestra la evolución de casos detectados por provincias y la
 #### Casos
 ```{r ev_prov, echo=FALSE, fig.align='center', message=FALSE, warning=FALSE, out.width='100%'}
 
-   tabla_prov<- covidArg %>% 
+  tabla_prov<- covidArg %>% 
     group_by(PROVINCIA, FECHA) %>% mutate(casos=sum(CASOS)) %>% select(PROVINCIA, FECHA, casos) %>% unique() 
 
     tabla_prov$acumulados <-0
@@ -636,6 +656,22 @@ A continuación se muestra la evolución de casos detectados por provincias y la
     fig
 
 ```
+
+#### Promedios diarios
+```{r promProvSem, echo=FALSE, fig.align='center', message=FALSE, warning=FALSE, out.width='100%' }
+  
+  prom <- tabla_prov %>% 
+    group_by(provincia) %>% filter(tipo=="casos") %>% 
+    mutate(prom= round(roll_mean(cant,  n=7, align="right", fill = NA), 0)) %>%  
+    filter(!is.na(prom) & prom>0)
+
+  fig <- plot_ly(prom, x = ~fecha, y = ~prom, color = ~provincia, type = "bar") #, mode='lines+markers') 
+  fig <- layout(fig, title="Evolución de casos diarios por Provincia \n (promedio de 7 días)",
+                xaxis = list(title = "día"), yaxis = list(title = "casos"))
+  fig
+
+```
+
 
 ### Días Transcurridos
 

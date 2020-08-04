@@ -52,7 +52,8 @@ knitr::opts_chunk$set(echo = TRUE)
   names(poblac_er) <- c("departamento", "poblacion")
      
   ### Base Nación
-  covid19ER <- read_excel("data/covid19casos.xlsx")
+  # covid19ER <- read_excel("data/covid19casos.xlsx")
+   covid19ER <- read_csv("data/Covid19Casos.csv")
   names(covid19ER) <- c("id_evento_caso", "sexo", "edad", "edad_anos_meses", "residencia_pais_nombre",
                         "residencia_provincia_nombre", 	"residencia_departamento_nombre",
                         "carga_provincia_nombre", 	"fecha_inicio_sintomas", 	"fecha_apertura",

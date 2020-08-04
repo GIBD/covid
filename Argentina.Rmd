@@ -71,7 +71,8 @@ output:
        muertosArg <- covidArg %>% select(FECHA, PROVINCIA, MUERTES)
   
     ### Datos abiertos
-     casos_pronvinciales <- read_excel("data/covid19casos.xlsx")
+     # casos_pronvinciales <- read_excel("data/covid19casos.xlsx")
+     casos_pronvinciales <- read_csv("data/Covid19Casos.csv")
      
      edades <-  casos_pronvinciales %>% 
         filter(clasificacion_resumen=="Confirmado") %>% group_by(sexo, edad, edad_años_meses) %>%

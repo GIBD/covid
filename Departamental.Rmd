@@ -38,7 +38,9 @@ knitr::opts_chunk$set(echo = TRUE)
   deptos <- st_read(dsn ="data/mapas/departamentos.shp") 
   # covid19casos <- read_csv("https://github.com/CSSEGISandData/COVID-19/raw/master/csse_covid_19_data/csse_covid_19_time_series/time_series_covid19_confirmed_global.csv")
   
-  covid19casos <- read_excel("data/covid19casos.xlsx")
+  # covid19casos <- read_excel("data/covid19casos.xlsx")
+ covid19casos <- read_csv("data/Covid19Casos.csv")
+
   names(covid19casos) <- c("id_evento_caso", "sexo", "edad", 	"edad_anos_meses", 	"residencia_pais_nombre", 	"residencia_provincia_nombre", 	"residencia_departamento_nombre", 	"carga_provincia_nombre", 	"fecha_inicio_sintomas", 	"fecha_apertura", 	"sepi_apertura", 	"fecha_internacion", 	"cuidado_intensivo", 	"fecha_cui_intensivo", "fallecido", 	"fecha_fallecimiento",	"asistencia_respiratoria_mecanica",	"carga_provincia_id",	"origen_financiamiento",	"clasificacion", 	"clasificacion_resumen",	"residencia_provincia_id", 	"fecha_diagnostico", 	"residencia_departamento_id",	"ultima_actualizacion")
 
   color <- function(d){ c <- if_else(d==0, '#FFFFFF', 

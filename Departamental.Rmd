@@ -110,6 +110,10 @@ Se muestra la distribución de casos a nivel departamental de las provincias.
   deptos$provincia <- if_else( deptos$provincia=="Ciudad Autónoma de Buenos Aires", "CABA",
                                as.character(deptos$provincia))
  
+# Tdeptal$provincia <- if_else( Tdeptal$provincia=="Ciudad Autónoma de Buenos Aires", "CABA",
+#                                as.character(Tdeptal$provincia))
+# Tdeptal$residencia_departamento_nombre <- gsub("COMUNA", "Comuna", Tdeptal$residencia_departamento_nombre)
+  # write.csv(Tdeptal, "Tdeptal.csv")
 
   Tdeptal$residencia_departamento_nombre <- gsub("COMUNA", "Comuna", Tdeptal$residencia_departamento_nombre)
   Tdeptal$residencia_departamento_nombre <- gsub("ñ", "?", Tdeptal$residencia_departamento_nombre)

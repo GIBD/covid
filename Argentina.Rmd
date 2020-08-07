@@ -205,21 +205,24 @@ Los datos con los que se trabajarán son de procesamiento propio en base a los i
      select(dia, Detectados, Activos, Fallecidos, Recuperados) %>% 
      gather(tipo, cantidad, c(Detectados, Activos, Fallecidos, Recuperados), -dia)
    
-     m <- evolArg %>% filter(dia==max(dia)) 
-     a <- list( x = m$dia+1, y = m$cantidad+100, text = paste0('<br>', m$tipo, '\n',m$cantidad, '</br>'),
-                xref = "x", yref = "y", showarrow = F, ax = 60, ay = -40  )
+     m <- evolArg %>% filter(dia==max(dia))
+     a <- list( x =  m$dia+1, y =if_else(m$tipo=="Fallecidos" | m$tipo=="Activos", m$cantidad+6000, m$cantidad),
+                text = paste0('<b>', m$tipo, '\n', format(m$cantidad, big.mark=".") , '</b>'),
+                xref = "x", yref = "y", showarrow = F, ax = 60, ay = -40)
      
-     b <- list(yref = "y", xref = "x", x="2020-03-20", y= 1, text="ASPO",   showarrow = T)
+     b <- list( x="2020-03-20", y= 1, yref = "y", xref = "x", ax=0, ay=-390,
+                text="ASPO", textangle = 0, showarrow = T,
+                arrowhead = 0,  arrowwidth=0.8, borderwidth=0.5, opacity=0.7)
      
      pal <- c( '#8DA0CB', '#9BD92F','#FF8080',  '#66C2A5')
      
      fig <- plot_ly(evolArg, x =~dia, y=~cantidad, split = ~tipo, color=~tipo,
-           colors=pal, alpha = 0.1, type='scatter', mode='lines', fill='tozeroy') 
+                    colors=pal, alpha = 0.1, type='scatter', mode='lines', fill='tozeroy')
      
-     fig %>% layout(title="Evolución de COVID-19 en Argentina",
+     fig %>% layout(title="<b> Evolución de COVID-19 en Argentina</b>",
                     xaxis = list(title = "día"), yaxis = list(title = ""),
-                    annotations=a) %>% layout(showlegend = FALSE,
-                    annotations=b) 
+                    annotations=a) %>% layout(showlegend = FALSE, annotations=b) 
+       
 ```
 
 

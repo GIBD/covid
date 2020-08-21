@@ -96,7 +96,8 @@ library(DT)
   Tdeptal <- amba %>% 
           group_by(residencia_provincia_nombre, residencia_departamento_nombre, fecha_apertura, clasificacion_resumen) %>%
           mutate(cantidad= n()) %>%
-          select(residencia_provincia_nombre, residencia_departamento_nombre, fecha_apertura, clasificacion_resumen, cantidad) %>%
+          select(residencia_provincia_nombre, residencia_departamento_nombre, 
+                 fecha_apertura, clasificacion_resumen, cantidad) %>%
           unique() %>%  spread(clasificacion_resumen, cantidad) %>%
     left_join(falle, by=c("residencia_provincia_nombre"="residencia_provincia_nombre",
                           "residencia_departamento_nombre"="residencia_departamento_nombre",
@@ -114,7 +115,8 @@ library(DT)
                                                 as.character(Tdeptal$residencia_departamento_nombre))
     
   amba <- Tdeptal %>% left_join(cordones, by=c("residencia_departamento_nombre"="Partido")) %>% 
-    select(provincia=residencia_provincia_nombre, Partido=residencia_departamento_nombre, fecha=fecha_apertura,
+    select(provincia=residencia_provincia_nombre, Partido=residencia_departamento_nombre, diarios=Confirmado,
+           fecha=fecha_apertura, 
            CASOS=acumulados, descartados=Descartado, sospechosos=Sospechoso, fallecidos, zona=ZONA, CORDON, POBLACION)
   
     # amba2 <- read_excel("data/argentina.xlsx", "GBA")
@@ -177,7 +179,7 @@ Se analizarán considerando a la Ciudad de Buenos Aires y los cordones de la Pro
 
 ## CABA y 1er Cordón
 
-### Curva de Casos
+### Curva de Casos Acumulados
 A continuación se grafica la evolución de los casos acumulados de Covid en CABA y el primer cordón del Gran Buenos Aires en base a la jurisdicción de residencia del paciente.
 
 
@@ -198,6 +200,32 @@ A continuación se grafica la evolución de los casos acumulados de Covid en CAB
   ggplotly(p,   height = 800) %>% layout(showlegend=F)
   
 ```
+
+
+
+### Casos diarios
+Los casos diarios son obtenidos de la base de datos abiertas del Ministerio de Salud de Nación en base a la fecha de apertura del caso.
+
+Por este motivo es usual que los últimos días presente siempre una cantidad menor de casos confirmados. Es recomendable observar las tendencias hasta diez días antes del actual.
+
+
+```{r primerProm, echo=FALSE, fig.align='center', message=FALSE, warning=FALSE, paged.print=FALSE, out.width='100%'}
+
+  amba %>% filter(CORDON=="1er") %>% select(cordon=CORDON, dia=fecha, distrito=Partido, cantidad=diarios) -> plot_data_n
+
+    p <- plot_data_n %>% 
+      ggplot(mapping=aes(x=dia, color=distrito, y=cantidad)) +
+      geom_line(show.legend = F,alpha = 0.5 ) + geom_point(show.legend = F, alpha = 0.5 ) + 
+      geom_smooth(method = 'loess', formula = 'y ~ x', alpha = 0.2, size = 1, span = .3, se=FALSE) +
+      labs(title = paste("COVID-19- Casos diarios en CABA y 1° cordón GBA (", last_date, ")"), 
+           subtitle = paste0("Casos diarios en CABA y 1° cordón GBA (al: ", last_date, ")") , 
+           y = "Casos",  x = "Fecha") +
+       facet_wrap(~ distrito, scales = "free_y", ncol = 2) 
+  
+  ggplotly(p, width = 900,  height = 900) %>% layout(showlegend=F)
+  
+```
+
 
 
 ### Movilidad CABA y 1° Cordón
@@ -282,6 +310,28 @@ Como población se considera la proyectada por INDEC para el 2020.
 ```
 
 
+
+### Casos diarios
+
+```{r segundoProm, echo=FALSE, fig.align='center', message=FALSE, warning=FALSE, paged.print=FALSE, out.width='100%'}
+
+  amba %>% filter(CORDON=="2do") %>% select(cordon=CORDON, dia=fecha, distrito=Partido, cantidad=diarios) -> plot_data_n
+
+    p <- plot_data_n %>% 
+      ggplot(mapping=aes(x=dia, color=distrito, y=cantidad)) +
+      geom_line(show.legend = F,alpha = 0.5 ) + geom_point(show.legend = F, alpha = 0.5 ) + 
+      geom_smooth(method = 'loess', formula = 'y ~ x', alpha = 0.2, size = 1, span = .3, se=FALSE) +
+      labs(title = paste("COVID-19- Casos diarios en 2° cordón GBA (", last_date, ")"), 
+           subtitle = paste0("Casos diarios en 2° cordón GBA (al: ", last_date, ")") , 
+           y = "Casos",  x = "Fecha") +
+       facet_wrap(~ distrito, scales = "free_y", ncol = 2) 
+  
+  ggplotly(p,   height = 900) %>% layout(showlegend=F)
+  
+```
+
+
+
 ### Movilidad 2° Cordón
 
 ```{r movilidad2, echo=FALSE, fig.align='center', message=FALSE, warning=FALSE, paged.print=FALSE, out.width='100%'}
@@ -336,7 +386,7 @@ Como población se considera la proyectada por INDEC para el 2020.
 
 ## PBA: 3° Cordón
 
-You can also embed plots, for example:
+Casos acumulados del Tercer cordón
 
 ```{r tercer, echo=FALSE, fig.align='center', message=FALSE, warning=FALSE, paged.print=FALSE, out.width='100%'}
 
@@ -355,6 +405,29 @@ You can also embed plots, for example:
   ggplotly(p, name="Tercer",  height = 800) %>% layout(showlegend=F)
   
 ```
+
+
+
+### Casos diarios
+
+```{r tercerProm, echo=FALSE, fig.align='center', message=FALSE, warning=FALSE, paged.print=FALSE, out.width='100%'}
+
+  amba %>% filter(CORDON=="3ro") %>% select(cordon=CORDON, dia=fecha, distrito=Partido, cantidad=diarios) -> plot_data_n
+
+    p <- plot_data_n %>% 
+      ggplot(mapping=aes(x=dia, color=distrito, y=cantidad)) +
+      geom_line(show.legend = F,alpha = 0.5 ) + geom_point(show.legend = F, alpha = 0.5 ) + 
+      geom_smooth(method = 'loess', formula = 'y ~ x', alpha = 0.2, size = 1, span = .3, se=FALSE) +
+      labs(title = paste("COVID-19- Casos diarios en 3° cordón GBA (", last_date, ")"), 
+           subtitle = paste0("Casos diarios en 3° cordón GBA (al: ", last_date, ")") , 
+           y = "Casos",  x = "Fecha") +
+       facet_wrap(~ distrito, scales = "free_y", ncol = 2) 
+  
+  ggplotly(p,   height = 900) %>% layout(showlegend=F)
+  
+```
+
+
 
 
 ### Movilidad 3° Cordón

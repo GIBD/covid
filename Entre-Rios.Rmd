@@ -43,7 +43,8 @@ knitr::opts_chunk$set(echo = TRUE)
   deptos_er <- st_read(dsn ="data/mapas/departamentos_entrerios.shp") 
       
   ### ENTRE RIOS
-  covid_er <- entre_rios_casos <- read_excel("data/entre_rios_casos.xlsx", "CASOS")
+  covid_er <- entre_rios_casos <- read_excel("data/entre_rios_casos.xlsx", "CASOS1")
+  localidades <- read_excel("data/entre_rios_casos.xlsx", "LOCALIDADES")
   covid_er_altas <- entre_rios_casos <- read_excel("data/entre_rios_casos.xlsx", "ALTAS")
   
   poblac_er <-  read_delim("data/poblaciones/poblacion_entre_rios.csv",  ";", escape_double = FALSE, 
@@ -114,8 +115,10 @@ La evolución de casos por departamento desde el inicio de la pandemia se muestr
 ```{r evolER, echo=FALSE, fig.align='center', message=FALSE, warning=FALSE, paged.print=FALSE, out.width='100%' }
    
    covid_er$FECHA <- as.Date(covid_er$FECHA, '%d/%m/%Y')
+   # evolER <- covid_er %>% group_by(DEPARTAMENTO, FECHA) %>% 
+   #   mutate(cantidad= n()) %>% select(DEPARTAMENTO, FECHA, cantidad) %>% unique()
    evolER <- covid_er %>% group_by(DEPARTAMENTO, FECHA) %>% 
-     mutate(cantidad= n()) %>% select(DEPARTAMENTO, FECHA, cantidad) %>% unique()
+     mutate(cantidad= sum(CASOS)) %>% select(DEPARTAMENTO, FECHA, cantidad) %>% unique()
    
    evolER$acumulados <-0
    evolER <- evolER %>% ungroup() %>% group_by(DEPARTAMENTO) %>% 
@@ -148,7 +151,7 @@ A continuación se muestran la cantidad de casos de COVID-19 confirmados por el 
 ```{r mapaER, echo=FALSE, message=FALSE, warning=FALSE, paged.print=FALSE}
 
   covider <- covid_er %>% group_by(DEPARTAMENTO) %>%
-    mutate(cantidad=n()) %>% select(DEPARTAMENTO, cantidad) %>% unique()
+    mutate(cantidad=sum(CASOS)) %>% select(DEPARTAMENTO, cantidad) %>% unique()
   
   
   highchart() %>%
@@ -172,26 +175,28 @@ A continuación se muestran la cantidad de casos de COVID-19 confirmados por el 
 
 #### Por Ciudad
 ```{r locER, echo=FALSE, message=FALSE, warning=FALSE, paged.print=FALSE}
- 
-  localidades_er <- covid_er %>% group_by(Lat, Long) %>% mutate(cant=n()) %>% 
+  
+  localidades_er <- covid_er %>% left_join(localidades, by=c("DEPARTAMENTO"="DEPARTAMENTO", "LOCALIDAD"="LOCALIDAD")) %>% 
+    group_by(Lat, Long) %>% mutate(cant=sum(CASOS)) %>% 
     select(LOCALIDAD, Lat, Long, cant) %>% unique() # %>% ungroup()
  
   leaflet() %>% addTiles() %>% 
       addProviderTiles(providers$OpenStreetMap) %>% 
       addPolygons(data=deptos_er, fill=FALSE, weight = 1, color = "#000")  %>% 
       addFullscreenControl()  %>%  
-  # addCircleMarkers(data=covid_er, lng =  as.double(covid_er$Long), lat = as.double(covid_er$Lat), 
-  #            clusterOptions = markerClusterOptions(maxClusterRadius=30), clusterId = "pointsCluster") %>%
-  addMarkers(data=covid_er, lng =  as.double(covid_er$Long), lat = as.double(covid_er$Lat),
-             clusterOptions = markerClusterOptions(singleMarkerMode= T), clusterId = "pointsCluster") %>%
+      addCircles(data=localidades_er, lng =  as.double(localidades_er$Long), lat = as.double(localidades_er$Lat),
+              label = ~as.character(localidades_er$cant), popup = ~as.character(localidades_er$cant),
+              weight = 1, radius = ~sqrt(localidades_er$cant)*250 ) %>% 
+   # addMarkers(data=localidades_er, lng =  as.double(localidades_er$Long), lat = as.double(localidades_er$Lat),
+   #            label = ~as.character(localidades_er$cant), popup = ~as.character(localidades_er$cant),
+   #            clusterOptions = markerClusterOptions(singleMarkerMode= T), clusterId = "pointsCluster") %>%
   addEasyButton(
     easyButton(states =  list(easyButtonState( 
       stateName="unfrozen-markers", icon="ion-toggle",
       title="Freeze Clusters",
       onClick = JS("function(btn, map) 
       {var  clusterManager = map.layerManager.getLayer('cluster', 'pointsCluster');
-      clusterManager.freezeAtZoom();
-      btn.state('frozen-markers');}")),
+      clusterManager.freezeAtZoom(); btn.state('frozen-markers');}")),
       easyButtonState(
         stateName="frozen-markers",
         icon="ion-toggle-filled",

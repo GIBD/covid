@@ -34,7 +34,7 @@ knitr::opts_chunk$set(echo = TRUE)
   library(readxl)
   library("tidyverse")
   library("ggTimeSeries")
- 
+  library(DT)
 
   theme_elegante_std <- function(base_family) {}
 
@@ -53,8 +53,7 @@ knitr::opts_chunk$set(echo = TRUE)
   names(poblac_er) <- c("departamento", "poblacion")
      
   ### Base Nación
-  # covid19ER <- read_excel("data/covid19casos.xlsx")
-   covid19ER <- read_csv("data/Covid19Casos.csv")
+  covid19ER <- read_csv("data/Covid19Casos.csv")
   names(covid19ER) <- c("id_evento_caso", "sexo", "edad", "edad_anos_meses", "residencia_pais_nombre",
                         "residencia_provincia_nombre", 	"residencia_departamento_nombre",
                         "carga_provincia_nombre", 	"fecha_inicio_sintomas", 	"fecha_apertura",
@@ -67,8 +66,7 @@ knitr::opts_chunk$set(echo = TRUE)
   
   covid19ER_Conf <- covid19ER %>%
     filter(clasificacion_resumen=="Confirmado" & carga_provincia_nombre=="Entre Ríos")
-  # table(covid19ER_Conf$sexo)
-    
+  
   covid19ER_Rec <- covid19ER %>% 
     filter(fallecido=="NO" & clasificacion_resumen=="Confirmado" &
              Clasificacion %in% c("Caso confirmado - No activo (por laboratorio y tiempo de evolución)",
@@ -87,8 +85,6 @@ knitr::opts_chunk$set(echo = TRUE)
   covid19ER_Desc <- covid19ER %>% filter(clasificacion_resumen=="Descartado") %>%
      group_by(residencia_provincia_nombre, residencia_departamento_nombre) %>%
      mutate(descartados=n())
-  # %>% select(residencia_provincia_nombre, residencia_departamento_nombre, descartados) %>% unique()
-  
   
   ### Movilidad
   poligonosMovil <- read_csv("data/poligonosMovil.csv",  locale = locale(encoding = "ISO-8859-1"))
@@ -115,8 +111,6 @@ La evolución de casos por departamento desde el inicio de la pandemia se muestr
 ```{r evolER, echo=FALSE, fig.align='center', message=FALSE, warning=FALSE, paged.print=FALSE, out.width='100%' }
    
    covid_er$FECHA <- as.Date(covid_er$FECHA, '%d/%m/%Y')
-   # evolER <- covid_er %>% group_by(DEPARTAMENTO, FECHA) %>% 
-   #   mutate(cantidad= n()) %>% select(DEPARTAMENTO, FECHA, cantidad) %>% unique()
    evolER <- covid_er %>% group_by(DEPARTAMENTO, FECHA) %>% 
      mutate(cantidad= sum(CASOS)) %>% select(DEPARTAMENTO, FECHA, cantidad) %>% unique()
    
@@ -187,9 +181,6 @@ A continuación se muestran la cantidad de casos de COVID-19 confirmados por el 
       addCircles(data=localidades_er, lng =  as.double(localidades_er$Long), lat = as.double(localidades_er$Lat),
               label = ~as.character(localidades_er$cant), popup = ~as.character(localidades_er$cant),
               weight = 1, radius = ~sqrt(localidades_er$cant)*250 ) %>% 
-   # addMarkers(data=localidades_er, lng =  as.double(localidades_er$Long), lat = as.double(localidades_er$Lat),
-   #            label = ~as.character(localidades_er$cant), popup = ~as.character(localidades_er$cant),
-   #            clusterOptions = markerClusterOptions(singleMarkerMode= T), clusterId = "pointsCluster") %>%
   addEasyButton(
     easyButton(states =  list(easyButtonState( 
       stateName="unfrozen-markers", icon="ion-toggle",
@@ -223,23 +214,14 @@ A continuación se muestran la cantidad de casos Activos de COVID-19. Los casos 
 ###  {.tabset  .tabset-fade .tabset-pills}
 #### Departamental
 ```{r mapaERAct, echo=FALSE, message=FALSE, warning=FALSE, paged.print=FALSE}
-  
-  # activos <- covid19ER_Conf %>% 
-  # group_by(residencia_provincia_nombre, residencia_departamento_nombre) %>% mutate(conf=n()) %>% 
   covider$provincia <- "Entre Ríos"
 
   activos <- covider %>% 
-  # select(residencia_provincia_nombre, residencia_departamento_nombre, conf) %>% unique() %>% 
     left_join(covid_er_altas, by=c("DEPARTAMENTO"="DEPARTAMENTO"))
 
-  # covider
-  
   activos$altas <- if_else(is.na(activos$ALTAS), 0, as.double(activos$ALTAS))  
   activos$FALLECIDOS <- if_else(is.na(activos$FALLECIDOS), 0, as.double(activos$FALLECIDOS))  
-  
   activos$activos <- activos$cantidad - activos$altas - activos$FALLECIDOS
-  
-  
   
   colors <- c("#ffffcc", "#ffeda0", "#fed976", "#feb24c", "#fd8d3c", "#fc4e2a", "#e31a1c", "#bd0026", "#800026")
 
@@ -271,24 +253,10 @@ A continuación se muestra el mapa departamental de los fallecidos COVID-19 en l
 ###  {.tabset  .tabset-fade .tabset-pills}
 #### Mapa
 ```{r mapaERFall, echo=FALSE, message=FALSE, warning=FALSE, paged.print=FALSE}
-  
-  # activos <- covid19ER_Conf %>% 
-  # group_by(residencia_provincia_nombre, residencia_departamento_nombre) %>% mutate(conf=n()) %>% 
-  # covider$provincia <- "Entre Ríos"
-
   fallecidos <- covider %>% 
-  # select(residencia_provincia_nombre, residencia_departamento_nombre, conf) %>% unique() %>% 
-    left_join(covid_er_altas, by=c("DEPARTAMENTO"="DEPARTAMENTO"))
+     left_join(covid_er_altas, by=c("DEPARTAMENTO"="DEPARTAMENTO"))
 
-  # covider
-  
-  # fallecidos$altas <- if_else(is.na(activos$ALTAS), 0, as.double(activos$ALTAS))  
   fallecidos$FALLECIDOS <- if_else(is.na(fallecidos$FALLECIDOS), 0, as.double(fallecidos$FALLECIDOS))  
-  
-  # activos$activos <- activos$cantidad-activos$altas - activos$FALLECIDOS
-  
-  
-  
   colors <- c("#ffffcc", "#ffeda0", "#fed976", "#feb24c", "#fd8d3c", "#fc4e2a", "#e31a1c", "#bd0026", "#800026")
 
   highchart() %>%
@@ -515,9 +483,38 @@ A continuación se grafica el cambio en la movilidad de cada departamento tomand
     facet_wrap(~ polygon_name, scales = "free_y", ncol = 3) +
     theme_elegante_std(base_family = "Assistant") 
 
-  # p$ hoverinfo<- "name+x" #hover options for 'average'
-  # p$data[[2]]$hoverinfo <- "name+x" #hover options for 'median'
   ggplotly(p, name="Movilidad",  height = 800)
 
 ```
 
+## Datos
+En la siguiente tabla se muestran los datos de Cantidad de Casos detectados, Altas, Fallecidos y Sospechosos calculado con la base de datos abiertos del Min. de Salud de la Nación. 
+
+Los datos pueden ser descargados en diversos formatos
+```{r datosER, echo=FALSE, message=FALSE, warning=FALSE, paged.print=FALSE, out.width='100%'}
+ 
+sospechosos <- covid19ER_Sosp %>% group_by(residencia_departamento_nombre) %>% mutate(sospechosos=sum(sospechosos)) %>% 
+  select(departamento=residencia_departamento_nombre, sospechosos) %>% unique()
+
+fallecidos <- covid19ER %>% filter(clasificacion_resumen=="Confirmado" & fallecido=="SI") %>%
+  group_by(residencia_departamento_nombre) %>% mutate(fallecidos=n()) %>% 
+  select(departamento = residencia_departamento_nombre, fallecidos)
+  
+
+ tabla <- covid19ER %>% filter(clasificacion_resumen=="Confirmado") %>% 
+   group_by(residencia_departamento_nombre) %>% mutate(casos=n()) %>% 
+  select(departamento=residencia_departamento_nombre, casos) %>% unique() %>% 
+  left_join(covid19ER_Rec, by=c("departamento"="residencia_departamento_nombre")) %>% 
+  select(departamento, casos, altas) %>% 
+   left_join(sospechosos, by=c("departamento"="departamento")) %>% 
+   left_join(fallecidos, by=c("departamento"="departamento")) %>% 
+   select(departamento, casos, altas, fallecidos, sospechosos) %>% unique() %>% arrange(departamento)
+
+tabla %>% datatable(extensions = 'Buttons', rownames = FALSE,
+                  colnames = c("Departamento", "Casos Detectados", "Recuperados", "Fallecidos", "Sospechosos"),
+            options = list(dom = 'Blfrtip',
+                           buttons = c('copy', 'csv', 'excel', 'pdf', 'print'),
+                           lengthMenu = list(c(10,25,50,-1),
+                                             c(10,25,50,"All"))))
+```
+```

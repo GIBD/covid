@@ -49,7 +49,8 @@ output:
 
   # capUti <- 1542
  # capUti <- 1721
-  capUti <-2885
+  # capUti <-2885
+  capUti <-3282
   
   ## Mapas y Poblaciones
       argentina <- fromJSON(file = "data/mapas/ar-all.geo.json")
@@ -71,6 +72,9 @@ output:
      muertosArg <- covidArg %>% select(FECHA, PROVINCIA, MUERTES)
   
     ### Datos abiertos
+     # base_hoy <- read.csv("https://sisa.msal.gov.ar/datos/descargas/covid-19/files/Covid19Casos.csv")
+     # 
+     # base_hoy$ultima_actualizacion
      casos_pronvinciales <- read_csv("data/Covid19Casos.csv")
      casos_pronvinciales2 <- casos_pronvinciales
      
@@ -80,7 +84,6 @@ output:
         select(sexo, edad, edad_años_meses, cantidad) %>% unique()
      
      edades$edad <- if_else(edades$edad_años_meses=="Meses", 1, edades$edad)
-     
      edades <-  edades %>% 
         group_by(sexo, edad) %>%
         mutate(cantidad=sum(cantidad)) %>% 
@@ -125,7 +128,7 @@ output:
                                                       clasificacion_resumen=="Confirmado") %>% 
         group_by(carga_provincia_nombre, fecha_apertura) %>% mutate(confirmados = n()) %>% 
         select(carga_provincia_nombre, fecha_apertura, confirmados) %>% unique()
-     
+     # write.csv(confirmados, "confirmados.csv")
      recuperados <- casos_pronvinciales %>% 
        filter(carga_provincia_nombre== residencia_provincia_nombre & 
                 clasificacion_resumen=="Confirmado" & 
@@ -167,7 +170,8 @@ output:
      casos_pronvinciales$positividad <- if_else(is.na(casos_pronvinciales$positividad), 0,
                                                  as.double(casos_pronvinciales$positividad))
      
-     casos_pronvinciales$activos <- casos_pronvinciales$confirmados- casos_pronvinciales$altas - casos_pronvinciales$fallecidos
+     casos_pronvinciales$activos <- casos_pronvinciales$confirmados - 
+                    casos_pronvinciales$altas - casos_pronvinciales$fallecidos
 
      color <- function(d){
           c <- if_else(d==0, '#FFFFFF',
@@ -591,21 +595,16 @@ También se muestra al final la media móvil (7 días) de los casos darios por p
 ```{r ev_prov, echo=FALSE, fig.align='center', message=FALSE, warning=FALSE, out.width='100%'}
 
   tabla_prov<- covidArg %>% 
-    group_by(PROVINCIA, FECHA) %>% mutate(casos=sum(CASOS)) %>% select(PROVINCIA, FECHA, casos) %>% unique() 
-
-    tabla_prov$acumulados <-0
-    tabla_prov$FECHA <- as.Date(tabla_prov$FECHA , "%d/%m/%Y")
-  
+    group_by(PROVINCIA, FECHA) %>% mutate(casos=sum(CASOS)) %>% select(PROVINCIA, FECHA, casos) %>% unique()
+  tabla_prov$acumulados <-0
+  tabla_prov$FECHA <- as.Date(tabla_prov$FECHA , "%d/%m/%Y")
   tabla_prov <- tabla_prov %>% ungroup() %>% group_by(PROVINCIA) %>% 
     arrange(PROVINCIA, FECHA) %>% 
     mutate(acumulados =cumsum(casos))
   
   tabla_prov <- tabla_prov %>%
-    gather(casos, acum, -c(PROVINCIA, FECHA))# %>% ungroup()
-  
+    gather(casos, acum, -c(PROVINCIA, FECHA))
   names(tabla_prov) <- c("provincia", "fecha", "tipo", "cant")
- 
- 
   p <- tabla_prov %>%
     filter(cant>0&tipo=="acumulados") %>% 
     group_by(provincia) %>% arrange(fecha) %>% mutate(dia1 = row_number()) 
@@ -668,7 +667,7 @@ También se muestra al final la media móvil (7 días) de los casos darios por p
 
 
 #### Promedios diarios
-
+Para seleccionar sólo una provincia haga doble click sobre el nombre de la misma en la leyenda
 ```{r promProvSem, echo=FALSE, fig.align='center', message=FALSE, warning=FALSE, out.width='100%' }
   
   prom <- tabla_prov %>% 

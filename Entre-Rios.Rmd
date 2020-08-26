@@ -62,7 +62,7 @@ knitr::opts_chunk$set(echo = TRUE)
                         "carga_provincia_id",	"origen_financiamiento",	"Clasificacion",
                         "clasificacion_resumen",	"residencia_provincia_id", 	"fecha_diagnostico",
                         "residencia_departamento_id",	"ultima_actualizacion")
-  covid19ER <- covid19ER %>% filter(residencia_provincia_nombre=="Entre Ríos")
+  covid19ER <- covid19ER %>% filter(residencia_provincia_nombre=="Entre Ríos" & carga_provincia_nombre=="Entre Ríos")
   
   covid19ER_Conf <- covid19ER %>%
     filter(clasificacion_resumen=="Confirmado" & carga_provincia_nombre=="Entre Ríos")
@@ -172,33 +172,27 @@ A continuación se muestran la cantidad de casos de COVID-19 confirmados por el 
   
   localidades_er <- covid_er %>% left_join(localidades, by=c("DEPARTAMENTO"="DEPARTAMENTO", "LOCALIDAD"="LOCALIDAD")) %>% 
     group_by(Lat, Long) %>% mutate(cant=sum(CASOS)) %>% 
-    select(LOCALIDAD, Lat, Long, cant) %>% unique() # %>% ungroup()
+    select(LOCALIDAD, Lat, Long, cant) %>% unique()
+
+  localidades_er <- as.data.frame(lapply(localidades_er, rep, localidades_er$cant))
  
-  leaflet() %>% addTiles() %>% 
+  leaflet(height = 900, width = 900) %>% addTiles() %>% 
       addProviderTiles(providers$OpenStreetMap) %>% 
       addPolygons(data=deptos_er, fill=FALSE, weight = 1, color = "#000")  %>% 
-      addFullscreenControl()  %>%  
-      addCircles(data=localidades_er, lng =  as.double(localidades_er$Long), lat = as.double(localidades_er$Lat),
-              label = ~as.character(localidades_er$cant), popup = ~as.character(localidades_er$cant),
-              weight = 1, radius = ~sqrt(localidades_er$cant)*250 ) %>% 
-  addEasyButton(
-    easyButton(states =  list(easyButtonState( 
+      addFullscreenControl()  %>%
+    addMarkers(data=localidades_er, 
+               lng =as.double(localidades_er$Long), lat = as.double(localidades_er$Lat),
+               clusterOptions = markerClusterOptions(singleMarkerMode= T), clusterId = "pointsCluster") %>%
+    addEasyButton( easyButton(states =  list(easyButtonState( 
       stateName="unfrozen-markers", icon="ion-toggle",
       title="Freeze Clusters",
-      onClick = JS("function(btn, map) 
-      {var  clusterManager = map.layerManager.getLayer('cluster', 'pointsCluster');
-      clusterManager.freezeAtZoom(); btn.state('frozen-markers');}")),
-      easyButtonState(
-        stateName="frozen-markers",
-        icon="ion-toggle-filled",
-        title="UnFreeze Clusters",
-        onClick = JS("function(btn, map) {
+      onClick = JS("function(btn, map) {var  clusterManager = map.layerManager.getLayer('cluster', 'pointsCluster');
+                   clusterManager.freezeAtZoom(); btn.state('frozen-markers');}")),
+      easyButtonState( stateName="frozen-markers", icon="ion-toggle-filled",
+        title="UnFreeze Clusters", onClick = JS("function(btn, map) {
         var clusterManager = map.layerManager.getLayer('cluster', 'pointsCluster');
-        clusterManager.unfreeze();
-        btn.state('unfrozen-markers');}"))
+        clusterManager.unfreeze(); btn.state('unfrozen-markers');}"))
       )))
-
-  
 ```
 
 
@@ -487,6 +481,8 @@ A continuación se grafica el cambio en la movilidad de cada departamento tomand
 
 ```
 
+
+
 ## Datos
 En la siguiente tabla se muestran los datos de Cantidad de Casos detectados, Altas, Fallecidos y Sospechosos calculado con la base de datos abiertos del Min. de Salud de la Nación. 
 
@@ -501,11 +497,9 @@ fallecidos <- covid19ER %>% filter(clasificacion_resumen=="Confirmado" & falleci
   select(departamento = residencia_departamento_nombre, fallecidos)
   
 
- tabla <- covid19ER %>% filter(clasificacion_resumen=="Confirmado") %>% 
-   group_by(residencia_departamento_nombre) %>% mutate(casos=n()) %>% 
-  select(departamento=residencia_departamento_nombre, casos) %>% unique() %>% 
-  left_join(covid19ER_Rec, by=c("departamento"="residencia_departamento_nombre")) %>% 
-  select(departamento, casos, altas) %>% 
+ tabla <- covider %>% 
+  left_join(covid19ER_Rec, by=c("DEPARTAMENTO"="residencia_departamento_nombre")) %>% 
+  select(departamento=DEPARTAMENTO, casos=cantidad, altas) %>% 
    left_join(sospechosos, by=c("departamento"="departamento")) %>% 
    left_join(fallecidos, by=c("departamento"="departamento")) %>% 
    select(departamento, casos, altas, fallecidos, sospechosos) %>% unique() %>% arrange(departamento)

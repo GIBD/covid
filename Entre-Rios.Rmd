@@ -34,7 +34,7 @@ knitr::opts_chunk$set(echo = TRUE)
   library(readxl)
   library("tidyverse")
   library("ggTimeSeries")
- 
+  library(DT)
 
   theme_elegante_std <- function(base_family) {}
 
@@ -43,7 +43,8 @@ knitr::opts_chunk$set(echo = TRUE)
   deptos_er <- st_read(dsn ="data/mapas/departamentos_entrerios.shp") 
       
   ### ENTRE RIOS
-  covid_er <- entre_rios_casos <- read_excel("data/entre_rios_casos.xlsx", "CASOS")
+  covid_er <- entre_rios_casos <- read_excel("data/entre_rios_casos.xlsx", "CASOS1")
+  localidades <- read_excel("data/entre_rios_casos.xlsx", "LOCALIDADES")
   covid_er_altas <- entre_rios_casos <- read_excel("data/entre_rios_casos.xlsx", "ALTAS")
   
   poblac_er <-  read_delim("data/poblaciones/poblacion_entre_rios.csv",  ";", escape_double = FALSE, 
@@ -52,7 +53,10 @@ knitr::opts_chunk$set(echo = TRUE)
   names(poblac_er) <- c("departamento", "poblacion")
      
   ### Base Nación
+<<<<<<< HEAD
   # covid19ER <- read_excel("data/covid19casos.xlsx")
+=======
+>>>>>>> 81cc0077d6f334465ac3683a3a9c4400f560a03b
   covid19ER <- read_csv("data/Covid19Casos.csv")
   names(covid19ER) <- c("id_evento_caso", "sexo", "edad", "edad_anos_meses", "residencia_pais_nombre",
                         "residencia_provincia_nombre", 	"residencia_departamento_nombre",
@@ -62,7 +66,7 @@ knitr::opts_chunk$set(echo = TRUE)
                         "carga_provincia_id",	"origen_financiamiento",	"Clasificacion",
                         "clasificacion_resumen",	"residencia_provincia_id", 	"fecha_diagnostico",
                         "residencia_departamento_id",	"ultima_actualizacion")
-  covid19ER <- covid19ER %>% filter(residencia_provincia_nombre=="Entre Ríos")
+  covid19ER <- covid19ER %>% filter(residencia_provincia_nombre=="Entre Ríos" & carga_provincia_nombre=="Entre Ríos")
   
   covid19ER_Conf <- covid19ER %>%
     filter(clasificacion_resumen=="Confirmado" & carga_provincia_nombre=="Entre Ríos")
@@ -85,7 +89,10 @@ knitr::opts_chunk$set(echo = TRUE)
   covid19ER_Desc <- covid19ER %>% filter(clasificacion_resumen=="Descartado") %>%
      group_by(residencia_provincia_nombre, residencia_departamento_nombre) %>%
      mutate(descartados=n())
+<<<<<<< HEAD
 
+=======
+>>>>>>> 81cc0077d6f334465ac3683a3a9c4400f560a03b
   
   ### Movilidad
   poligonosMovil <- read_csv("data/poligonosMovil.csv",  locale = locale(encoding = "ISO-8859-1"))
@@ -113,7 +120,7 @@ La evolución de casos por departamento desde el inicio de la pandemia se muestr
    
    covid_er$FECHA <- as.Date(covid_er$FECHA, '%d/%m/%Y')
    evolER <- covid_er %>% group_by(DEPARTAMENTO, FECHA) %>% 
-     mutate(cantidad= n()) %>% select(DEPARTAMENTO, FECHA, cantidad) %>% unique()
+     mutate(cantidad= sum(CASOS)) %>% select(DEPARTAMENTO, FECHA, cantidad) %>% unique()
    
    evolER$acumulados <-0
    evolER <- evolER %>% ungroup() %>% group_by(DEPARTAMENTO) %>% 
@@ -146,7 +153,7 @@ A continuación se muestran la cantidad de casos de COVID-19 confirmados por el 
 ```{r mapaER, echo=FALSE, message=FALSE, warning=FALSE, paged.print=FALSE}
 
   covider <- covid_er %>% group_by(DEPARTAMENTO) %>%
-    mutate(cantidad=n()) %>% select(DEPARTAMENTO, cantidad) %>% unique()
+    mutate(cantidad=sum(CASOS)) %>% select(DEPARTAMENTO, cantidad) %>% unique()
   
   
   highchart() %>%
@@ -171,37 +178,30 @@ A continuación se muestran la cantidad de casos de COVID-19 confirmados por el 
 
 #### Por Ciudad
 ```{r locER, echo=FALSE, message=FALSE, warning=FALSE, paged.print=FALSE}
+  
+  localidades_er <- covid_er %>% left_join(localidades, by=c("DEPARTAMENTO"="DEPARTAMENTO", "LOCALIDAD"="LOCALIDAD")) %>% 
+    group_by(Lat, Long) %>% mutate(cant=sum(CASOS)) %>% 
+    select(LOCALIDAD, Lat, Long, cant) %>% unique()
+
+  localidades_er <- as.data.frame(lapply(localidades_er, rep, localidades_er$cant))
  
-  localidades_er <- covid_er %>% group_by(Lat, Long) %>% mutate(cant=n()) %>% 
-    select(LOCALIDAD, Lat, Long, cant) %>% unique() # %>% ungroup()
- 
-  leaflet() %>% addTiles() %>% 
+  leaflet(height = 900, width = 900) %>% addTiles() %>% 
       addProviderTiles(providers$OpenStreetMap) %>% 
       addPolygons(data=deptos_er, fill=FALSE, weight = 1, color = "#000")  %>% 
-      addFullscreenControl()  %>%  
-  # addCircleMarkers(data=covid_er, lng =  as.double(covid_er$Long), lat = as.double(covid_er$Lat), 
-  #            clusterOptions = markerClusterOptions(maxClusterRadius=30), clusterId = "pointsCluster") %>%
-  addMarkers(data=covid_er, lng =  as.double(covid_er$Long), lat = as.double(covid_er$Lat),
-             clusterOptions = markerClusterOptions(singleMarkerMode= T), clusterId = "pointsCluster") %>%
-  addEasyButton(
-    easyButton(states =  list(easyButtonState( 
+      addFullscreenControl()  %>%
+    addMarkers(data=localidades_er, 
+               lng =as.double(localidades_er$Long), lat = as.double(localidades_er$Lat),
+               clusterOptions = markerClusterOptions(singleMarkerMode= T), clusterId = "pointsCluster") %>%
+    addEasyButton( easyButton(states =  list(easyButtonState( 
       stateName="unfrozen-markers", icon="ion-toggle",
       title="Freeze Clusters",
-      onClick = JS("function(btn, map) 
-      {var  clusterManager = map.layerManager.getLayer('cluster', 'pointsCluster');
-      clusterManager.freezeAtZoom();
-      btn.state('frozen-markers');}")),
-      easyButtonState(
-        stateName="frozen-markers",
-        icon="ion-toggle-filled",
-        title="UnFreeze Clusters",
-        onClick = JS("function(btn, map) {
+      onClick = JS("function(btn, map) {var  clusterManager = map.layerManager.getLayer('cluster', 'pointsCluster');
+                   clusterManager.freezeAtZoom(); btn.state('frozen-markers');}")),
+      easyButtonState( stateName="frozen-markers", icon="ion-toggle-filled",
+        title="UnFreeze Clusters", onClick = JS("function(btn, map) {
         var clusterManager = map.layerManager.getLayer('cluster', 'pointsCluster');
-        clusterManager.unfreeze();
-        btn.state('unfrozen-markers');}"))
+        clusterManager.unfreeze(); btn.state('unfrozen-markers');}"))
       )))
-
-  
 ```
 
 
@@ -217,23 +217,14 @@ A continuación se muestran la cantidad de casos Activos de COVID-19. Los casos 
 ###  {.tabset  .tabset-fade .tabset-pills}
 #### Departamental
 ```{r mapaERAct, echo=FALSE, message=FALSE, warning=FALSE, paged.print=FALSE}
-  
-  # activos <- covid19ER_Conf %>% 
-  # group_by(residencia_provincia_nombre, residencia_departamento_nombre) %>% mutate(conf=n()) %>% 
   covider$provincia <- "Entre Ríos"
 
   activos <- covider %>% 
-  # select(residencia_provincia_nombre, residencia_departamento_nombre, conf) %>% unique() %>% 
     left_join(covid_er_altas, by=c("DEPARTAMENTO"="DEPARTAMENTO"))
 
-  # covider
-  
   activos$altas <- if_else(is.na(activos$ALTAS), 0, as.double(activos$ALTAS))  
   activos$FALLECIDOS <- if_else(is.na(activos$FALLECIDOS), 0, as.double(activos$FALLECIDOS))  
-  
   activos$activos <- activos$cantidad - activos$altas - activos$FALLECIDOS
-  
-  
   
   colors <- c("#ffffcc", "#ffeda0", "#fed976", "#feb24c", "#fd8d3c", "#fc4e2a", "#e31a1c", "#bd0026", "#800026")
 
@@ -265,24 +256,10 @@ A continuación se muestra el mapa departamental de los fallecidos COVID-19 en l
 ###  {.tabset  .tabset-fade .tabset-pills}
 #### Mapa
 ```{r mapaERFall, echo=FALSE, message=FALSE, warning=FALSE, paged.print=FALSE}
-  
-  # activos <- covid19ER_Conf %>% 
-  # group_by(residencia_provincia_nombre, residencia_departamento_nombre) %>% mutate(conf=n()) %>% 
-  # covider$provincia <- "Entre Ríos"
-
   fallecidos <- covider %>% 
-  # select(residencia_provincia_nombre, residencia_departamento_nombre, conf) %>% unique() %>% 
-    left_join(covid_er_altas, by=c("DEPARTAMENTO"="DEPARTAMENTO"))
+     left_join(covid_er_altas, by=c("DEPARTAMENTO"="DEPARTAMENTO"))
 
-  # covider
-  
-  # fallecidos$altas <- if_else(is.na(activos$ALTAS), 0, as.double(activos$ALTAS))  
   fallecidos$FALLECIDOS <- if_else(is.na(fallecidos$FALLECIDOS), 0, as.double(fallecidos$FALLECIDOS))  
-  
-  # activos$activos <- activos$cantidad-activos$altas - activos$FALLECIDOS
-  
-  
-  
   colors <- c("#ffffcc", "#ffeda0", "#fed976", "#feb24c", "#fd8d3c", "#fc4e2a", "#e31a1c", "#bd0026", "#800026")
 
   highchart() %>%
@@ -509,9 +486,38 @@ A continuación se grafica el cambio en la movilidad de cada departamento tomand
     facet_wrap(~ polygon_name, scales = "free_y", ncol = 3) +
     theme_elegante_std(base_family = "Assistant") 
 
-  # p$ hoverinfo<- "name+x" #hover options for 'average'
-  # p$data[[2]]$hoverinfo <- "name+x" #hover options for 'median'
   ggplotly(p, name="Movilidad",  height = 800)
 
 ```
 
+
+
+## Datos
+En la siguiente tabla se muestran los datos de Cantidad de Casos detectados, Altas, Fallecidos y Sospechosos calculado con la base de datos abiertos del Min. de Salud de la Nación. 
+
+Los datos pueden ser descargados en diversos formatos
+```{r datosER, echo=FALSE, message=FALSE, warning=FALSE, paged.print=FALSE, out.width='100%'}
+ 
+sospechosos <- covid19ER_Sosp %>% group_by(residencia_departamento_nombre) %>% mutate(sospechosos=sum(sospechosos)) %>% 
+  select(departamento=residencia_departamento_nombre, sospechosos) %>% unique()
+
+fallecidos <- covid19ER %>% filter(clasificacion_resumen=="Confirmado" & fallecido=="SI") %>%
+  group_by(residencia_departamento_nombre) %>% mutate(fallecidos=n()) %>% 
+  select(departamento = residencia_departamento_nombre, fallecidos)
+  
+
+ tabla <- covider %>% 
+  left_join(covid19ER_Rec, by=c("DEPARTAMENTO"="residencia_departamento_nombre")) %>% 
+  select(departamento=DEPARTAMENTO, casos=cantidad, altas) %>% 
+   left_join(sospechosos, by=c("departamento"="departamento")) %>% 
+   left_join(fallecidos, by=c("departamento"="departamento")) %>% 
+   select(departamento, casos, altas, fallecidos, sospechosos) %>% unique() %>% arrange(departamento)
+
+tabla %>% datatable(extensions = 'Buttons', rownames = FALSE,
+                  colnames = c("Departamento", "Casos Detectados", "Recuperados", "Fallecidos", "Sospechosos"),
+            options = list(dom = 'Blfrtip',
+                           buttons = c('copy', 'csv', 'excel', 'pdf', 'print'),
+                           lengthMenu = list(c(10,25,50,-1),
+                                             c(10,25,50,"All"))))
+```
+```

@@ -35,6 +35,7 @@ knitr::opts_chunk$set(echo = TRUE)
   library("tidyverse")
   library("ggTimeSeries")
   library(DT)
+  library(RcppRoll)
 
   theme_elegante_std <- function(base_family) {}
 
@@ -104,8 +105,40 @@ knitr::opts_chunk$set(echo = TRUE)
   
 ```
 
+## Evolución provincial
+A continuación se muestra la cantidad de casos diarios totales informados por en Ministerio de Salud de la provincia de Entre Ríos.
+
+```{r diaC, echo=FALSE, fig.align='center', message=FALSE, warning=FALSE, paged.print=FALSE, out.width='100%'}
+  diario <-  covid_er %>% group_by(FECHA) %>%  
+    mutate(casosD = sum(CASOS)) %>% select(FECHA, casosD) %>% unique()
+  diario$FECHA <- as.Date(diario$FECHA, "%d/%m/%Y")
+  
+  diario <- diario %>% ungroup() %>% arrange(FECHA) %>%  
+    mutate(casosP=roll_mean(casosD, n=7, align="right", fill = NA)) %>%
+    select(FECHA, casosD, casosP) %>% unique()
+
+
+  fig <- plot_ly(diario, x = ~FECHA, y = ~casosD, type = 'bar', name = 'Casos Diarios',
+        marker = list(color = 'rgba(222,45,38,0.8)'), width = 800)
+  fig <- fig %>% add_trace(y = ~casosP, name = 'Casos Promedios', marker = list(color = 'rgb(55, 83, 109)'))
+  fig <- fig %>% layout(title = 'Casos diarios y casos promediados (7 días)',
+           xaxis = list(
+             title = "",
+             tickfont = list(size = 14, color = 'rgb(107, 107, 107)')),
+           yaxis = list(
+             title = 'Cantidad',
+             titlefont = list(size = 16, color = 'rgb(107, 107, 107)'),
+             tickfont = list( size = 14, color = 'rgb(107, 107, 107)')),
+         legend = list(x = 0, y = 1, bgcolor = 'rgba(255, 255, 255, 0)', 
+                       bordercolor = 'rgba(255, 255, 255, 0)'),
+         barmode = 'group', bargap = 0.15, bargroupgap = 0.1)
+
+    fig
+    
+```
+
 <!-- # Entre Ríos -->
-## Evolución diaria
+## Evolución departamental
 La evolución de casos por departamento desde el inicio de la pandemia se muestra a continuación
 
 ```{r evolER, echo=FALSE, fig.align='center', message=FALSE, warning=FALSE, paged.print=FALSE, out.width='100%' }
@@ -127,7 +160,7 @@ La evolución de casos por departamento desde el inicio de la pandemia se muestr
      filter(cant>0&tipo=="acumulados") %>%
      group_by(departamento) %>% arrange(fecha) %>% mutate(dia1 = row_number())
    
-   fig <- plot_ly(p, x = ~fecha, y = ~cant, color = ~departamento, type = "scatter", mode='lines+markers')
+   fig <- plot_ly(p, x = ~fecha, y = ~cant, color = ~departamento, width = 800, type = "scatter", mode='lines+markers')
    fig <- layout(fig, title="Evolución de casos confirmados por Departamento",
                  xaxis = list(title = "día"), yaxis = list(title = "casos"))
    fig
@@ -136,12 +169,74 @@ La evolución de casos por departamento desde el inicio de la pandemia se muestr
 ```
 
 
-## Casos por Departamento
+## Casos del día
+
+###  {.tabset  .tabset-fade .tabset-pills}
+#### Distribución departamental
+A continuación se muestran los casos confirmados por la provincia el día `r max(covid_er$FECHA)` en base a la distribución departamental
+
+```{r casosDia, echo=FALSE, message=FALSE, warning=FALSE}
+
+  covid_er_hoy <- covid_er %>% filter(FECHA==max(FECHA)) %>% group_by(DEPARTAMENTO) %>% 
+  mutate(CASOS=sum(CASOS)) %>% 
+  select(DEPARTAMENTO,FECHA, CASOS) %>% unique()
+  
+  covid_er_hoy$parents <- "Confirmados"
+  plot_ly(data = covid_er_hoy,
+          type= "treemap",
+          values = ~CASOS,
+          labels= ~DEPARTAMENTO,
+          parents=  ~parents,
+          domain = list(column=0),
+          name = "Confirmados",
+          textinfo="label+value+percent parent") %>%
+    layout(title = paste("Covid19 ER - Distribución de casos Confirmados el día ", max(covid_er_hoy$FECHA)))
+
+
+```
+
+
+#### Por Ciudad
+La cantidad de casos confirmados el día  `r max(covid_er$FECHA)` por localidad de residencia informados por la provincia se muestran en el mapa a continuación.
+
+```{r locERHoy, echo=FALSE, message=FALSE, warning=FALSE, paged.print=FALSE}
+  
+  localidades_er_hoy <- covid_er %>% filter(FECHA==max(FECHA)) %>%
+  left_join(localidades, by=c("DEPARTAMENTO"="DEPARTAMENTO", "LOCALIDAD"="LOCALIDAD")) %>% 
+    group_by(Lat2, Long2) %>% mutate(cant=sum(CASOS), Lat=as.double(Lat), Long=as.double(Long)) %>% 
+    select(LOCALIDAD, Lat, Long, cant) %>% unique()
+
+  localidades_er_hoy <- as.data.frame(lapply(localidades_er_hoy, rep, localidades_er_hoy$cant))
+ 
+  leaflet(height = 900, width = 900) %>% addTiles() %>% 
+      addProviderTiles(providers$OpenStreetMap) %>% 
+      addPolygons(data=deptos_er, fill=FALSE, weight = 1, color = "#000")  %>% 
+      addFullscreenControl()  %>%
+    addMarkers(data=localidades_er_hoy, 
+                # lng =as.double(localidades_er$Long2), lat = as.double(localidades_er$Lat2),
+               # lng =as.double(localidades_er$Long), lat =  as.double(localidades_er$Lat),
+                lng = localidades_er_hoy$Long, lat = localidades_er_hoy$Lat,
+               clusterOptions = markerClusterOptions(singleMarkerMode= T), clusterId = "pointsCluster") %>%
+    addEasyButton( easyButton(states =  list(easyButtonState( 
+      stateName="unfrozen-markers", icon="ion-toggle",
+      title="Freeze Clusters",
+      onClick = JS("function(btn, map) {var  clusterManager = map.layerManager.getLayer('cluster', 'pointsCluster');
+                   clusterManager.freezeAtZoom(); btn.state('frozen-markers');}")),
+      easyButtonState( stateName="frozen-markers", icon="ion-toggle-filled",
+        title="UnFreeze Clusters", onClick = JS("function(btn, map) {
+        var clusterManager = map.layerManager.getLayer('cluster', 'pointsCluster');
+        clusterManager.unfreeze(); btn.state('unfrozen-markers');}"))
+      )))
+  
+```
+
+
+
+
+## Mapa por Departamento
 A continuación se muestran la cantidad de casos de COVID-19 confirmados por el Ministerio de Salud de Entre Ríos, discriminados por departamento y localidad
 
 
-###  {.tabset  .tabset-fade .tabset-pills}
-#### Departamental
 ```{r mapaER, echo=FALSE, message=FALSE, warning=FALSE, paged.print=FALSE}
 
   covider <- covid_er %>% group_by(DEPARTAMENTO) %>%
@@ -167,7 +262,9 @@ A continuación se muestran la cantidad de casos de COVID-19 confirmados por el 
 
 
 
-#### Por Ciudad
+## Por Ciudad
+Cantidad de casos totales acumulados por ciudad de residencia informada por la provincia de Entre Ríos
+
 ```{r locER, echo=FALSE, message=FALSE, warning=FALSE, paged.print=FALSE}
   
   localidades_er <- covid_er %>% left_join(localidades, by=c("DEPARTAMENTO"="DEPARTAMENTO", "LOCALIDAD"="LOCALIDAD")) %>% 
@@ -343,10 +440,12 @@ Representa el porcentaje por grupo etario y sexo de todos los pacientes con COVI
    edadER$sexo <- if_else(edadER$sexo=="M",  "Hombre", "Mujer")
    edadER <- edadER %>%  ungroup() %>% mutate(prop = round(cant/sum(cant)*100,2))
    edadER$prop <- if_else(edadER$sexo=="Hombre",  edadER$prop*-1, edadER$prop)
- 
+  
    plot_ly(edadER, x = ~prop, y = ~grEdad, color = ~sexo) %>%
      add_bars(orientation = "h",
-           hoverinfo = "y+text+name", text =  ~paste(abs(prop), " %", '\n Cant.: (', cant,')'),  
+           hoverinfo = "y+text+name", 
+           text =  ~paste(abs(round(prop,1)), "%", '\n(',cant,')'),  
+           textposition = 'outside',
            colors = c("#2c7fb8", "#fa9fb5")) %>%
      layout(bargap = 0.1, barmode = "overlay", 
             title = "Piramide Poblaciónal de Casos Confirmados en Entre Ríos", 
@@ -416,7 +515,7 @@ Entre estos casos hay algunos a los que ta se ha tomado la muestra y aún espera
 
 A continuación se graficará la cantidad de casos sospechosos por departamento y su clasificación
 
-<!-- ### {.tabset  .tabset-fade .tabset-pills} -->
+
 #### Casos Sospechosos
 ```{r sospechosos, echo=FALSE, message=FALSE, warning=FALSE, paged.print=FALSE}
 

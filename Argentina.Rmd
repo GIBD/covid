@@ -50,7 +50,8 @@ output:
   # capUti <- 1542
  # capUti <- 1721
   # capUti <-2885
-  capUti <-3282
+  # capUti <-3282
+  capUti <-3541
   
   ## Mapas y Poblaciones
       argentina <- fromJSON(file = "data/mapas/ar-all.geo.json")
@@ -350,10 +351,12 @@ La composición de la siguiente pirámide poblacional de los casos confirmados f
    
    plot_ly(edades, x = ~porcent, y = ~grupo, color = ~sexo) %>%
      add_bars(orientation = "h",
-           hoverinfo = "y+text+name", text =  ~paste(abs(porcent), " %", '\n Cant.: (', cantidad,')'),  
+           hoverinfo = "y+text+name", 
+           text =  ~paste(abs(round(porcent,1)), "%", '\n(',cantidad,')'),  
+           textposition = 'outside',
            colors = c("#2c7fb8", "#fa9fb5")) %>%
      layout(bargap = 0.1, barmode = "overlay", 
-            title = "Piramide Poblaciónal de Casos Confirmados", 
+            title = "Pirámide Poblacional de Casos Confirmados", 
             xaxis = list(tickmode = "array", 
                        tickvals = c(-100, -50, -25, -20, -15, -10, -5, 0, 
                                       5, 10, 15, 20, 25, 50, 100),
@@ -377,7 +380,10 @@ La composición de la siguiente pirámide poblacional de los casos confirmados f
      
      plot_ly(edades_m, x = ~prop, y = ~grupo, color = ~genero) %>%
        add_bars(orientation = "h",
-          hoverinfo = "y+text+name", text = ~paste(abs(prop), " %", '\n Cant.: (', total,')'), 
+          hoverinfo = "y+text+name", 
+          # text = ~paste(abs(prop), " %", '\n Cant.: (', total,')'), 
+          text =  ~paste(abs(round(prop,1)), "%", '\n(',total,')'),  
+          textposition = 'outside',
           colors = c("#2c7fb8", "#fa9fb5")) %>%
        layout(bargap = 0.1, barmode = "overlay", 
            title = "Piramide Poblaciónal de Personas Fallecidas", 
@@ -398,9 +404,13 @@ La composición de la siguiente pirámide poblacional de los casos confirmados f
     filter(!is.na(grupo)) %>% 
   mutate(let = round(total/cantidad*100, 1)) %>% select(sexo, grupo, let) %>% unique()
 
-   plot_ly(let_edad, x=~let, y=~grupo, color=~sexo) %>% 
+   plot_ly(let_edad, x=~let, y=~grupo, color=~sexo, width = 800 ) %>% 
        add_bars(orientation = "h",
-        hoverinfo = "y+text", text = ~paste('Género: ', sexo, '\n Letalidad: ', let, ' %'), 
+        hoverinfo = "y+text", 
+        
+        # text = ~paste('Género: ', sexo, '\n Letalidad: ', let, ' %'), 
+        text = ~paste(let, '%'), 
+        textposition = 'outside',
         colors = c("#2c7fb8", "#fa9fb5")) %>% 
        layout( title = "Tasas de Letalidad por Grupo",
                xaxis = list(title = "Letalidad"), yaxis = list(title = "Grupo Edad"))

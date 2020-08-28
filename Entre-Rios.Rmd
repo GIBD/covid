@@ -29,7 +29,7 @@ knitr::opts_chunk$set(echo = TRUE)
   library(leaflet)
   library(leaflet.extras)
   library(sf)
-  library(tmap)
+  # library(tmap)
   library(googlesheets4)
   library(readxl)
   library("tidyverse")
@@ -54,6 +54,10 @@ knitr::opts_chunk$set(echo = TRUE)
   names(poblac_er) <- c("departamento", "poblacion")
      
   ### Base Nación
+<<<<<<< HEAD
+  # covid19ER <- read_excel("data/covid19casos.xlsx")
+=======
+>>>>>>> 81cc0077d6f334465ac3683a3a9c4400f560a03b
   covid19ER <- read_csv("data/Covid19Casos.csv")
   names(covid19ER) <- c("id_evento_caso", "sexo", "edad", "edad_anos_meses", "residencia_pais_nombre",
                         "residencia_provincia_nombre", 	"residencia_departamento_nombre",
@@ -86,6 +90,10 @@ knitr::opts_chunk$set(echo = TRUE)
   covid19ER_Desc <- covid19ER %>% filter(clasificacion_resumen=="Descartado") %>%
      group_by(residencia_provincia_nombre, residencia_departamento_nombre) %>%
      mutate(descartados=n())
+<<<<<<< HEAD
+
+=======
+>>>>>>> 81cc0077d6f334465ac3683a3a9c4400f560a03b
   
   ### Movilidad
   poligonosMovil <- read_csv("data/poligonosMovil.csv",  locale = locale(encoding = "ISO-8859-1"))
@@ -256,7 +264,8 @@ A continuación se muestran la cantidad de casos de COVID-19 confirmados por el 
     hc_mapNavigation(enabled = TRUE) %>%
     hc_add_theme(hc_theme_ffx()) %>% 
     hc_add_annotation(xValue = 0, yValue = 0, title = list(text = 'Fuente: Ministerio Salud ER')) %>% 
-    hc_chart(borderColor = "#08338F", borderRadius = 10, borderWidth = 2)
+    # hc_chart(borderColor = "#08338F", borderRadius = 10, borderWidth = 2)
+    hc_chart(borderColor = "#FFFFFF", borderRadius = 10, borderWidth = 2)
   
 ```
 

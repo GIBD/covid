@@ -171,7 +171,7 @@ A continuación se muestran la cantidad de casos de COVID-19 confirmados por el 
 ```{r locER, echo=FALSE, message=FALSE, warning=FALSE, paged.print=FALSE}
   
   localidades_er <- covid_er %>% left_join(localidades, by=c("DEPARTAMENTO"="DEPARTAMENTO", "LOCALIDAD"="LOCALIDAD")) %>% 
-    group_by(Lat, Long) %>% mutate(cant=sum(CASOS)) %>% 
+    group_by(Lat2, Long2) %>% mutate(cant=sum(CASOS), Lat=as.double(Lat), Long=as.double(Long)) %>% 
     select(LOCALIDAD, Lat, Long, cant) %>% unique()
 
   localidades_er <- as.data.frame(lapply(localidades_er, rep, localidades_er$cant))
@@ -181,7 +181,9 @@ A continuación se muestran la cantidad de casos de COVID-19 confirmados por el 
       addPolygons(data=deptos_er, fill=FALSE, weight = 1, color = "#000")  %>% 
       addFullscreenControl()  %>%
     addMarkers(data=localidades_er, 
-               lng =as.double(localidades_er$Long), lat = as.double(localidades_er$Lat),
+                # lng =as.double(localidades_er$Long2), lat = as.double(localidades_er$Lat2),
+               # lng =as.double(localidades_er$Long), lat =  as.double(localidades_er$Lat),
+                lng = localidades_er$Long, lat = localidades_er$Lat,
                clusterOptions = markerClusterOptions(singleMarkerMode= T), clusterId = "pointsCluster") %>%
     addEasyButton( easyButton(states =  list(easyButtonState( 
       stateName="unfrozen-markers", icon="ion-toggle",
@@ -193,6 +195,7 @@ A continuación se muestran la cantidad de casos de COVID-19 confirmados por el 
         var clusterManager = map.layerManager.getLayer('cluster', 'pointsCluster');
         clusterManager.unfreeze(); btn.state('unfrozen-markers');}"))
       )))
+  
 ```
 
 

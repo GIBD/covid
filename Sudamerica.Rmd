@@ -47,12 +47,10 @@ sep.miles <- function(x){format(x,big.mark=".")}
   ## Datos mundiales
     { # Confirmados
       covid19 <- read_csv("https://github.com/CSSEGISandData/COVID-19/raw/master/csse_covid_19_data/csse_covid_19_time_series/time_series_covid19_confirmed_global.csv")
-
       covid19 <- covid19[-1]
       
       # Fallecidos
       covid19_m <- read_csv("https://raw.githubusercontent.com/CSSEGISandData/COVID-19/master/csse_covid_19_data/csse_covid_19_time_series/time_series_covid19_deaths_global.csv")
-      # covid19_m <- read_csv("https://github.com/CSSEGISandData/COVID-19/blob/master/csse_covid_19_data/csse_covid_19_time_series/time_series_covid19_deaths_global.csv")
       covid19_m <- covid19_m[-1]
       
      # Recuperados
@@ -165,11 +163,7 @@ sep.miles <- function(x){format(x,big.mark=".")}
     sudamerica$muertes <- if_else(is.na(sudamerica$muertes), 0, sudamerica$muertes)
     sudamerica$recuperados <- if_else(is.na(sudamerica$recuperados), 0, sudamerica$recuperados)
     
-     # porc_rec_sud <- sum(sudamerica$recuperados)/sum(sudamerica$casos)*100
-     #  letal_sud <- sum(sudamerica$muertes)/sum(sudamerica$casos)*100
-      
-    
-  }
+}
     
  
 ```
@@ -296,21 +290,6 @@ Al día de la fecha las incidencias acumuladas por cada 100.000 habitantes de lo
     select(pais, dia, poblacion, casos, inc) %>% 
     arrange(desc(inc))
 
-  # highchart() %>%
-  #   hc_title(text = "<i>Incidencia COVID-19 en Sudamérica</i>",
-  #            margin = 20, align = "center", style = list(color = "#08338F", useHTML = TRUE)) %>%
-  #   hc_tooltip(followPointer =  FALSE) %>%
-  #   hc_add_series_map(sud, ia, name = "IA", value = "inc", joinBy = c("name", "pais"),
-  #                     dataLabels = list(enabled = TRUE, format = '{point.properties.woe-name}')) %>%
-  #   
-  #   hc_colorAxis(minColor = "#B7D4EB", maxColor = "#08338F")  %>%
-  #   hc_legend(align = "center", x = 0, y = -10) %>%
-  #   hc_mapNavigation(enabled = TRUE) %>%
-  #   hc_add_theme(hc_theme_ffx()) %>%
-  #   hc_add_annotation(xValue = 0, yValue = 0, 
-  #                     title = list(text = 'Fuente: OMS. <p> Elaborado por: GIBD UTN')) %>%
-  #   hc_chart(borderColor = "#08338F", borderRadius = 10, borderWidth = 2)
-  # 
   highchart() %>%
     hc_title(text = "<i>Incidencia Acumulada COVID-19 en Sudamérica</i> ",
              margin = 20, align = "center", style = list(color = "#780000", useHTML = TRUE)) %>%

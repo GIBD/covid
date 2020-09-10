@@ -51,8 +51,8 @@ output:
  # capUti <- 1721
   # capUti <-2885
   # capUti <-3282
-  capUti <-3541
-  
+ # capUti <-3541
+  capUti <-3981
   ## Mapas y Poblaciones
       argentina <- fromJSON(file = "data/mapas/ar-all.geo.json")
       poblacionArg <- read_delim("data/poblaciones/prov_argentina.csv", ";", escape_double = FALSE,  
@@ -77,6 +77,7 @@ output:
      # 
      # base_hoy$ultima_actualizacion
      casos_pronvinciales <- read_csv("data/Covid19Casos.csv")
+    
      casos_pronvinciales2 <- casos_pronvinciales
      
      edades <-  casos_pronvinciales %>% 
@@ -349,20 +350,16 @@ La composición de la siguiente pirámide poblacional de los casos confirmados f
    edades <- edades %>%  ungroup() %>% mutate(prop = round(cantidad/sum(cantidad)*100, 2))
    edades$porcent <- if_else(edades$sexo=="Hombre",  edades$prop*-1, edades$prop)   
    
-   plot_ly(edades, x = ~porcent, y = ~grupo, color = ~sexo) %>%
-     add_bars(orientation = "h",
-           hoverinfo = "y+text+name", 
+   plot_ly(edades, x = ~porcent, y = ~grupo, color = ~sexo, width = 900) %>%
+     add_bars(orientation = "h", hoverinfo = "y+text+name", 
            text =  ~paste(abs(round(porcent,1)), "%", '\n(',cantidad,')'),  
-           textposition = 'outside',
-           colors = c("#2c7fb8", "#fa9fb5")) %>%
+           textposition = 'outside', colors = c("#2c7fb8", "#fa9fb5")) %>%
      layout(bargap = 0.1, barmode = "overlay", 
             title = "Pirámide Poblacional de Casos Confirmados", 
             xaxis = list(tickmode = "array", 
-                       tickvals = c(-100, -50, -25, -20, -15, -10, -5, 0, 
-                                      5, 10, 15, 20, 25, 50, 100),
-                         ticktext = c("100", "50%", "25%", "20%", "15%", "10%","5%", "0",
-                                      "5%", "10%", "15%","20%", "25%", "50%", "100%"),
-                         title = "Casos Confirmados"), 
+                       tickvals = c(-100, -50, -25, -20, -15, -10, -5, 0, 5, 10, 15, 20, 25, 50, 100),
+                       ticktext = c("100", "50%", "25%", "20%", "15%", "10%","5%", "0", "5%", "10%", "15%","20%", "25%", "50%", "100%"),
+                       title = "Casos Confirmados"), 
             yaxis = list(title = "Grupo Edad"))
 
 ```
@@ -378,7 +375,7 @@ La composición de la siguiente pirámide poblacional de los casos confirmados f
      
      edades_m$prop <- if_else(edades_m$genero=="Hombre", edades_m$prop*-1, edades_m$prop)
      
-     plot_ly(edades_m, x = ~prop, y = ~grupo, color = ~genero) %>%
+     plot_ly(edades_m, x = ~prop, y = ~grupo, color = ~genero, width = 900) %>%
        add_bars(orientation = "h",
           hoverinfo = "y+text+name", 
           # text = ~paste(abs(prop), " %", '\n Cant.: (', total,')'), 
@@ -404,11 +401,9 @@ La composición de la siguiente pirámide poblacional de los casos confirmados f
     filter(!is.na(grupo)) %>% 
   mutate(let = round(total/cantidad*100, 1)) %>% select(sexo, grupo, let) %>% unique()
 
-   plot_ly(let_edad, x=~let, y=~grupo, color=~sexo, width = 800 ) %>% 
+   plot_ly(let_edad, x=~let, y=~grupo, color=~sexo, width = 900) %>% 
        add_bars(orientation = "h",
         hoverinfo = "y+text", 
-        
-        # text = ~paste('Género: ', sexo, '\n Letalidad: ', let, ' %'), 
         text = ~paste(let, '%'), 
         textposition = 'outside',
         colors = c("#2c7fb8", "#fa9fb5")) %>% 
@@ -443,7 +438,7 @@ Debido a que no todas las provincias lo informan diariamente pueden existir algu
   
   colors <- c("#ffffcc", "#ffeda0", "#fed976", "#feb24c", "#fd8d3c", "#fc4e2a", "#e31a1c", "#bd0026", "#800026")
 
-  highchart() %>%
+  highchart(width = 900) %>%
      hc_title(text = "<i>Casos Activos COVID-19 por Provincia en Argentina</i> - <b>GIBD</b>",
               margin = 5, align = "center", 
               style = list(color = "#bd0026", useHTML = TRUE, fontWeight = "bold")) %>% 
@@ -470,7 +465,7 @@ Debido a que no todas las provincias lo informan diariamente pueden existir algu
     group_by(PROVINCIA) %>% 
     mutate(total=sum(CASOS)) %>% select(PROVINCIA, total) %>% unique()
 
-  highchart() %>%
+  highchart(width = 900) %>%
           hc_title(text = "<i>Mapa dinámico de COVID-19 en Argentina</i> - <b>GIBD</b>",
              margin = 5, align = "center",
              style = list(color = "#08338F", useHTML = TRUE)) %>% 
@@ -497,7 +492,7 @@ Debido a que no todas las provincias lo informan diariamente pueden existir algu
   select(Provincia=PROVINCIA, total) %>% unique()
 
 
-  highchart() %>%
+  highchart(width = 900) %>%
           hc_title(text = "<i>Mapa dinámico de COVID-19 en Argentina</i> - <b>Fallecidos</b>",
              margin = 5, align = "center",
              style = list(color = "#780000", useHTML = TRUE)) %>% 
@@ -868,81 +863,13 @@ En base a las provincias de residencia de los fallecidos, informadas por el Mini
   tabla <- tabiaprov %>% left_join(let_prov, by=c("provincia"="Provincia")) %>% 
   select(provincia, casos=cant.x, ia, fallecidos=cantidad, letalidad)
 
-  # tabiaprov <- ia_prov %>% select(provincia, cant, ia) %>% arrange(desc(ia))
-
   tabla %>%  datatable(extensions = 'Buttons', rownames = FALSE,
                           colnames = c("Provincia", "Casos Detectados", "Incidencia cada 100.000 Hab.",
                                        "Fallecidos", "% Letalidad"),
               options = list(dom = 'Blfrtip', buttons = c('csv', 'excel', 'pdf'),
                            lengthMenu = list(c(10,25,50,-1), c(10,25,50,"All"))))
   
-  
- # let_prov %>% arrange(desc(letalidad)) %>% kable( col.names =  c("Provincia", "Fallecidos", "Casos Acumulados", "Tasa Letalidad"),format.args = list( big.mark=".", decimal.mark = ","),
- #            align =  c('l', 'c', 'c', 'c') ) %>%  kable_styling()
 ```
-
-
-
-<!-- ## Relación entre Letalidad y Recuperados -->
-<!-- En el siguiente gráfico se ilustra la relación entre la tasa de letalidad y el porcentaje de recuperados de cada provincia. El tamaño de las burbujas está dado por la cantidad de casos activos actualmente. -->
-
-<!--  ```{r letRec,  echo=FALSE, fig.align='center', message=FALSE, warning=FALSE, out.width='100%' } -->
-
-<!--     fallecidos <- muertosArg %>% group_by(Provincia) %>%  -->
-<!--       mutate(cantidad = n()) %>% -->
-<!--       select(Provincia, cantidad) %>% unique() -->
-
-<!--     casos <- tabla_prov %>% -->
-<!--       filter(tipo == "acumulados") %>% -->
-<!--       group_by(provincia) %>% -->
-<!--       filter(fecha == max(fecha)) %>% -->
-<!--       select(provincia, cant) -->
-
-<!--     recuperados <- casos_pronvinciales %>%  -->
-<!--       filter(departamento=="TOTAL GENERAL") %>%   -->
-<!--       select(provincia, recuperados) -->
-<!--     recuperados$provincia <- gsub("Tierra del Fuego, Antártida e Islas del Atlántico Sur",  -->
-<!--                                 "Tierra del Fuego", recuperados$provincia) -->
-<!--     recuperados$provincia <- gsub("Ciudad Autónoma de Buenos Aires",  -->
-<!--                                   "Ciudad de Buenos Aires", recuperados$provincia) -->
-
-<!--     totalesProv <- casos %>% left_join(fallecidos, by=c("provincia"="Provincia"))  -->
-<!--     totalesProv <-totalesProv %>% left_join(recuperados, by=c("provincia"="provincia")) -->
-<!--     names(totalesProv) <- c("provincia", "cantidad", "fallecidos", "recuperados") -->
-
-<!--     totalesProv$fallecidos <- if_else(is.na(totalesProv$fallecidos), 0, as.double(totalesProv$fallecidos)) -->
-<!--     totalesProv$recuperados <- if_else(is.na(totalesProv$recuperados), 0, as.double(totalesProv$recuperados)) -->
-<!--     totalesProv$porcRec <- round(totalesProv$recuperados/totalesProv$cantidad *100, 1) -->
-<!--     totalesProv$porcFall <- round(totalesProv$fallecidos/totalesProv$cantidad *100, 1) -->
-<!--     totalesProv$activos <- totalesProv$cantidad - totalesProv$recuperados - totalesProv$fallecidos -->
-<!--     totalesProv$porcAct <- round(totalesProv$activos/totalesProv$cantidad *100, 1) -->
-<!--     totalesProv$provincia <- gsub("Ciudad Autónoma de Buenos Aires", "CABA", totalesProv$provincia) -->
-
-<!--     totalesProv$provincia <- gsub("Tierra del Fuego, Antártida e Islas del Atlántico Sur",  -->
-<!--                                 "Tierra del Fuego", totalesProv$provincia) -->
-<!--     totalesProv <- totalesProv %>% filter(!is.na(porcAct)) -->
-
-<!--     fig <- plot_ly(totalesProv, x = ~porcFall, y = ~porcRec, hoverinfo='text', -->
-<!--                    texttemplate = '%{y:.2s}', textposition = 'inside', -->
-<!--                    text = ~paste('</br> Provincia: ', provincia , -->
-<!--                                  '</br> Letalidad: ', porcFall, '%', -->
-<!--                                  '</br> Recuperados: ', porcRec,'%', -->
-<!--                                  '</br> Activos: ',activos), -->
-<!--                    color = ~provincia, -->
-<!--                    type = 'scatter', mode = 'markers', -->
-<!--                    marker = list(size= ~porcAct, opacity = 0.7, symbol = 'circle', sizemode = 'diameter', -->
-<!--                                  line = list(width = 1, color = '#FFFFFF'))) -->
-
-<!--     fig <- fig %>% layout(title = 'Relación entre Recuperados y Fallecidos por Provincia', -->
-<!--                           xaxis = list(title="% de Fallecidos", showgrid = FALSE ), -->
-<!--                           yaxis = list(title="% de Recuperados", showgrid = FALSE), -->
-<!--                           paper_bgcolor = 'rgb(243, 243, 243)', -->
-<!--                           plot_bgcolor = 'rgb(243, 243, 243)') -->
-<!--     fig -->
-
-
-<!-- ``` -->
-
 
 
 
@@ -986,7 +913,6 @@ La evolución y distribución de los casos según el tipo en Argentina es:
            barmode = "stack",
            legend = list(orientation = 'h', font = list(size = 10)))
   
-  
 ```
 
 
@@ -1022,18 +948,14 @@ A continuación se visualiará la evolución en la proporción de los casos dete
 ##### Tasa de Positividad
 A continuación se visualiará la evolución en la proporción de los casos detectados sobre la cantidad de pruebas analizadas. 
 ```{r test, echo=FALSE, fig.align='center', message=FALSE, warning=FALSE, out.width='100%'}
-
   test <- argCov %>% select(dia, DescTest, Detectados, Recuperados, MuestraD) %>%
          mutate(total = DescTest + Detectados)
-      # mutate(total = DescTest + Detectados+ Recuperados)
   test <- test %>% filter(DescTest >= 0) %>%  mutate(prop= round(Detectados/total * 100, 2)) %>% arrange(dia)
- 
   test$dia <-as.Date(test$dia, "%d/%m/%Y")
   
   plot_ly(test, x = ~dia, y = ~prop, type = "bar", name = "Tasa de Positividad",
            texttemplate = '%{y:.3s}', textposition = 'outside') %>% 
     layout(title="Tasa de Positividad", xaxis=list(title=""), yaxis = list(title = "Tasa de Positividad (%)"))
-  
 
 ```
 
@@ -1043,7 +965,6 @@ A continuación se visualiará la evolución en la proporción de los casos dete
             add_trace(y = ~Detectados, name = "Test Positivos") %>% 
         layout(title="Cantidad de Test Realizados", yaxis = list(title = "Acumulado de Pruebas Realizadas"), barmode = "stack")
   p4
-
   
 ```
 
@@ -1063,8 +984,6 @@ A continuación se visualiará la evolución en la proporción de los casos dete
                     xaxis = list(title = "día"), yaxis = list(title = "% Posit."))
       fig
 
-  
-
 ```
 
 
@@ -1072,8 +991,7 @@ A continuación se visualiará la evolución en la proporción de los casos dete
 Considerando la fecha de inicio de síntomas, o en caso de no existir la menor entre las fechas de apertura o diagnóstico se obtienen las siguientes curvas para cada provincia.
 * Para seleccionar una sola o mas hacer doble clik sobre el nombre de la/s misma/s en la leyenda
 ```{r iniSint, out.width='100%'}
-  confirmados <- casos_pronvinciales2 %>%
-    filter(clasificacion_resumen=="Confirmado")
+  confirmados <- casos_pronvinciales2 %>% filter(clasificacion_resumen=="Confirmado")
   
   confirmados$fis <- if_else(is.na(confirmados$fecha_inicio_sintomas),
                            min(confirmados$fecha_apertura, confirmados$fecha_diagnostico), 
@@ -1085,8 +1003,7 @@ Considerando la fecha de inicio de síntomas, o en caso de no existir la menor e
             mutate(casos = n()) %>% 
             select(carga_provincia_nombre, fis, casos) %>% unique()
   
-  fig <- plot_ly(tProv, x = ~fis, y = ~casos, 
-                      color = ~carga_provincia_nombre, type = "bar") #, mode='lines+markers') 
+  fig <- plot_ly(tProv, x = ~fis, y = ~casos, color = ~carga_provincia_nombre, type = "bar") 
   fig <- layout(fig, title="Evolución de Casos por Fecha de Inicio de Síntomas",
                 xaxis = list(title = "día"), yaxis = list(title = "casos"))
   fig

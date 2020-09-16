@@ -59,15 +59,16 @@ knitr::opts_chunk$set(echo = TRUE)
                         "residencia_provincia_id", 	"fecha_diagnostico", "residencia_departamento_id",	"ultima_actualizacion")
   covid19ER <- covid19ER %>% filter(residencia_provincia_nombre=="Entre Ríos" & carga_provincia_nombre=="Entre Ríos")
   
+  # table(covid19ER$Clasificacion)
   covid19ER_Conf <- covid19ER %>%
     filter(clasificacion_resumen=="Confirmado" & carga_provincia_nombre=="Entre Ríos")
   
   covid19ER_Rec <- covid19ER %>%  
     filter(carga_provincia_nombre=="Entre Ríos" &
              fallecido=="NO" & clasificacion_resumen=="Confirmado" & 
-             Clasificacion %in% c("Caso confirmado - No activo (por laboratorio y tiempo de evolución)",
-                                  "Caso confirmado - No Activo por criterio de laboratorio", 
-                                  "Caso confirmado - No activo (por tiempo de evolución)")) %>%
+             Clasificacion %in% c("Caso confirmado por criterio clínico-epidemiológico  - No activo (por tiempo de evolución)",
+                                  "Caso confirmado por laboratorio - No activo (por tiempo de evolución)", 
+                                  "Caso confirmado por laboratorio - No Activo por criterio de laboratorio")) %>%
     group_by(residencia_provincia_nombre, residencia_departamento_nombre) %>% mutate(altas=n()) %>%
     select(residencia_provincia_nombre, residencia_departamento_nombre, altas) %>% unique()
   
@@ -82,8 +83,10 @@ knitr::opts_chunk$set(echo = TRUE)
   
   covid19ER_Desc <- covid19ER %>% filter(clasificacion_resumen=="Descartado") %>%
      group_by(residencia_provincia_nombre, residencia_departamento_nombre) %>%
-     mutate(descartados=n())
-
+     mutate(descartados=n()) 
+  
+  descartados <-covid19ER_Desc %>% select(provincia=residencia_provincia_nombre, 
+                                          departamento=residencia_departamento_nombre, descartados) %>% unique()
   ### Movilidad
   poligonosMovil <- read_csv("data/poligonosMovil.csv",  locale = locale(encoding = "ISO-8859-1")) %>% 
     filter(NAME_1=="Entre Ríos")
@@ -659,10 +662,11 @@ fallecidos <- covid19ER %>% filter(clasificacion_resumen=="Confirmado" & falleci
   select(departamento=DEPARTAMENTO, casos=cantidad, altas) %>% 
    left_join(sospechosos, by=c("departamento"="departamento")) %>% 
    left_join(fallecidos, by=c("departamento"="departamento")) %>% 
-   select(departamento, casos, altas, fallecidos, sospechosos) %>% unique() %>% arrange(departamento)
+   left_join(descartados, by=c("departamento"="departamento")) %>% 
+   select(departamento, casos, altas, fallecidos, sospechosos, descartados) %>% unique() %>% arrange(departamento)
 
 tabla %>% datatable(extensions = 'Buttons', rownames = FALSE,
-                  colnames = c("Departamento", "Casos Detectados", "Recuperados", "Fallecidos", "Sospechosos"),
+                  colnames = c("Departamento", "Casos Detectados", "Recuperados", "Fallecidos", "Sospechosos", "Descartados"),
             options = list(dom = 'Blfrtip',
                            buttons = c('copy', 'csv', 'excel', 'pdf', 'print'),
                            lengthMenu = list(c(10,25,50,-1),

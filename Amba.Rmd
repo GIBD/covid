@@ -56,7 +56,6 @@ library(DT)
                          "\t", escape_double = FALSE, locale = locale(encoding = "ISO-8859-1"), 
                          trim_ws = TRUE) %>% filter(country=="ARG") 
   # datos_mov <- movement %>% left_join(poligonosMovil, by=c("polygon_id" = "GID_2"))
-  
   # write.csv2(datos_mov, "datos_mov.csv")
   
   cordones <- read_excel("data/argentina.xlsx", "POBLAC_AMBA")

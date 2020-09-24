@@ -44,6 +44,7 @@ knitr::opts_chunk$set(echo = TRUE)
  # covid19casos <- read_csv("data/Covid19Casos_10082020.csv")
   names(covid19casos) <- c("id_evento_caso", "sexo", "edad", 	"edad_anos_meses", 	"residencia_pais_nombre", 	"residencia_provincia_nombre", 	"residencia_departamento_nombre", 	"carga_provincia_nombre", 	"fecha_inicio_sintomas", 	"fecha_apertura", 	"sepi_apertura", 	"fecha_internacion", 	"cuidado_intensivo", 	"fecha_cui_intensivo", "fallecido", 	"fecha_fallecimiento",	"asistencia_respiratoria_mecanica",	"carga_provincia_id",	"origen_financiamiento",	"clasificacion", 	"clasificacion_resumen",	"residencia_provincia_id", 	"fecha_diagnostico", 	"residencia_departamento_id",	"ultima_actualizacion")
 
+
   color <- function(d){ c <- if_else(d==0, '#FFFFFF', 
                                      if_else(d < 25, '#fdd49e',
                                              if_else(d < 50, '#fc8d59',
@@ -82,19 +83,81 @@ Se muestra la distribución de casos a nivel departamental de las provincias.
   deptal$residencia_provincia_nombre <- if_else(deptal$residencia_provincia_nombre=="Tierra del Fuego",
                                                 "Tierra del Fuego, Antártida e Islas del Atlántico Sur",
                                                 as.character(deptal$residencia_provincia_nombre))
+  deptal$residencia_departamento_nombre <- if_else(deptal$residencia_provincia_nombre=="Salta" &  
+                                                     deptal$residencia_departamento_nombre=="Grl. José de San Martín",
+                                                   "General José de San Martín", deptal$residencia_departamento_nombre)
+  deptal$residencia_departamento_nombre <- if_else(deptal$residencia_provincia_nombre=="Chaco" &  
+                                                     deptal$residencia_departamento_nombre=="1º de Mayo",
+                                                   "1ro. de Mayo", deptal$residencia_departamento_nombre)
   
+  deptal$residencia_departamento_nombre <- if_else(deptal$residencia_provincia_nombre=="Formosa" &  
+                                                     deptal$residencia_departamento_nombre=="Laishi",
+                                                   "Laishí", deptal$residencia_departamento_nombre)
+  
+  deptal$residencia_departamento_nombre <- if_else(deptal$residencia_provincia_nombre=="Misiones" &  
+                                                     deptal$residencia_departamento_nombre=="Libertador Grl. San Martín",
+                                                   "Libertador General San Martín", deptal$residencia_departamento_nombre)
+  deptal$residencia_departamento_nombre <- if_else(deptal$residencia_provincia_nombre=="Misiones" &  
+                                                     deptal$residencia_departamento_nombre=="25 de Mayo",
+                                                   "25de Mayo", deptal$residencia_departamento_nombre)
+  deptal$residencia_departamento_nombre <- if_else(deptal$residencia_provincia_nombre=="Santiago del Estero" &  
+                                                     deptal$residencia_departamento_nombre=="Silípica",
+                                                   "Silipica", deptal$residencia_departamento_nombre)
+    
+  deptal$residencia_departamento_nombre <- if_else(deptal$residencia_provincia_nombre=="La Rioja" &  
+                                                     deptal$residencia_departamento_nombre=="San Blas de los Sauces",
+                                                   "San Blas de Los Sauces", deptal$residencia_departamento_nombre)
+
+  deptal$residencia_departamento_nombre <- if_else(deptal$residencia_provincia_nombre=="San Juan" &  
+                                                     deptal$residencia_departamento_nombre=="Jáchal",
+                                                   "Jachal", deptal$residencia_departamento_nombre)
+  
+  deptal$residencia_departamento_nombre <- if_else(deptal$residencia_provincia_nombre=="San Juan" &  
+                                                     deptal$residencia_departamento_nombre=="Ullúm",
+                                                   "Ullum", deptal$residencia_departamento_nombre)
+
+  deptal$residencia_departamento_nombre <- if_else(deptal$residencia_provincia_nombre=="Mendoza" &  
+                                                     deptal$residencia_departamento_nombre=="Luján de Cuyo",
+                                                   "Cuyo", deptal$residencia_departamento_nombre)
+  deptal$residencia_departamento_nombre <- if_else(deptal$residencia_provincia_nombre=="San Luis" &  
+                                                     deptal$residencia_departamento_nombre=="Luján de Cuyo",
+                                                   "Cuyo", deptal$residencia_departamento_nombre)
+  
+ deptal$residencia_departamento_nombre <- if_else(deptal$residencia_provincia_nombre=="Neuquén" &  
+                                                     deptal$residencia_departamento_nombre=="Ñorquín",
+                                                   "?orquín", deptal$residencia_departamento_nombre)    
+  
+ deptal$residencia_departamento_nombre <- if_else(deptal$residencia_provincia_nombre=="Río Negro" &  
+                                                     deptal$residencia_departamento_nombre=="Ñorquín",
+                                                   "?orquín", deptal$residencia_departamento_nombre)  
+ 
+ deptal$residencia_departamento_nombre <- if_else(deptal$residencia_provincia_nombre=="Río Negro" &  
+                                                     deptal$residencia_departamento_nombre=="9 de Julio",
+                                                   "9 de julio", deptal$residencia_departamento_nombre)  
+ 
+ deptal$residencia_departamento_nombre <- if_else(deptal$residencia_provincia_nombre=="Río Negro" &  
+                                                     deptal$residencia_departamento_nombre=="Ñorquincó",
+                                                   "?orquinco", deptal$residencia_departamento_nombre)  
+ 
+
+
+ # sal <- deptal %>% filter(residencia_provincia_nombre=="Río Negro")
+ # table(sal$residencia_departamento_nombre)
+   
   falle <- covid19casos %>% filter(fallecido=="SI" & clasificacion_resumen=="Confirmado") %>%
           group_by(residencia_provincia_nombre, residencia_departamento_nombre) %>%
           mutate(fallecidos=n()) %>%
           select(residencia_provincia_nombre, residencia_departamento_nombre, fallecidos)
+    
   
-  altas <- covid19casos %>% filter(fallecido=="NO" & clasificacion_resumen=="Confirmado" & 
-                                     clasificacion %in% c("Caso confirmado - No activo (por laboratorio y tiempo de evolución)",
-                                                           "Caso confirmado - No Activo por criterio de laboratorio", 
-                                                           "Caso confirmado - No activo (por tiempo de evolución)")) %>%
-    group_by(residencia_provincia_nombre, residencia_departamento_nombre) %>%
-    mutate(altas=n()) %>%
+  altas <- covid19casos %>% 
+    filter(fallecido=="NO" & clasificacion_resumen=="Confirmado" &
+             clasificacion %in% c("Caso confirmado por criterio clínico-epidemiológico  - No activo (por tiempo de evolución)",
+                                  "Caso confirmado por laboratorio - No activo (por tiempo de evolución)", 
+                                  "Caso confirmado por laboratorio - No Activo por criterio de laboratorio")) %>%
+    group_by(residencia_provincia_nombre, residencia_departamento_nombre) %>% mutate(altas=n()) %>%
     select(residencia_provincia_nombre, residencia_departamento_nombre, altas) %>% unique()
+  
   rm(covid19casos)
   
   Tdeptal <- deptal %>% 
@@ -109,7 +172,7 @@ Se muestra la distribución de casos a nivel departamental de las provincias.
   
   deptos$provincia <- if_else( deptos$provincia=="Ciudad Autónoma de Buenos Aires", "CABA",
                                as.character(deptos$provincia))
- 
+  
   Tdeptal$residencia_departamento_nombre <- gsub("COMUNA", "Comuna", Tdeptal$residencia_departamento_nombre)
   Tdeptal$residencia_departamento_nombre <- gsub("ñ", "?", Tdeptal$residencia_departamento_nombre)
 
@@ -118,6 +181,8 @@ deptos_covid <- deptos %>%
   unique()
 
   deptos_covid$Confirmado <- if_else(is.na(deptos_covid$Confirmado ), 0, as.double(deptos_covid$Confirmado))
+  deptos_covid$Confirmado <- if_else(deptos_covid$departamen=="Islas Malvinas", 13, as.double(deptos_covid$Confirmado))
+  
   deptos_covid$Descartado <- if_else(is.na(deptos_covid$Descartado ), 0, as.double(deptos_covid$Descartado))
   deptos_covid$Sospechoso <- if_else(is.na(deptos_covid$Sospechoso ), 0, as.double(deptos_covid$Sospechoso))
   # deptos_covid$Notificado <- if_else(is.na(deptos_covid$Notificado ), 0, as.double(deptos_covid$Notificado))

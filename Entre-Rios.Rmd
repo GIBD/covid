@@ -190,6 +190,7 @@ A continuación se muestran los casos confirmados por la provincia el día `r ma
           name = "Confirmados",
           textinfo="label+value+percent parent") %>%
     layout(title = paste("Covid19 ER - Distribución de casos Confirmados", max(covid_er_hoy$FECHA)))
+  
 
 ```
 
@@ -438,7 +439,7 @@ Representa el porcentaje por grupo etario y sexo de todos los pacientes con COVI
    edadER <- edadER %>%  ungroup() %>% mutate(prop = round(cant/sum(cant)*100,2))
    edadER$prop <- if_else(edadER$sexo=="Hombre",  edadER$prop*-1, edadER$prop)
   
-   plot_ly(edadER, x = ~prop, y = ~grEdad, color = ~sexo, width = 700, height = 600) %>%
+   plot_ly(edadER, x = ~prop, y = ~grEdad, color = ~sexo) %>% #, width = 700, height = 600) %>%
      add_bars(orientation = "h",
            hoverinfo = "y+text+name", 
            text =  ~paste(abs(round(prop,1)), "%", '\n(',cant,')'),  
@@ -478,7 +479,7 @@ Representa el porcentaje por grupo etario y sexo de todos los pacientes con COVI
    edadERF <- edadERF %>%  ungroup() %>% mutate(prop = round(cant/sum(cant)*100,2))
    edadERF$prop <- if_else(edadERF$sexo=="Hombre",  edadERF$prop*(-1), edadERF$prop)
   
-   plot_ly(edadERF, x = ~prop, y = ~grEdad, color = ~sexo, width = 800, height = 700) %>%
+   plot_ly(edadERF, x = ~prop, y = ~grEdad, color = ~sexo) %>% #, width = 800, height = 700) %>%
      add_bars(orientation = "h",
            hoverinfo = "y+text+name", 
            text =  ~paste(abs(round(prop,1)), "%", '\n(',cant,')'),  
@@ -634,10 +635,10 @@ A continuación se grafica el cambio en la movilidad de cada departamento tomand
          caption = "Fuente: https://data.humdata.org/group/arg", 
          y = "Movilidad", 
          x = "Fecha") +
-    facet_wrap(~ NAME_2, scales = "free_y", ncol = 3) +
+    facet_wrap(~ NAME_2, scales = "free_y", ncol = 6) +
     theme_elegante_std(base_family = "Assistant") 
 
-  ggplotly(p, name="Movilidad", width = 900, height = 900)
+  ggplotly(p, name="Movilidad") #, width = 900, height = 900)
 
 ```
 

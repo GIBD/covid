@@ -140,6 +140,8 @@ output:
         group_by(carga_provincia_nombre, fecha_apertura) %>% mutate(altas = n()) %>% 
         select(carga_provincia_nombre, fecha_apertura, altas) %>% unique()
      
+     
+     
      descartados <- casos_pronvinciales %>% filter(carga_provincia_nombre== residencia_provincia_nombre & 
                                                       clasificacion_resumen=="Descartado") %>% 
         group_by(carga_provincia_nombre, fecha_apertura) %>% mutate(descartados = n()) %>% 
@@ -159,6 +161,23 @@ output:
        left_join(fallecidos, by=c("carga_provincia_nombre"="carga_provincia_nombre",
                                    "fecha_apertura"="fecha_apertura"))
      
+     # table(casos_pronvinciales$clasificacion)
+      # confirmados <- casos_pronvinciales %>% filter(carga_provincia_nombre== residencia_provincia_nombre & 
+      #                                                 clasificacion %in% c(
+      #                                                 "Caso confirmado por laboratorio - Activo",
+      #                                               "Caso confirmado por laboratorio - Activo Internado",
+      #                                                "Caso confirmado por laboratorio - Fallecido",
+      #                                                "Caso confirmado por laboratorio - No activo (por tiempo de evolución)",
+      #                                               "Caso confirmado por laboratorio - No Activo por criterio de laboratorio",
+      #                                               "Caso Descartado")) %>% 
+      #                                                 # clasificacion_resumen=="Confirmado") %>% 
+      #   group_by(carga_provincia_nombre, fecha_apertura) %>% mutate(confirmados = n()) %>% 
+      #   select(carga_provincia_nombre, fecha_apertura, confirmados) %>% unique()
+      # 
+      # posit <- confirmados %>% left_join(descartados, by=c("carga_provincia_nombre"="carga_provincia_nombre", 
+      #                                                      "fecha_apertura"="fecha_apertura"))
+      
+      
      casos_pronvinciales$positividad <- round(casos_pronvinciales$confirmados/
                                                 (casos_pronvinciales$confirmados + casos_pronvinciales$descartados)*100, 1)
      

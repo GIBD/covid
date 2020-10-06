@@ -184,9 +184,10 @@ A continuación se grafica la evolución de los casos acumulados de Covid en CAB
   amba %>% filter(CORDON=="1er") %>% select(cordon=CORDON, dia=fecha, distrito=Partido, cantidad=CASOS) -> plot_data_n
 
     p <- plot_data_n %>% 
-      ggplot(mapping=aes(x=dia, color=distrito, y=cantidad)) +
-      geom_line(show.legend = F) + geom_point(show.legend = F) + 
-      # geom_smooth(method = 'loess', formula = 'y ~ x', alpha = 0.2, size = 1, span = .3, se=FALSE) +
+      ggplot(mapping=aes(x=dia, color=distrito, y=cantidad )) +
+      geom_col(show.legend = F)+
+      # geom_line(show.legend = F) + 
+      # geom_point(show.legend = F) + 
       labs(title = paste("COVID-19- Casos acumulados en CABA y 1° cordón GBA (", last_date, ")"), 
            subtitle = paste0("Casos acumulados en CABA y 1° cordón GBA (al: ", last_date, ")") , 
            y = "Casos",  x = "Fecha") +
@@ -194,6 +195,13 @@ A continuación se grafica la evolución de los casos acumulados de Covid en CAB
        facet_wrap(~ distrito, scales = "free_y", ncol = 3) 
   
   ggplotly(p,   height = 800) %>% layout(showlegend=F)
+  
+   
+  # fig <- plot_ly(plot_data_n, x = ~dia, y = ~cantidad, color = ~distrito, type = "bar") 
+  # fig <- layout(fig, title="Evolución de Casos por Fecha de Inicio de Síntomas",
+  #               xaxis = list(title = "día"), yaxis = list(title = "casos"))
+  # fig
+  
   
 ```
 

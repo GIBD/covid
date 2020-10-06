@@ -175,6 +175,7 @@ En Sud América el primer caso detectado de COVID-19 se informa el día `r day(m
 A continuación se muestran las fechas en que se detectó por primera vez un infectado en cada país:
 
 ```{r tablaFechas, echo=FALSE, fig.align='center', message=FALSE, warning=FALSE, out.width='100%', out.height='70%', paged.print=FALSE}
+
   fechas <- sudamerica %>%
     group_by(pais) %>%  arrange( fecha ) %>%
     mutate(inicio= format(min(fecha),'%d/%m/%Y') ) %>%
@@ -355,6 +356,46 @@ Los datos de la tasa de letalidad al `r  max(sudamerica$fecha)` para cada país 
 
 ```
 
+
+
+
+## Tasa de Mortalidad
+Si uno quiere conocer la **tasa de mortalidad general**, es necesario comparar la cantidad de personas fallecidas respecto a la población total del país.
+A continuación se muestra la tasa de mortalidad para los países de sudamérica
+
+###  {.tabset  .tabset-fade .tabset-pills}
+#### Gráfica
+```{r sud_tasa_mort, echo=FALSE, message=FALSE, warning=FALSE, paged.print=FALSE, out.width='100%', fig.align='center'}
+p <- sudamerica  %>% 
+    left_join(poblacion )%>% 
+    mutate(tasa_mor = round(muertes/poblacion * 1000000, 1)) %>% filter(dia==max(dia)) %>% arrange(desc(tasa_mor))
+  
+  fig <- plot_ly(p, type="bar")
+  fig <- fig %>% add_trace( x = ~pais, y = ~tasa_mor, name="Mortalidad",
+                            color= ~(-tasa_mor),
+                            text=~tasa_mor, textposition = 'auto',
+                            mode="lines",
+                            line = list(width = 5)) %>% 
+    hide_colorbar() %>%
+    layout(title="Mortalidad por Covid-19 en Sudamérica",  
+           xaxis = list(), yaxis=list(title="Fall. x 1000000 Hab."))
+  
+  fig %>% layout(showlegend=F)
+       
+```
+
+
+#### Datos
+Los datos de la mortalidad por paises al `r  max(sudamerica$fecha)` son:
+```{r d_tasa_mortalid, echo=FALSE, message=FALSE, warning=FALSE, paged.print=FALSE, out.width='100%', fig.align='center'}
+p %>% select(pais, casos,  recuperados, muertes,  tasa_mor) %>% 
+   datatable(extensions = 'Buttons', rownames = FALSE,
+                          colnames = c("Pais","Casos Detec.", "Recuperados", "Fallecidos", "Mortalidad"),
+            options = list(dom = 'Blfrtip',
+                           buttons = c('copy', 'csv', 'excel', 'pdf', 'print'),
+                           lengthMenu = list(c(10,25,50,-1),
+                                             c(10,25,50,"All"))))
+```
 
 
 

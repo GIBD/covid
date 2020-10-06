@@ -33,7 +33,7 @@ output:
   library(plotly)
   library(gganimate)
   library(stringr)
-  library(leaflet)
+  # library(leaflet)
   library(sf)
   library(tmap)
   library(googlesheets4)
@@ -160,24 +160,7 @@ output:
                                    "fecha_apertura"="fecha_apertura")) %>% 
        left_join(fallecidos, by=c("carga_provincia_nombre"="carga_provincia_nombre",
                                    "fecha_apertura"="fecha_apertura"))
-     
-     # table(casos_pronvinciales$clasificacion)
-      # confirmados <- casos_pronvinciales %>% filter(carga_provincia_nombre== residencia_provincia_nombre & 
-      #                                                 clasificacion %in% c(
-      #                                                 "Caso confirmado por laboratorio - Activo",
-      #                                               "Caso confirmado por laboratorio - Activo Internado",
-      #                                                "Caso confirmado por laboratorio - Fallecido",
-      #                                                "Caso confirmado por laboratorio - No activo (por tiempo de evolución)",
-      #                                               "Caso confirmado por laboratorio - No Activo por criterio de laboratorio",
-      #                                               "Caso Descartado")) %>% 
-      #                                                 # clasificacion_resumen=="Confirmado") %>% 
-      #   group_by(carga_provincia_nombre, fecha_apertura) %>% mutate(confirmados = n()) %>% 
-      #   select(carga_provincia_nombre, fecha_apertura, confirmados) %>% unique()
-      # 
-      # posit <- confirmados %>% left_join(descartados, by=c("carga_provincia_nombre"="carga_provincia_nombre", 
-      #                                                      "fecha_apertura"="fecha_apertura"))
-      
-      
+
      casos_pronvinciales$positividad <- round(casos_pronvinciales$confirmados/
                                                 (casos_pronvinciales$confirmados + casos_pronvinciales$descartados)*100, 1)
      
@@ -267,7 +250,7 @@ A continuación se grafica la evolución de la cantidad de casos internados en U
    
   fig <- fig %>% add_trace(y = ~round(porc,1), name = '% UTI',  
                            type = "scatter", mode='lines+markers', marker = list(color = 'rgba(222,45,38,0.8)'))
-  fig <- fig %>% layout(title = '% de Ocupación de UTI',
+  fig <- fig %>% layout(title = 'Ocupación de UTI',
            xaxis = list(title = "", tickfont = list(size = 14, color = 'rgb(107, 107, 107)')),
            yaxis = list( title = 'Cantidad',
              titlefont = list(size = 16, color = 'rgb(107, 107, 107)'),
@@ -285,7 +268,7 @@ A continuación se grafica la evolución de la cantidad de casos internados en U
    totalesArg <- argCov %>%
      select(dia, Detectados, Fallecidos, Recuperados)
 
- totalesArg %>% datatable(extensions = 'Buttons', rownames = FALSE,
+    totalesArg %>% datatable(extensions = 'Buttons', rownames = FALSE,
                           colnames = c("Fecha", "Casos Detectados", "Fallecidos", "Recuperados"),
             options = list(dom = 'Blfrtip',
                            buttons = c('copy', 'csv', 'excel', 'pdf', 'print'),
@@ -303,7 +286,7 @@ Si presiona sobre los rectángulos mas pequeños ampliará la provincia/jurisdic
 ```{r casosDia, echo=FALSE, message=FALSE, warning=FALSE}
  covidArg_hoy <- covidArg %>% 
       group_by(PROVINCIA) %>% filter(FECHA==max(FECHA)) %>% select(PROVINCIA,FECHA, CASOS) %>% unique()
-  
+
   covidArg_hoy$parents <- "Confirmados"
   plot_ly(data = covidArg_hoy,
           type= "treemap",
@@ -818,6 +801,48 @@ La tasa de Letalidad a nivel nacional ha evolucionado como lo muestra la siguien
 ```
 
 
+
+
+## Tasa de Mortalidad
+La **tasa de mortalidad general** de cada una de las provincias viene dada por comparar la cantidad de personas fallecidas respecto a la población total de la provincia.
+
+###  {.tabset  .tabset-fade .tabset-pills}
+#### Gráfica
+```{r sud_tasa_mort, echo=FALSE, message=FALSE, warning=FALSE, paged.print=FALSE, out.width='100%', fig.align='center'}
+  p <- muertosArg  %>% group_by(PROVINCIA) %>% mutate(fall = sum(MUERTES, na.rm = T)) %>% 
+    select(PROVINCIA, fall) %>% unique() %>% 
+    left_join(poblacionArg, by = c("PROVINCIA"="provincia")) %>% 
+    mutate(tasa_mor = round(fall/poblacion * 1000000, 1)) %>% arrange(desc(tasa_mor))
+  
+  fig <- plot_ly(p, type="bar")
+  fig <- fig %>% add_trace( x = ~PROVINCIA, y = ~tasa_mor, name="Mortalidad",
+                            color= ~(-tasa_mor),
+                            text=~tasa_mor, textposition = 'auto',
+                            mode="lines",
+                            line = list(width = 5)) %>% 
+    hide_colorbar() %>%
+    layout(title="Covid-19 Mortalidad por Provinciass",  
+           xaxis = list(), yaxis=list(title="Fall. x 1000000 Hab."))
+  
+  fig %>% layout(showlegend=F)
+       
+```
+
+
+#### Datos
+Los datos de la mortalidad por provincias al `r  max(muertosArg$FECHA)` son:
+```{r d_tasa_mortalid, echo=FALSE, message=FALSE, warning=FALSE, paged.print=FALSE, out.width='100%', fig.align='center'}
+p %>% select(PROVINCIA, fall,  tasa_mor) %>% 
+   datatable(extensions = 'Buttons', rownames = FALSE,
+                          colnames = c("Provincia", "Fallecidos", "Mortalidad"),
+            options = list(dom = 'Blfrtip',
+                           buttons = c('copy', 'csv', 'excel', 'pdf', 'print'),
+                           lengthMenu = list(c(10,25,50,-1),
+                                             c(10,25,50,"All"))))
+```
+
+
+
 <!-- El `r round(nrow(muertosArg[muertosArg$genero=="Hombre", ])/nrow(muertosArg) * 100, 1)` % de los fallecidos son Hombres, mientras que el `r round(nrow(muertosArg[muertosArg$genero=="Mujer", ])/nrow(muertosArg) * 100, 1)` % restante corresponde a Mujeres. -->
 
 <!-- La edad media de los pacientes fallecidos es de `r round(mean(muertosArg$edad, na.rm = T), 0)` años, y en particular la edad media de los Hombres fallecidos es de `r round(mean(muertosArg$edad[muertosArg$genero=="Hombre"], na.rm = T), 0)` años y en la Mujeres de `r round(mean(muertosArg$edad[muertosArg$genero=="Mujer"], na.rm = T), 0)` años. -->
@@ -1006,7 +1031,8 @@ A continuación se visualiará la evolución en la proporción de los casos dete
 ```
 
 
-### Casos por Inicio de Síntomas
+
+## Casos por Inicio de Síntomas
 Considerando la fecha de inicio de síntomas, o en caso de no existir la menor entre las fechas de apertura o diagnóstico se obtienen las siguientes curvas para cada provincia.
 * Para seleccionar una sola o mas hacer doble clik sobre el nombre de la/s misma/s en la leyenda
 ```{r iniSint, out.width='100%'}
@@ -1025,6 +1051,39 @@ Considerando la fecha de inicio de síntomas, o en caso de no existir la menor e
   fig <- plot_ly(tProv, x = ~fis, y = ~casos, color = ~carga_provincia_nombre, type = "bar") 
   fig <- layout(fig, title="Evolución de Casos por Fecha de Inicio de Síntomas",
                 xaxis = list(title = "día"), yaxis = list(title = "casos"))
+  fig
+  
+  
+```
+
+
+
+
+
+## Fallecidos por Fecha de Fallecimiento
+En la siguiente gráfica se muestra la cantidad de fallecidos diarios considerando la fecha en que se producen los decesos y no la fecha en que son reportadas. 
+Para este gráfico se considera la provincia que carga el caso cuando no se especifique la provincia de residencia de la persona
+
+* Para seleccionar una sola o mas hacer doble clik sobre el nombre de la/s misma/s en la leyenda
+```{r fallFeFall, out.width='100%'}
+  fallecidos <- casos_pronvinciales2 %>% filter(clasificacion_resumen=="Confirmado" & !(is.na(fecha_fallecimiento)))
+ 
+
+  fallecidos$fecha_fallecimiento<- as.Date(fallecidos$fecha_fallecimiento, "%d/%m/%Y")
+
+  fallecidos$residencia_provincia_nombre <- if_else(is.na(fallecidos$residencia_provincia_nombre),
+                                                    fallecidos$carga_provincia_nombre,
+                                                    fallecidos$residencia_provincia_nombre)
+  
+  tProvF <- fallecidos %>%  arrange(fecha_fallecimiento) %>% 
+            group_by(residencia_provincia_nombre, fecha_fallecimiento) %>% 
+            mutate(fall = n()) %>% 
+            select(provincia = residencia_provincia_nombre, fecha=fecha_fallecimiento, fall) %>% unique()
+  
+  fig <- plot_ly(tProvF, x = ~fecha, y = ~fall, color = ~provincia,  text= ~fall,  textposition = 'outside',
+                 type = "bar") 
+  fig <- layout(fig, title="Fallecidos por Fecha de Fallecimiento",
+                xaxis = list(title = "día"), yaxis = list(title = "fallecidos"))
   fig
   
   

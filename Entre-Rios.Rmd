@@ -61,7 +61,7 @@ knitr::opts_chunk$set(echo = TRUE)
   
   # table(covid19ER$Clasificacion)
   covid19ER_Conf <- covid19ER %>%
-    filter(clasificacion_resumen=="Confirmado" & carga_provincia_nombre=="Entre Ríos")
+    filter(clasificacion_resumen=="Confirmado" & carga_provincia_nombre=="Entre Ríos" & residencia_provincia_nombre=="Entre Ríos")
   
   covid19ER_Rec <- covid19ER %>%  
     filter(carga_provincia_nombre=="Entre Ríos" &
@@ -73,15 +73,15 @@ knitr::opts_chunk$set(echo = TRUE)
     select(residencia_provincia_nombre, residencia_departamento_nombre, altas) %>% unique()
   
   covid19ER_Fall <- covid19ER %>% 
-    filter(carga_provincia_nombre=="Entre Ríos" & clasificacion_resumen=="Confirmado" & fallecido=="SI") 
+    filter(carga_provincia_nombre=="Entre Ríos" & residencia_provincia_nombre=="Entre Ríos" & clasificacion_resumen=="Confirmado" & fallecido=="SI") 
 
   covid19ER_Sosp <- covid19ER %>% 
-    filter(clasificacion_resumen=="Sospechoso" & carga_provincia_nombre=="Entre Ríos") %>%
+    filter(clasificacion_resumen=="Sospechoso" & carga_provincia_nombre=="Entre Ríos" & residencia_provincia_nombre=="Entre Ríos") %>%
     group_by(residencia_provincia_nombre, residencia_departamento_nombre, Clasificacion) %>%
     mutate(sospechosos=n()) %>%
     select(residencia_provincia_nombre, residencia_departamento_nombre,Clasificacion, sospechosos) %>% unique()
   
-  covid19ER_Desc <- covid19ER %>% filter(clasificacion_resumen=="Descartado") %>%
+  covid19ER_Desc <- covid19ER %>% filter(clasificacion_resumen=="Descartado" & residencia_provincia_nombre=="Entre Ríos" & carga_provincia_nombre=="Entre Ríos") %>%
      group_by(residencia_provincia_nombre, residencia_departamento_nombre) %>%
      mutate(descartados=n()) 
   
@@ -140,11 +140,16 @@ A continuación se muestra la cantidad de casos diarios totales informados por e
 ## Evolución departamental
 La evolución de casos por departamento desde el inicio de la pandemia se muestra a continuación
 
+###  {.tabset  .tabset-fade .tabset-pills}
+#### Acumulados
 ```{r evolER, echo=FALSE, fig.align='center', message=FALSE, warning=FALSE, paged.print=FALSE, out.width='100%' }
    
    covid_er$FECHA <- as.Date(covid_er$FECHA, '%d/%m/%Y')
    evolER <- covid_er %>% group_by(DEPARTAMENTO, FECHA) %>% 
      mutate(cantidad= sum(CASOS)) %>% select(DEPARTAMENTO, FECHA, cantidad) %>% unique()
+   
+   diario <- evolER %>% group_by(DEPARTAMENTO) %>% mutate(promD = roll_mean(cantidad, n=7, align="right", fill = NA))
+   diario$promD <- if_else(is.na(diario$promD), 0, as.double(diario$promD))
    
    evolER$acumulados <-0
    evolER <- evolER %>% ungroup() %>% group_by(DEPARTAMENTO) %>% 
@@ -166,6 +171,25 @@ La evolución de casos por departamento desde el inicio de la pandemia se muestr
 
      
 ```
+
+
+#### Diarios
+Casos diarios promediados a 7 días previos.
+```{r promERDpto, echo=FALSE, fig.align='center', message=FALSE, warning=FALSE, out.width='100%' }
+  
+  # prom <- tabla_prov %>% 
+  #   group_by(provincia) %>% filter(tipo=="casos") %>% 
+  #   mutate(prom= round(roll_mean(cant,  n=7, align="right", fill = NA), 0)) %>%  
+  #   filter(!is.na(prom) & prom>0)
+
+  fig <- plot_ly(diario, x = ~FECHA, y = ~promD, color = ~DEPARTAMENTO, type = "bar") #, mode='lines+markers') 
+  fig <- layout(fig, title="Evolución de casos diarios por Dpto. \n (promedio de 7 días)",
+                xaxis = list(title = "día"), yaxis = list(title = "casos"))
+  fig
+
+```
+
+
 
 
 ## Casos del día
@@ -635,10 +659,11 @@ A continuación se grafica el cambio en la movilidad de cada departamento tomand
          caption = "Fuente: https://data.humdata.org/group/arg", 
          y = "Movilidad", 
          x = "Fecha") +
-    facet_wrap(~ NAME_2, scales = "free_y", ncol = 6) +
+    facet_wrap(~ NAME_2, scales = "free_y", ncol = 4) +
     theme_elegante_std(base_family = "Assistant") 
 
-  ggplotly(p, name="Movilidad") #, width = 900, height = 900)
+  ggplotly(p, name="Movilidad", #width = 900,
+               height = 900)
 
 ```
 

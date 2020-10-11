@@ -38,6 +38,7 @@ output:
   library(googlesheets4)
   library(readxl)
   library(RcppRoll)
+  library(DT)
 sep.miles <- function(x){format(x,big.mark=".")}
  
   #################

@@ -73,9 +73,12 @@ knitr::opts_chunk$set(echo = TRUE)
     group_by(residencia_provincia_nombre, residencia_departamento_nombre) %>% mutate(altas=n()) %>%
     select(residencia_provincia_nombre, residencia_departamento_nombre, altas) %>% unique()
   
-  covid19ER_Fall <- covid19ER %>% 
-    filter(carga_provincia_nombre=="Entre Ríos" & residencia_provincia_nombre=="Entre Ríos" & clasificacion_resumen=="Confirmado" & fallecido=="SI") 
+  # covid19ER_Fall <- covid19ER %>% 
+  #   filter(carga_provincia_nombre=="Entre Ríos" & residencia_provincia_nombre=="Entre Ríos" & clasificacion_resumen=="Confirmado" & fallecido=="SI") 
 
+   covid19ER_Fall <- covid19ER %>% 
+    filter(carga_provincia_nombre=="Entre Ríos" & residencia_provincia_nombre=="Entre Ríos" & clasificacion_resumen=="Confirmado" & fallecido=="SI") 
+   
   covid19ER_Sosp <- covid19ER %>% 
     filter(clasificacion_resumen=="Sospechoso" & carga_provincia_nombre=="Entre Ríos" & residencia_provincia_nombre=="Entre Ríos") %>%
     group_by(residencia_provincia_nombre, residencia_departamento_nombre, Clasificacion) %>%
@@ -679,10 +682,13 @@ Los datos pueden ser descargados en diversos formatos
 sospechosos <- covid19ER_Sosp %>% group_by(residencia_departamento_nombre) %>% mutate(sospechosos=sum(sospechosos)) %>% 
   select(departamento=residencia_departamento_nombre, sospechosos) %>% unique()
 
-fallecidos <- covid19ER %>% filter(clasificacion_resumen=="Confirmado" & fallecido=="SI") %>%
-  group_by(residencia_departamento_nombre) %>% mutate(fallecidos=n()) %>% 
-  select(departamento = residencia_departamento_nombre, fallecidos)
+## Con Datos abiertos
+# fallecidos <- covid19ER %>% filter(clasificacion_resumen=="Confirmado" & fallecido=="SI") %>%
+#   group_by(residencia_departamento_nombre) %>% mutate(fallecidos=n()) %>% 
+#   select(departamento = residencia_departamento_nombre, fallecidos)
   
+fallecidos <- covid_er_altas %>% 
+  select(departamento = DEPARTAMENTO, fallecidos=FALLECIDOS)
 
  tabla <- covider %>% 
   left_join(covid19ER_Rec, by=c("DEPARTAMENTO"="residencia_departamento_nombre")) %>% 

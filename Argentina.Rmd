@@ -779,6 +779,22 @@ Al día de la fecha las incidencias acumuladas por cada 100.000 habitantes en la
   
 ```
 
+#### Gráfica
+```{r sud_tasainc, echo=FALSE, message=FALSE, warning=FALSE, paged.print=FALSE, out.width='100%', fig.align='center'}
+ 
+  fig <- plot_ly(tabiaprov, type="bar")
+  fig <- fig %>% add_trace( x = ~provincia, y = ~ia, name="Incidencia",
+                            color= ~(-ia),
+                            text=~ia, textposition = 'auto',
+                            mode="lines",
+                            line = list(width = 5)) %>% 
+    hide_colorbar() %>%
+    layout(title="Covid-19 Incidencia por Provinciass",  
+           xaxis = list(), yaxis=list(title="Casos x 100.000 Hab."))
+  
+  fig %>% layout(showlegend=F)
+       
+```
 
 
 
@@ -1074,6 +1090,9 @@ Para este gráfico se considera la provincia que carga el caso cuando no se espe
   fallecidos$residencia_provincia_nombre <- if_else(is.na(fallecidos$residencia_provincia_nombre),
                                                     fallecidos$carga_provincia_nombre,
                                                     fallecidos$residencia_provincia_nombre)
+  
+  # write.csv(tProv, "tProv.csv")
+  # write.csv(tProvF, "tProvF.csv")
   
   tProvF <- fallecidos %>%  arrange(fecha_fallecimiento) %>% 
             group_by(residencia_provincia_nombre, fecha_fallecimiento) %>% 

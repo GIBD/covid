@@ -833,7 +833,8 @@ La **tasa de mortalidad general** de cada una de las provincias viene dada por c
   fig <- plot_ly(p, type="bar")
   fig <- fig %>% add_trace( x = ~PROVINCIA, y = ~tasa_mor, name="Mortalidad",
                             color= ~(-tasa_mor),
-                            text=~tasa_mor, textposition = 'auto',
+                            text=~tasa_mor, 
+                            textposition = 'auto',
                             mode="lines",
                             line = list(width = 5)) %>% 
     hide_colorbar() %>%

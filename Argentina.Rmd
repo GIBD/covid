@@ -286,7 +286,8 @@ Si presiona sobre los rectángulos mas pequeños ampliará la provincia/jurisdic
 ```{r casosDia, echo=FALSE, message=FALSE, warning=FALSE}
  covidArg_hoy <- covidArg %>% 
       group_by(PROVINCIA) %>% filter(FECHA==max(FECHA)) %>% select(PROVINCIA,FECHA, CASOS) %>% unique()
-
+  covidArg_hoy$PROVINCIA <- if_else(covidArg_hoy$PROVINCIA == "Ciudad de Buenos Aires", "CABA",  covidArg_hoy$PROVINCIA)
+    
   covidArg_hoy$parents <- "Confirmados"
   plot_ly(data = covidArg_hoy,
           type= "treemap",

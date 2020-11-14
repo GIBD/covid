@@ -173,13 +173,14 @@ A continuación se muestra la cantidad de casos diarios totales informados por e
   diario$FECHA <- as.Date(diario$FECHA, "%d/%m/%Y")
   
   diario <- diario %>% ungroup() %>% arrange(FECHA) %>%  
-    mutate(casosP=roll_mean(casosD, n=7, align="right", fill = NA)) %>%
+    mutate(casosP=round(roll_mean(casosD, n=7, align="right", fill = NA), 0) ) %>%
     select(FECHA, casosD, casosP) %>% unique()
 
 
-  fig <- plot_ly(diario, x = ~FECHA, y = ~casosD, type = 'bar', name = 'Casos Diarios',
+  fig <- plot_ly(diario, x = ~FECHA, y = ~casosD, type = 'bar', name = 'Casos Diarios',text= ~casosD,  textposition = 'outside',
         marker = list(color = 'rgba(222,45,38,0.8)'), width = 800)
-  fig <- fig %>% add_trace(y = ~casosP, name = 'Casos Promedios', marker = list(color = 'rgb(55, 83, 109)'))
+  fig <- fig %>% add_trace(y = ~casosP, name = 'Casos Promedios', marker = list(color = 'rgb(55, 83, 109)'),
+                           text= ~casosP,  textposition = 'outside')
   fig <- fig %>% layout(title = 'Casos diarios y casos promediados (7 días)',
            xaxis = list( title = "",
              tickfont = list(size = 14, color = 'rgb(107, 107, 107)')),

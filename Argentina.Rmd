@@ -130,7 +130,8 @@ output:
                                                       clasificacion_resumen=="Confirmado") %>% 
         group_by(carga_provincia_nombre, fecha_apertura) %>% mutate(confirmados = n()) %>% 
         select(carga_provincia_nombre, fecha_apertura, confirmados) %>% unique()
-     # write.csv(confirmados, "confirmados.csv")
+     
+     
      recuperados <- casos_pronvinciales %>% 
        filter(carga_provincia_nombre== residencia_provincia_nombre & 
                 clasificacion_resumen=="Confirmado" & 
@@ -140,10 +141,38 @@ output:
         group_by(carga_provincia_nombre, fecha_apertura) %>% mutate(altas = n()) %>% 
         select(carga_provincia_nombre, fecha_apertura, altas) %>% unique()
      
+     confirmados_lab <- casos_pronvinciales %>% 
+        filter(carga_provincia_nombre== residencia_provincia_nombre & 
+                 clasificacion_resumen=="Confirmado" &
+                 clasificacion %in% c("Caso confirmado por laboratorio - Activo",
+                                       "Caso confirmado por laboratorio - Activo Internado",
+                                     "Caso confirmado por laboratorio - Fallecido",
+                                     "Caso confirmado por laboratorio - No activo (por tiempo de evolución)",
+                                     "Caso confirmado por laboratorio - No Activo por criterio de laboratorio" )) %>% 
+        group_by(carga_provincia_nombre, fecha_apertura) %>% mutate(confirmados = n()) %>% 
+        select(carga_provincia_nombre, fecha_apertura, confirmados) %>% unique()
      
+     # table(casos_pronvinciales$clasificacion)
+     descartados_lab <- casos_pronvinciales %>% 
+       filter(carga_provincia_nombre== residencia_provincia_nombre & 
+                clasificacion_resumen=="Descartado" &
+                clasificacion %in% c("Caso Descartado") ) %>% 
+        group_by(carga_provincia_nombre, fecha_apertura) %>% mutate(descartados = n()) %>% 
+        select(carga_provincia_nombre, fecha_apertura, descartados) %>% unique()
      
+     positiv_lab <-descartados_lab %>%  
+       left_join(confirmados_lab, by=c("carga_provincia_nombre"="carga_provincia_nombre",
+                                   "fecha_apertura"="fecha_apertura"))
+     
+       positiv_lab$positividad <- round(positiv_lab$confirmados/
+                                                (positiv_lab$confirmados + positiv_lab$descartados)*100, 1)
+       
+       positiv_lab$positividad <- if_else(is.na(positiv_lab$positividad), 0,
+                                                 as.double(positiv_lab$positividad))
+       
+       
      descartados <- casos_pronvinciales %>% filter(carga_provincia_nombre== residencia_provincia_nombre & 
-                                                      clasificacion_resumen=="Descartado") %>% 
+                                                      clasificacion_resumen=="Descartado" ) %>% 
         group_by(carga_provincia_nombre, fecha_apertura) %>% mutate(descartados = n()) %>% 
         select(carga_provincia_nombre, fecha_apertura, descartados) %>% unique()
      
@@ -212,7 +241,7 @@ Los datos con los que se trabajarán son de procesamiento propio en base a los i
      gather(tipo, cantidad, c(Detectados, Activos, Fallecidos, Recuperados), -dia)
    
      m <- evolArg %>% filter(dia==max(dia))
-     a <- list( x =  m$dia+1, y =if_else(m$tipo=="Fallecidos" | m$tipo=="Activos", m$cantidad+6000, m$cantidad),
+     a <- list( x =  m$dia+1, y =if_else(m$tipo=="Fallecidos" | m$tipo=="Activos", m$cantidad+12000, m$cantidad),
                 text = paste0('<b>', m$tipo, '\n', format(m$cantidad, big.mark=".") , '</b>'),
                 xref = "x", yref = "y", showarrow = F, ax = 60, ay = -40)
      
@@ -246,10 +275,10 @@ A continuación se grafica la evolución de la cantidad de casos internados en U
      mutate(porc = UTI/capUti*100)
  
   fig <- plot_ly(p2, x = ~dia, y = ~UTI, type = 'bar', name = 'UTI',
-        marker = list(color ='rgb(55, 83, 109)'))
+        marker = list(color =  "#8DA0CB")) # 'rgba(222,45,38,0.8)'))
    
-  fig <- fig %>% add_trace(y = ~round(porc,1), name = '% UTI',  
-                           type = "scatter", mode='lines+markers', marker = list(color = 'rgba(222,45,38,0.8)'))
+  # fig <- fig %>% add_trace(y = ~round(porc,1), name = '% UTI',  
+  #                          type = "scatter", mode='lines+markers', marker = list(color = "#8DA0CB")) #'rgba(222,45,38,0.8)'))
   fig <- fig %>% layout(title = 'Ocupación de UTI',
            xaxis = list(title = "", tickfont = list(size = 14, color = 'rgb(107, 107, 107)')),
            yaxis = list( title = 'Cantidad',
@@ -747,7 +776,7 @@ Al día de la fecha las incidencias acumuladas por cada 100.000 habitantes en la
     filter(fecha == max(fecha)) %>%
     select(provincia, cant) %>%
     left_join(poblacionArg) %>% 
-    mutate(ia= round(cant/poblacion * 100000, 2)) %>%
+    mutate(ia= round(cant/poblacion * 100000, 0)) %>%
     arrange(desc(ia))
 
  
@@ -771,8 +800,11 @@ Al día de la fecha las incidencias acumuladas por cada 100.000 habitantes en la
 #### Datos
 
 ```{r iAProvD}
-  tabiaprov <- ia_prov %>% select(provincia, cant, ia) %>% arrange(desc(ia))
 
+  ia_prov$provincia <- if_else(ia_prov$provincia=="Ciudad de Buenos Aires", "CABA", ia_prov$provincia)
+
+  tabiaprov <- ia_prov %>% select(provincia, cant, ia) %>% arrange(desc(ia))
+  tabiaprov$provincia <- if_else(tabiaprov$provincia=="Ciudad de Buenos Aires", "CABA", tabiaprov$provincia)
   tabiaprov %>%  datatable(extensions = 'Buttons', rownames = FALSE,
                           colnames = c("Provincia", "Casos Detectados", "Incidencia cada 100.000 Hab."),
               options = list(dom = 'Blfrtip', buttons = c('csv', 'excel', 'pdf'),
@@ -783,6 +815,7 @@ Al día de la fecha las incidencias acumuladas por cada 100.000 habitantes en la
 #### Gráfica
 ```{r sud_tasainc, echo=FALSE, message=FALSE, warning=FALSE, paged.print=FALSE, out.width='100%', fig.align='center'}
  
+
   fig <- plot_ly(tabiaprov, type="bar")
   fig <- fig %>% add_trace( x = ~provincia, y = ~ia, name="Incidencia",
                             color= ~(-ia),
@@ -831,6 +864,7 @@ La **tasa de mortalidad general** de cada una de las provincias viene dada por c
     left_join(poblacionArg, by = c("PROVINCIA"="provincia")) %>% 
     mutate(tasa_mor = round(fall/poblacion * 1000000, 1)) %>% arrange(desc(tasa_mor))
   
+p$PROVINCIA <- if_else(p$PROVINCIA=="Ciudad de Buenos Aires", "CABA", p$PROVINCIA)
   fig <- plot_ly(p, type="bar")
   fig <- fig %>% add_trace( x = ~PROVINCIA, y = ~tasa_mor, name="Mortalidad",
                             color= ~(-tasa_mor),
@@ -839,7 +873,7 @@ La **tasa de mortalidad general** de cada una de las provincias viene dada por c
                             mode="lines",
                             line = list(width = 5)) %>% 
     hide_colorbar() %>%
-    layout(title="Covid-19 Mortalidad por Provinciass",  
+    layout(title="Covid-19 Mortalidad por Provincias",  
            xaxis = list(), yaxis=list(title="Fall. x 1000000 Hab."))
   
   fig %>% layout(showlegend=F)
@@ -921,6 +955,7 @@ En base a las provincias de residencia de los fallecidos, informadas por el Mini
 
 #### Datos
 ```{r datLetProv, echo=FALSE,message=FALSE, warning=FALSE}
+  let_prov$Provincia <- if_else(let_prov$Provincia=="Ciudad de Buenos Aires", "CABA", let_prov$Provincia)
 
   tabla <- tabiaprov %>% left_join(let_prov, by=c("provincia"="Provincia")) %>% 
   select(provincia, casos=cant.x, ia, fallecidos=cantidad, letalidad)
@@ -1010,7 +1045,8 @@ A continuación se visualiará la evolución en la proporción de los casos dete
 ##### Tasa de Positividad
 A continuación se visualiará la evolución en la proporción de los casos detectados sobre la cantidad de pruebas analizadas. 
 ```{r test, echo=FALSE, fig.align='center', message=FALSE, warning=FALSE, out.width='100%'}
-  test <- argCov %>% select(dia, DescTest, Detectados, Recuperados, MuestraD) %>%
+ 
+ test <- argCov %>% select(dia, DescTest, Detectados, Recuperados, MuestraD) %>%
          mutate(total = DescTest + Detectados)
   test <- test %>% filter(DescTest >= 0) %>%  mutate(prop= round(Detectados/total * 100, 2)) %>% arrange(dia)
   test$dia <-as.Date(test$dia, "%d/%m/%Y")
@@ -1033,11 +1069,17 @@ A continuación se visualiará la evolución en la proporción de los casos dete
 
 #### Positividad por Provincia
 ```{r positProv, out.width='100%'}
-   testProv <- casos_pronvinciales %>% 
+    testProv <- positiv_lab %>% 
             group_by(carga_provincia_nombre)%>% arrange(fecha_apertura) %>% 
             filter(fecha_apertura > "2020-04-30" & fecha_apertura!=max(fecha_apertura)) %>% 
             mutate(positP=roll_mean(positividad, n=7, align="right", fill = NA)) %>% 
             select(carga_provincia_nombre, fecha_apertura, positP) 
+
+  # testProv <- casos_pronvinciales %>% 
+  #           group_by(carga_provincia_nombre)%>% arrange(fecha_apertura) %>% 
+  #           filter(fecha_apertura > "2020-04-30" & fecha_apertura!=max(fecha_apertura)) %>% 
+  #           mutate(positP=roll_mean(positividad, n=7, align="right", fill = NA)) %>% 
+  #           select(carga_provincia_nombre, fecha_apertura, positP) 
       
       fig <- plot_ly(testProv, x = ~fecha_apertura, y = ~positP, 
                     color = ~carga_provincia_nombre, type = "scatter", mode='lines+markers') 

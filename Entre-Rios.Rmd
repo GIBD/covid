@@ -110,10 +110,13 @@ knitr::opts_chunk$set(echo = TRUE)
                                   "Caso confirmado por laboratorio - No Activo por criterio de laboratorio")) %>%
     group_by(residencia_provincia_nombre, residencia_departamento_nombre) %>% mutate(altas=n()) %>%
     select(residencia_provincia_nombre, residencia_departamento_nombre, altas) %>% unique()
-  
-  # covid19ER_Fall <- covid19ER %>% 
-  #   filter(carga_provincia_nombre=="Entre Ríos" & residencia_provincia_nombre=="Entre Ríos" & clasificacion_resumen=="Confirmado" & fallecido=="SI") 
 
+  covid19ER_Fall_sisa <- covid19ER %>%
+    filter(carga_provincia_nombre=="Entre Ríos" & residencia_provincia_nombre=="Entre Ríos" & clasificacion_resumen=="Confirmado" & fallecido=="SI")
+
+  covid19ER_Fall_S <-covid19ER_Fall_sisa %>% group_by(residencia_departamento_nombre) %>%  mutate(fallS = n()) %>% 
+    select(departamento = residencia_departamento_nombre, fallS) %>% unique()
+  
   covid19ER_Fall <- covid19ER %>% 
     filter(carga_provincia_nombre=="Entre Ríos" & residencia_provincia_nombre=="Entre Ríos" & clasificacion_resumen=="Confirmado" & fallecido=="SI") 
    
@@ -195,6 +198,62 @@ A continuación se muestra la cantidad de casos diarios totales informados por e
 ```
 
 
+
+
+## Fallecidos por Fechas
+La siguiente información es extraída de los datos abiertos proporcionados por el Ministerio de Salud Nacional, en base a la información reportada en el Sistema Nacional de Vigilancia en Salud (SISA)
+
+### Total Provincial
+```{r fallD, echo=FALSE, fig.align='center', message=FALSE, warning=FALSE, paged.print=FALSE, out.width='100%'}
+ # covid19ER_Fall_sisa
+ FallDiario <-  covid19ER_Fall_sisa %>% group_by(fecha_fallecimiento) %>%  
+    mutate(fallD = n()) %>% select(FECHA=fecha_fallecimiento, fallD) %>% unique()
+ 
+ # diario$FECHA <- as.Date(diario$FECHA, "%d/%m/%Y")
+  
+  # diario <- diario %>% ungroup() %>% arrange(FECHA) %>%  
+  #   mutate(casosP=round(roll_mean(casosD, n=7, align="right", fill = NA), 0) ) %>%
+  #   select(FECHA, casosD, casosP) %>% unique()
+
+
+  fig <- plot_ly(FallDiario, x = ~FECHA, y = ~fallD, type = 'bar', name = 'Fall. Diarios',text= ~fallD,  textposition = 'outside',
+        marker = list(color = 'rgba(222,45,38,0.8)'), width = 800)
+  # fig <- fig %>% add_trace(y = ~casosP, name = 'Casos Promedios', marker = list(color = 'rgb(55, 83, 109)'),
+  #                          text= ~casosP,  textposition = 'outside')
+  fig <- fig %>% layout(title = 'Fallecidos por Fecha de fallecimiento',
+           xaxis = list( title = "",
+             tickfont = list(size = 14, color = 'rgb(107, 107, 107)')),
+           yaxis = list( title = 'Cantidad',
+             titlefont = list(size = 16, color = 'rgb(107, 107, 107)'),
+             tickfont = list( size = 14, color = 'rgb(107, 107, 107)')),
+         legend = list(x = 0, y = 1, bgcolor = 'rgba(255, 255, 255, 0)', 
+                       bordercolor = 'rgba(255, 255, 255, 0)'),
+         barmode = 'group', bargap = 0.15, bargroupgap = 0.1)
+  fig
+    
+```
+
+
+### Por Departamento
+La siguiente información es extraída de los datos abiertos proporcionados por el Ministerio de Salud Nacional, en base a la información reportada en el Sistema Nacional de Vigilancia en Salud (SISA). 
+Se consideran los fallecidos residentes  y que han sido cargados por la provincia de Entre Ríos
+
+```{r fallDpto, echo=FALSE, fig.align='center', message=FALSE, warning=FALSE, paged.print=FALSE, out.width='100%'}
+
+fall_er <- covid19ER %>% filter(residencia_provincia_nombre=="Entre Ríos" & carga_provincia_nombre=="Entre Ríos") %>%
+  group_by(residencia_departamento_nombre, sexo, edad, fecha_fallecimiento) %>% mutate(fall =n()) %>% 
+  select(departamento = residencia_departamento_nombre, fecha= fecha_fallecimiento, fallecidos=fall) %>% unique()
+
+ fig <- plot_ly(fall_er, x = ~fecha, y = ~fallecidos, color = ~departamento,   text= ~fallecidos,  textposition = 'outside', type = "bar") #, mode='lines+markers') 
+  fig <- layout(fig, title="Fallecidos por Dpto. \n (por fecha de fallecimiento)",
+                xaxis = list(title = "día"), yaxis = list(title = "cantidad"))
+  fig
+
+  
+```
+
+
+
 ## Evolución departamental
 La evolución de casos por departamento desde el inicio de la pandemia se muestra a continuación
 
@@ -219,10 +278,11 @@ La evolución de casos por departamento desde el inicio de la pandemia se muestr
    names(evolER) <- c("departamento", "fecha", "tipo", "cant")
    
    p <- evolER %>%
-     filter(cant>0&tipo=="acumulados") %>%
+     filter(cant>0 & tipo=="acumulados") %>%
      group_by(departamento) %>% arrange(fecha) %>% mutate(dia1 = row_number())
    
-   fig <- plot_ly(p, x = ~fecha, y = ~cant, color = ~departamento, width = 800, type = "scatter", mode='lines+markers')
+   fig <- plot_ly(p, x = ~fecha, y = ~cant, color = ~departamento, width = 800, type = "scatter", 
+                 mode='lines+markers')
    fig <- layout(fig, title="Evolución de casos confirmados por Departamento",
                  xaxis = list(title = "día"), yaxis = list(title = "casos"))
    fig
@@ -240,7 +300,7 @@ Casos diarios promediados a 7 días previos.
   #   mutate(prom= round(roll_mean(cant,  n=7, align="right", fill = NA), 0)) %>%  
   #   filter(!is.na(prom) & prom>0)
 
-  fig <- plot_ly(diario, x = ~FECHA, y = ~promD, color = ~DEPARTAMENTO, type = "bar") #, mode='lines+markers') 
+  fig <- plot_ly(diario, x = ~FECHA, y = ~promD, color = ~DEPARTAMENTO,   text= ~round(promD, 0),  textposition = 'outside', type = "bar") #, mode='lines+markers') 
   fig <- layout(fig, title="Evolución de casos diarios por Dpto. \n (promedio de 7 días)",
                 xaxis = list(title = "día"), yaxis = list(title = "casos"))
   fig
@@ -570,7 +630,7 @@ Representa el porcentaje por grupo etario y sexo de todos los pacientes con COVI
    edadER <- edadER %>%  ungroup() %>% mutate(prop = round(cant/sum(cant)*100,2))
    edadER$prop <- if_else(edadER$sexo=="Hombre",  edadER$prop*-1, edadER$prop)
   
-   plot_ly(edadER, x = ~prop, y = ~grEdad, color = ~sexo, width = 700, height = 600) %>%
+   plot_ly(edadER, x = ~prop, y = ~grEdad, color = ~sexo, width = 900, height = 600) %>%
      add_bars(orientation = "h",
            hoverinfo = "y+text+name", 
            text =  ~paste(abs(round(prop,1)), "%", '\n(',cant,')'),  
@@ -603,14 +663,14 @@ Representa el porcentaje por grupo etario y sexo de todos los pacientes con COVI
                           if_else(edadERF$edad<70, "60 a 69", 
                           if_else(edadERF$edad<80, "70 a 79", "80 o más"))))))))
   
-  edadERF <- edadERF %>% group_by(grEdad, sexo) %>% mutate(cant = n()) %>%
+  edadERF <- edadERF %>% filter(!(sexo=="NR")) %>%  group_by(grEdad, sexo) %>% mutate(cant = n()) %>%
     select(grEdad, sexo, cant) %>% unique()
   
    edadERF$sexo <- if_else(edadERF$sexo=="M",  "Hombre", "Mujer")
    edadERF <- edadERF %>%  ungroup() %>% mutate(prop = round(cant/sum(cant)*100,2))
    edadERF$prop <- if_else(edadERF$sexo=="Hombre",  edadERF$prop*(-1), edadERF$prop)
   
-   plot_ly(edadERF, x = ~prop, y = ~grEdad, color = ~sexo, width = 800, height = 700) %>%
+   plot_ly(edadERF, x = ~prop, y = ~grEdad, color = ~sexo, width = 900, height = 700) %>%
      add_bars(orientation = "h",
            hoverinfo = "y+text+name", 
            text =  ~paste(abs(round(prop,1)), "%", '\n(',cant,')'),  
@@ -635,10 +695,10 @@ Representa el porcentaje por grupo etario y sexo de todos los pacientes con COVI
 ```{r let_Edad_ER, echo=FALSE, message=FALSE, warning=FALSE, paged.print=FALSE}
 
   let_edad <- edadER %>% left_join(edadERF, by=c("sexo"="sexo", "grEdad"="grEdad")) %>% 
-    filter(!is.na(grEdad)) %>% 
+    filter(!is.na(grEdad) & !is.na(sexo)) %>% 
   mutate(let = round(cant.y/cant.x*100, 1)) %>% select(sexo, grupo=grEdad, let) %>% unique()
   let_edad$let <- if_else(is.na(let_edad$let), 0, as.double(let_edad$let))
-   plot_ly(let_edad, x=~let, y=~grupo, color=~sexo, width = 800) %>% 
+   plot_ly(let_edad, x=~let, y=~grupo, color=~sexo, width = 900) %>% 
        add_bars(orientation = "h",
         hoverinfo = "y+text", 
         text = ~paste(let, '%'), 
@@ -767,11 +827,10 @@ A continuación se grafica el cambio en la movilidad de cada departamento tomand
          caption = "Fuente: https://data.humdata.org/group/arg", 
          y = "Movilidad", 
          x = "Fecha") +
-    facet_wrap(~ NAME_2, scales = "free_y", ncol = 4) +
+    facet_wrap(~ NAME_2, scales = "free_y", ncol = 8) +
     theme_elegante_std(base_family = "Assistant") 
 
-  ggplotly(p, name="Movilidad", #width = 900,
-               height = 900)
+  ggplotly(p, name="Movilidad", width = 1200 ) #, height = 800)
 
 ```
 
@@ -804,14 +863,15 @@ fallecidos <- covid_er_altas %>%
    left_join(covid19ER_Nexo, by=c("departamento"="departamento")) %>% 
    left_join(covid19ER_Lab, by=c("departamento"="departamento")) %>% 
    left_join(fallecidos, by=c("departamento"="departamento")) %>% 
+   left_join(covid19ER_Fall_S, by=c("departamento"="departamento")) %>% 
    left_join(descartados, by=c("departamento"="departamento")) %>% 
    left_join(sospechosos, by=c("departamento"="departamento")) %>% 
    left_join(dupl, by=c("departamento"="departamento")) %>% 
-   select(departamento, casos, nexo, lab, altas, fallecidos, descartados, sospechosos, dias) %>% unique() %>% arrange(departamento)
+   select(departamento, casos, nexo, lab, altas, fallecidos, fallS, descartados, sospechosos, dias) %>% unique() %>% arrange(departamento)
 
   tabla %>% datatable(extensions = 'Buttons', rownames = FALSE,
                   colnames = c("Departamento", "Casos Detectados", "Por Nexo", "Por Lab.", 
-                               "Recuperados", "Fallecidos", "Descartados", "Sospechosos", "Dias Dupl."),
+                               "Recuperados", "Fallecidos", "Fall. SISA", "Descartados", "Sospechosos", "Dias Dupl."),
             options = list(dom = 'Blfrtip',
                            buttons = c('copy', 'csv', 'excel', 'pdf', 'print'),
                            lengthMenu = list(c(10,25,50,-1),

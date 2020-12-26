@@ -881,7 +881,7 @@ La **tasa de mortalidad general** de cada una de las provincias viene dada por c
   p <- muertosArg  %>% group_by(PROVINCIA) %>% mutate(fall = sum(MUERTES, na.rm = T)) %>% 
     select(PROVINCIA, fall) %>% unique() %>% 
     left_join(poblacionArg, by = c("PROVINCIA"="provincia")) %>% 
-    mutate(tasa_mor = round(fall/poblacion * 1000000, 1)) %>% arrange(desc(tasa_mor))
+    mutate(tasa_mor = round(fall/poblacion * 1000000, 0)) %>% arrange(desc(tasa_mor))
   
 p$PROVINCIA <- if_else(p$PROVINCIA=="Ciudad de Buenos Aires", "CABA", p$PROVINCIA)
   fig <- plot_ly(p, type="bar")

@@ -44,7 +44,7 @@ deptos_er <- st_read(dsn ="data/mapas/departamentos_entrerios.shp")
 ### ENTRE RIOS
 covid_er <- entre_rios_casos <- read_excel("data/entre_rios_casos.xlsx", "CASOS1")
 localidades <- read_excel("data/entre_rios_casos.xlsx", "LOCALIDADES")
-covid_er_altas <- entre_rios_casos <- read_excel("data/entre_rios_casos.xlsx", "ALTAS")
+covid_er_fall <-  read_excel("data/entre_rios_casos.xlsx", "ALTAS")
 
 diasH <- covid_er %>%  group_by(DEPARTAMENTO, FECHA) %>% mutate(casos = sum(CASOS)) %>% 
   select(departamento=DEPARTAMENTO, fecha=FECHA, casos) %>% unique()
@@ -78,8 +78,10 @@ names(covid19ER) <- c("id_evento_caso", "sexo", "edad", "edad_anos_meses",
                       "fallecido", 	"fecha_fallecimiento",	"asistencia_respiratoria_mecanica",
                       "carga_provincia_id",	"origen_financiamiento",	"Clasificacion", "clasificacion_resumen",	
                       "residencia_provincia_id", 	"fecha_diagnostico", "residencia_departamento_id",	"ultima_actualizacion")
+
 covid19ER <- covid19ER %>% filter(residencia_provincia_nombre=="Entre Ríos" & carga_provincia_nombre=="Entre Ríos")
 # write.csv(covid19ER, "covidER.csv")
+
 covid19ER_Conf <- covid19ER %>%
   filter(clasificacion_resumen=="Confirmado" & 
            carga_provincia_nombre=="Entre Ríos" & 
@@ -93,7 +95,7 @@ covid19ER_Nexo <-covid19ER_Conf %>%
   group_by(residencia_provincia_nombre, residencia_departamento_nombre) %>% mutate(nexo=n()) %>%
   select(residencia_provincia_nombre, residencia_departamento_nombre, nexo) %>% unique()
 
-covid19ER_Lab <-covid19ER_Conf %>% 
+covid19ER_Lab <- covid19ER_Conf %>% 
   filter(!(Clasificacion %in% c("Caso confirmado por criterio clinico-epidemiológico - Activo",
                                 "Caso confirmado por criterio clínico-epidemiologico - Fallecido",
                                 "Caso confirmado por criterio clínico-epidemiológico  - No activo (por tiempo de evolución)",
@@ -110,6 +112,8 @@ covid19ER_Rec <- covid19ER %>%
                                 "Caso confirmado por laboratorio - No Activo por criterio de laboratorio")) %>%
   group_by(residencia_provincia_nombre, residencia_departamento_nombre) %>% mutate(altas=n()) %>%
   select(residencia_provincia_nombre, residencia_departamento_nombre, altas) %>% unique()
+
+covid_er_altas <- covid19ER_Rec # <- read_excel("data/entre_rios_casos.xlsx", "ALTAS")
 
 covid19ER_Fall_sisa <- covid19ER %>%
   filter(carga_provincia_nombre=="Entre Ríos" & 
@@ -134,27 +138,61 @@ covid19ER_Sosp <- covid19ER %>%
   mutate(sospechosos=n()) %>%
   select(residencia_provincia_nombre, residencia_departamento_nombre,Clasificacion, sospechosos) %>% unique()
 
+covid19ER_Desc_Sem <- covid19ER %>% 
+  filter(clasificacion_resumen=="Descartado" & 
+           Clasificacion=="Caso Descartado" &
+           residencia_provincia_nombre=="Entre Ríos" & 
+           carga_provincia_nombre=="Entre Ríos") 
+
+
+confLab <- covid19ER_Conf %>% 
+  filter(!(Clasificacion %in% c("Caso confirmado por criterio clinico-epidemiológico - Activo",
+                                "Caso confirmado por criterio clínico-epidemiologico - Fallecido",
+                                "Caso confirmado por criterio clínico-epidemiológico  - No activo (por tiempo de evolución)",
+                                "Caso confirmado por criterio clínico - epidemiológico -  Activo internado"))) %>% 
+  group_by(fecha_diagnostico, residencia_departamento_nombre) %>% 
+  mutate(lab=n()) %>%
+  select(departamento = residencia_departamento_nombre, fecha_diagnostico, confirmados= lab) %>% unique()
+
+
+
 covid19ER_Desc <- covid19ER %>% 
   filter(clasificacion_resumen=="Descartado" & 
            Clasificacion=="Caso Descartado" &
            residencia_provincia_nombre=="Entre Ríos" & 
            carga_provincia_nombre=="Entre Ríos") %>%
-  group_by(residencia_provincia_nombre, residencia_departamento_nombre) %>%
-  mutate(descartados=n())
+  group_by(residencia_departamento_nombre, fecha_diagnostico) %>%
+  mutate(descartados=n()) %>%  
+  select(departamento = residencia_departamento_nombre, fecha_diagnostico, descartado = descartados) %>% unique()
 
+
+posit <- covid19ER_Desc %>% left_join(confLab, by=c("departamento"="departamento", "fecha_diagnostico"="fecha_diagnostico"))
+posit$confirmados <- if_else(is.na(posit$confirmados), 0, as.double(posit$confirmados))
+  
+posit$positividad <- round(posit$confirmados/(posit$confirmados + posit$descartado)*100, 0)
+
+posit <- posit %>% group_by(departamento) %>% arrange(fecha_diagnostico) %>%  
+  mutate(promPos = round(roll_mean(positividad, n=7,align = "right", fill=NA),0))
+  
 # table(covid19ER_Desc$Clasificacion)
-descartados <-covid19ER_Desc %>% 
-  select(provincia=residencia_provincia_nombre,
-         departamento=residencia_departamento_nombre, descartados) %>% unique()
+descartados <- covid19ER %>% 
+  filter(clasificacion_resumen=="Descartado" & 
+           Clasificacion=="Caso Descartado" &
+           residencia_provincia_nombre=="Entre Ríos" & 
+           carga_provincia_nombre=="Entre Ríos") %>%
+  group_by(residencia_departamento_nombre) %>%
+  mutate(descartados=n()) %>%  
+  select(departamento = residencia_departamento_nombre, descartado = descartados) %>% unique()
+
 
 ### Movilidad
-poligonosMovil <- read_csv("data/poligonosMovil.csv",  locale = locale(encoding = "ISO-8859-1")) %>% 
-  filter(NAME_1=="Entre Ríos")
-movement <- read_delim("data/movement-range.txt", "\t", escape_double = FALSE, 
-                       locale = locale(encoding = "ISO-8859-1"), 
-                       trim_ws = TRUE) %>% filter(country=="ARG") 
-datos_mov <- movement %>% left_join(poligonosMovil, by=c("polygon_id" = "GID_2")) %>% 
-  filter(NAME_1 =="Entre Ríos")
+# poligonosMovil <- read_csv("data/poligonosMovil.csv",  locale = locale(encoding = "ISO-8859-1")) %>% 
+#   filter(NAME_1=="Entre Ríos")
+# movement <- read_delim("data/movement-range.txt", "\t", escape_double = FALSE, 
+#                        locale = locale(encoding = "ISO-8859-1"), 
+#                        trim_ws = TRUE) %>% filter(country=="ARG") 
+# datos_mov <- movement %>% left_join(poligonosMovil, by=c("polygon_id" = "GID_2")) %>% 
+#   filter(NAME_1 =="Entre Ríos")
 
 porLoc <- covid_er %>% group_by(DEPARTAMENTO, LOCALIDAD) %>%
   mutate(total = sum(CASOS)) %>% select(DEPARTAMENTO, LOCALIDAD, total) %>% unique() %>% 
@@ -372,8 +410,6 @@ incDep <- diario %>% filter(FECHA > "2020-06-14") %>%
          incidP =  round(roll_mean(incid,  n=7, align="right", fill = 0), 1)) %>% #NA), 0)) %>% 
   arrange(DEPARTAMENTO, FECHA)
 
-# col <- diario %>%  filter(DEPARTAMENTO=="Colón")
-# incDep$incidP <- if_else(is.na(incDep$incidP), 0, incDep$incidP)
 fig <- plot_ly(incDep, x = ~FECHA, y = ~incidP, color = ~DEPARTAMENTO, alpha = 1,  size = 20, type = 'area')
 fig <- layout(fig,  autosize = F, width = 800,
               title="Evolución de la Incidencia diaria por Departamento",
@@ -386,8 +422,7 @@ fig
 #### A 14 días
 ```{r incDptalvDiaria14, echo=FALSE, fig.align='center', message=FALSE, warning=FALSE, out.width='100%' }
 incDep <- incDep %>% 
-  # diario %>% filter(FECHA > "2020-06-14") %>% 
-  # left_join(poblac_er, by=c("DEPARTAMENTO"="departamento")) %>% 
+ 
   mutate(#incid = round(cantidad/poblacion*100000, 1),
          incidP2 =  round(roll_mean(incid,  n=14, align="right", fill = 0), 1)) %>% #NA), 0)) %>% 
   arrange(DEPARTAMENTO, FECHA)
@@ -415,6 +450,26 @@ incDep %>%
 ```
 
 
+
+
+
+## Positividad por Departamento
+La positividad es calculada en base a los casos confirmados y descartados por Laboratorio. 
+
+A continuación se muestra la curva de positividad para cada departamento, calculada como el promedio de los últimos 7 días.
+
+```{r positProv,echo=FALSE, message=FALSE, warning=FALSE, out.width='100%'}
+      posit <- posit %>% filter(month(fecha_diagnostico)>=6)
+      
+      fig <- plot_ly(posit, x = ~fecha_diagnostico, y = ~promPos, 
+                    color = ~departamento, type = "scatter", mode='lines+markers') 
+      fig <- layout(fig,   autosize = F, width = 800, height=550,# 
+                    title="Evolución de la Tasa de Positividad por Departamento \n (promedio a 7 días)",
+                    legend = list(x = 0.1, y = 1.0),
+                    xaxis = list(title = "día"), yaxis = list(title = "% Posit.", side = "right"))
+      fig
+
+```
 
 
 
@@ -490,8 +545,10 @@ A continuación se muestran la cantidad de casos Activos de COVID-19. Los casos 
 ```{r mapaERAct, echo=FALSE, message=FALSE, warning=FALSE, paged.print=FALSE}
 covider$provincia <- "Entre Ríos"
 activos <- covider %>% 
-  left_join(covid_er_altas, by=c("DEPARTAMENTO"="DEPARTAMENTO"))
-activos$altas <- if_else(is.na(activos$ALTAS), 0, as.double(activos$ALTAS))  
+  left_join(covid_er_altas, by=c("DEPARTAMENTO"="residencia_departamento_nombre")) %>% 
+  left_join(covid_er_fall, by = c("DEPARTAMENTO"="DEPARTAMENTO"))
+activos$altas <- if_else(is.na(activos$altas), 0, as.double(activos$altas))  
+
 activos$FALLECIDOS <- if_else(is.na(activos$FALLECIDOS), 0, as.double(activos$FALLECIDOS))  
 activos$activos <- activos$cantidad - activos$altas - activos$FALLECIDOS
 colors <- c("#ffffcc", "#ffeda0", "#fed976", "#feb24c", "#fd8d3c", "#fc4e2a", "#e31a1c", "#bd0026", "#800026")
@@ -525,16 +582,18 @@ A continuación se muestra el mapa departamental de los fallecidos COVID-19 en l
 ###  {.tabset  .tabset-fade .tabset-pills}
 #### Mapa
 ```{r mapaERFall, echo=FALSE, message=FALSE, warning=FALSE, paged.print=FALSE}
-fallecidos <- covider %>% 
-  left_join(covid_er_altas, by=c("DEPARTAMENTO"="DEPARTAMENTO"))
-fallecidos$FALLECIDOS <- if_else(is.na(fallecidos$FALLECIDOS), 0, as.double(fallecidos$FALLECIDOS))
+# fallecidos <- covider %>% 
+#   left_join(covid_er_altas, by=c("DEPARTAMENTO"="DEPARTAMENTO"))
+# fallecidos$FALLECIDOS <- if_else(is.na(fallecidos$FALLECIDOS), 0, as.double(fallecidos$FALLECIDOS))
+
 colors <- c("#ffffcc", "#ffeda0", "#fed976", "#feb24c", "#fd8d3c", "#fc4e2a", "#e31a1c", "#bd0026", "#800026")
+
 highchart( ) %>%
   hc_title(text = "<i>COVID-19 - Fallecidos por Departamento en Entre Ríos</i> - <b>GIBD</b>",
            margin = 5, align = "center", 
            style = list(color = "#bd0026", useHTML = TRUE, fontWeight = "bold")) %>% 
   hc_tooltip(followPointer =  FALSE) %>%
-  hc_add_series_map(entrerios, fallecidos, name = "Fallecidos", value = "FALLECIDOS",
+  hc_add_series_map(entrerios, activos, name = "Fallecidos", value = "FALLECIDOS",
                     joinBy = c("nam", "DEPARTAMENTO"),
                     dataLabels = list(enabled = TRUE,
                                       format = '{point.properties.nam}: {point.value}')) %>%
@@ -747,13 +806,13 @@ Para simplificar la lectura se graficará la cantidad de casos confirmados y des
 #### Casos confirmados y descartados
 ```{r descartados, echo=FALSE, message=FALSE, warning=FALSE, paged.print=FALSE}
 
- descartadosER <- covid19ER_Desc  %>%  filter(carga_provincia_nombre=="Entre Ríos")
+ # descartadosER <- covid19ER_Desc_Sem  # %>%  filter(carga_provincia_nombre=="Entre Ríos")
  confirmadosER <- covid19ER_Conf %>%  filter(carga_provincia_nombre=="Entre Ríos") %>% 
    group_by(sepi_apertura) %>% 
    mutate(conf =n(), desde=min(fecha_apertura), hasta=max(fecha_apertura)) %>% 
    select(sepi_apertura, desde, hasta, conf)
    
- sem <- descartadosER %>% group_by(sepi_apertura) %>% 
+ sem <- covid19ER_Desc_Sem %>% group_by(sepi_apertura) %>% 
    mutate(cant =n(), desde=min(fecha_apertura), hasta=max(fecha_apertura)) %>% 
   select(sepi_apertura, desde, hasta, cant)  %>% unique() %>% 
    left_join(confirmadosER, by=c("sepi_apertura"="sepi_apertura")) %>% 
@@ -832,33 +891,34 @@ A continuación se graficará la cantidad de casos sospechosos por departamento 
 ```
 
 
-## Movilidad
+<!-- ## Movilidad -->
 
-A continuación se grafica el cambio en la movilidad de cada departamento tomando como linea de base la movilidad al mes de Febrero. Los datos utilizados son medidos por Facebook.
+<!-- A continuación se grafica el cambio en la movilidad de cada departamento tomando como linea de base la movilidad al mes de Febrero. Los datos utilizados son medidos por Facebook. -->
 
-```{r movilidad, echo=FALSE, message=FALSE, warning=FALSE, paged.print=FALSE, out.width='100%'}
+
+<!--  ```{r movilidad, echo=FALSE, message=FALSE, warning=FALSE, paged.print=FALSE, out.width='100%'} -->
   
-  datos_mov$movilidad <- round(-datos_mov$all_day_ratio_single_tile_users*100, 0)
-  datos_mov$fecha <- datos_mov$ds
-  
-  p<- datos_mov %>% 
-    # filter(NAME_1 =="Entre Ríos") %>%
-    ggplot(mapping=aes(x=fecha, y=movilidad)) +
-    geom_line(color="#67a9cf") +
-    geom_point(color="#67a9cf") +
-    geom_smooth(method = 'loess',
-                formula = 'y ~ x', alpha = 0.2, size = 1, span = .3, se=FALSE, color="#ef8a62") + 
-    labs(title = paste("COVID-19 en Entre Ríos"), 
-         subtitle = paste0("Variación de la movilidad por departamento (al: ", max(datos_mov$ds), ")") , 
-         caption = "Fuente: https://data.humdata.org/group/arg", 
-         y = "Movilidad", 
-         x = "Fecha") +
-    facet_wrap(~ NAME_2, scales = "free_y", ncol = 8) +
-    theme_elegante_std(base_family = "Assistant") 
+  <!-- datos_mov$movilidad <- round(-datos_mov$all_day_ratio_single_tile_users*100, 0) -->
+  <!-- datos_mov$fecha <- datos_mov$ds -->
 
-  ggplotly(p, name="Movilidad", width = 1200 ) #, height = 800)
+  <!-- p<- datos_mov %>%  -->
+  <!--   # filter(NAME_1 =="Entre Ríos") %>% -->
+  <!--   ggplot(mapping=aes(x=fecha, y=movilidad)) + -->
+  <!--   geom_line(color="#67a9cf") + -->
+  <!--   geom_point(color="#67a9cf") + -->
+  <!--   geom_smooth(method = 'loess', -->
+  <!--               formula = 'y ~ x', alpha = 0.2, size = 1, span = .3, se=FALSE, color="#ef8a62") +  -->
+  <!--   labs(title = paste("COVID-19 en Entre Ríos"),  -->
+  <!--        subtitle = paste0("Variación de la movilidad por departamento (al: ", max(datos_mov$ds), ")") ,  -->
+  <!--        caption = "Fuente: https://data.humdata.org/group/arg",  -->
+  <!--        y = "Movilidad",  -->
+  <!--        x = "Fecha") + -->
+  <!--   facet_wrap(~ NAME_2, scales = "free_y", ncol = 8) + -->
+  <!--   theme_elegante_std(base_family = "Assistant")  -->
 
-```
+  <!-- ggplotly(p, name="Movilidad", width = 1200 ) #, height = 800) -->
+
+<!-- ``` -->
 
 
 
@@ -870,7 +930,8 @@ Los datos pueden ser descargados en diversos formatos
  
 sospechosos <- covid19ER_Sosp %>% group_by(residencia_departamento_nombre) %>% mutate(sospechosos=sum(sospechosos)) %>% 
   select(departamento=residencia_departamento_nombre, sospechosos) %>% unique()
-fallecidos <- covid_er_altas %>% 
+
+fallecidos <- covid_er_fall %>% #  covid_er_altas %>%
   select(departamento = DEPARTAMENTO, fallecidos=FALLECIDOS)
 
 dupl <- dupl %>% select(departamento, dias)
@@ -887,7 +948,7 @@ tabla <- covider %>%
    left_join(descartados, by=c("departamento"="departamento")) %>% 
    left_join(sospechosos, by=c("departamento"="departamento")) %>% 
    left_join(dupl, by=c("departamento"="departamento")) %>% 
-   select(departamento, casos, nexo, lab, altas, fallecidos, fallS, descartados, sospechosos, dias) %>%
+   select(departamento, casos, nexo, lab, altas, fallecidos, fallS, descartado, sospechosos, dias) %>%
   unique() %>% arrange(departamento)
 
 tabla %>% datatable(extensions = 'Buttons', rownames = FALSE,

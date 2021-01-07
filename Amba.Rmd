@@ -213,7 +213,7 @@ Los casos diarios son obtenidos de la base de datos abiertas del Ministerio de S
 Por este motivo es usual que los últimos días presente siempre una cantidad menor de casos confirmados. Es recomendable observar las tendencias hasta diez días antes del actual.
 
 
-```{r primerProm, echo=FALSE, fig.align='center', message=FALSE, warning=FALSE, paged.print=FALSE, out.width='100%'}
+```{r primerPromS, echo=FALSE, fig.align='center', message=FALSE, warning=FALSE, paged.print=FALSE, out.width='100%'}
 
   amba %>% filter(CORDON=="1er") %>% select(cordon=CORDON, dia=fecha, distrito=Partido, cantidad=diarios) -> plot_data_n
 
@@ -232,63 +232,84 @@ Por este motivo es usual que los últimos días presente siempre una cantidad me
 
 
 
-### Movilidad CABA y 1° Cordón
-
-Los datos de movilidad son obtenidos por Facebook tomando la movilidad existente en febrero como base para comparar la de los días posteriores.  
-
-```{r movilidad1, echo=FALSE, fig.align='center', message=FALSE, warning=FALSE, paged.print=FALSE, out.width='100%'}
- 
-  ### NORTE
-  datos <- datos_mov %>% filter(NAME_2 %in% primer) %>% 
-  select(polygon_name=NAME_2, ds, all_day_bing_tiles_visited_relative_change) %>% unique() 
-
-  datos$polygon_name <- gsub("Distrito Federal", "CABA", datos$polygon_name )
-  # unique(datos_mov$NAME_2)
-  datos$movilidad <- round(datos$all_day_bing_tiles_visited_relative_change*100, 1)
-  datos$fecha <- datos$ds
-  
-  uno <-  datos %>% ggplot(mapping=aes(x=fecha, y=movilidad)) +
-    geom_line(color="#67a9cf") +
-    geom_point(color="#67a9cf") +
-    geom_smooth(method = 'loess',
-                formula = 'y ~ x', alpha = 0.2, size = 1, span = .3, se=FALSE, color="#ef8a62") +
-    labs(title = paste("COVID-19: Variación de la movilidad en CABA y 1° cordón de PBA "), 
-         y = "Movilidad", 
-         x = "Fecha") +
-    facet_wrap(~ polygon_name, scales = "free_y", ncol = 2) #+ theme_elegante_std(base_family = "Assistant")
-  
-  ggplotly(uno, name="Movilidad",  height = 900)%>% layout(showlegend=F)
-  
-
-  
-  
-```
+### Casos diarios Promedio 1
+Los casos diarios promediados a 7 días
 
 
+```{r primerProm, echo=FALSE, fig.align='center', message=FALSE, warning=FALSE, paged.print=FALSE, out.width='100%'}
+ primer <- amba %>% filter(CORDON=="1er") %>% select(cordon=CORDON, dia=fecha, distrito=Partido, cantidad=diarios)
 
-### Mapa de Incidencia
 
-La incidencia se calcula en base a los datos reportados por los Ministerios de Salud de la Ciudad de Buenos Aires y de la provincia de Buenos Aires. 
-Como población se considera la proyectada por INDEC para el 2020.
+primer <- primer %>% group_by(distrito) %>%  mutate(prom = round(roll_mean(cantidad, n=7, fill = 0),0) ) 
 
-```{r inc1, echo=FALSE, fig.align='center', message=FALSE, warning=FALSE, paged.print=FALSE, out.width='100%'}
- 
-# incidencia <- deptos_covid %>% select(departam_1, incidencia)
-# write.csv(incidencia, "incidencia.csv")
-  leaflet(data = deptos_covid1) %>% 
-    addTiles(urlTemplate = urlign, attribution="IGN") %>%
-    addPolygons( color = "#444444", weight = 1,
-                 fillColor = color(deptos_covid1$incidencia), fillOpacity = 0.6,
-                 label = paste0(deptos_covid1$departam_1, ": ", deptos_covid1$CASOS),
-                 popup = paste0(deptos_covid1$departam_1,
-                               " <br/> Casos: ", deptos_covid1$CASOS,
-                               " <br/>- Incidencia: ", deptos_covid1$incidencia),
-                 highlightOptions = highlightOptions(color = "white", weight = 2, bringToFront = TRUE))  %>%
-        addFullscreenControl()  %>%     
-    addLegend(colors = c('#FFFFFF','#fdd49e', '#fc8d59', '#d7301f', '#b30000', '#7f0000'),
-              labels= c("0", "1-249", "250-499", "500-999", "1000 - 1499", "1500 o más"), position ="bottomright") 
+fig <- plot_ly(primer, x = ~dia, y = ~prom, color = ~distrito, 
+               text= ~round(prom, 0),  textposition = 'outside', type = "bar")
+fig <- layout(fig, title="Evolución de casos diarios por Distrito \n (promedio de 7 días)",
+              xaxis = list(title = "día"), yaxis = list(title = "casos"))
+fig
 
 ```
+
+
+
+ 
+<!-- ### Movilidad CABA y 1° Cordón -->
+
+<!-- Los datos de movilidad son obtenidos por Facebook tomando la movilidad existente en febrero como base para comparar la de los días posteriores.   -->
+
+<!--  ```{r movilidad1, echo=FALSE, fig.align='center', message=FALSE, warning=FALSE, paged.print=FALSE, out.width='100%'} -->
+ 
+<!--   ### NORTE -->
+<!--   datos <- datos_mov %>% filter(NAME_2 %in% primer) %>%  -->
+<!--   select(polygon_name=NAME_2, ds, all_day_bing_tiles_visited_relative_change) %>% unique()  -->
+
+<!--   datos$polygon_name <- gsub("Distrito Federal", "CABA", datos$polygon_name ) -->
+<!--   # unique(datos_mov$NAME_2) -->
+<!--   datos$movilidad <- round(datos$all_day_bing_tiles_visited_relative_change*100, 1) -->
+<!--   datos$fecha <- datos$ds -->
+
+<!--   uno <-  datos %>% ggplot(mapping=aes(x=fecha, y=movilidad)) + -->
+<!--     geom_line(color="#67a9cf") + -->
+<!--     geom_point(color="#67a9cf") + -->
+<!--     geom_smooth(method = 'loess', -->
+<!--                 formula = 'y ~ x', alpha = 0.2, size = 1, span = .3, se=FALSE, color="#ef8a62") + -->
+<!--     labs(title = paste("COVID-19: Variación de la movilidad en CABA y 1° cordón de PBA "),  -->
+<!--          y = "Movilidad",  -->
+<!--          x = "Fecha") + -->
+<!--     facet_wrap(~ polygon_name, scales = "free_y", ncol = 2) #+ theme_elegante_std(base_family = "Assistant") -->
+
+<!--   ggplotly(uno, name="Movilidad",  height = 900)%>% layout(showlegend=F) -->
+
+
+
+
+<!-- ``` -->
+
+
+
+<!-- ### Mapa de Incidencia -->
+
+<!-- La incidencia se calcula en base a los datos reportados por los Ministerios de Salud de la Ciudad de Buenos Aires y de la provincia de Buenos Aires.  -->
+<!-- Como población se considera la proyectada por INDEC para el 2020. -->
+
+<!-- # ```{r inc1, echo=FALSE, fig.align='center', message=FALSE, warning=FALSE, paged.print=FALSE, out.width='100%'} -->
+<!-- #   -->
+<!-- # # incidencia <- deptos_covid %>% select(departam_1, incidencia) -->
+<!-- # # write.csv(incidencia, "incidencia.csv") -->
+<!-- #   leaflet(data = deptos_covid1) %>%  -->
+<!-- #     addTiles(urlTemplate = urlign, attribution="IGN") %>% -->
+<!-- #     addPolygons( color = "#444444", weight = 1, -->
+<!-- #                  fillColor = color(deptos_covid1$incidencia), fillOpacity = 0.6, -->
+<!-- #                  label = paste0(deptos_covid1$departam_1, ": ", deptos_covid1$CASOS), -->
+<!-- #                  popup = paste0(deptos_covid1$departam_1, -->
+<!-- #                                " <br/> Casos: ", deptos_covid1$CASOS, -->
+<!-- #                                " <br/>- Incidencia: ", deptos_covid1$incidencia), -->
+<!-- #                  highlightOptions = highlightOptions(color = "white", weight = 2, bringToFront = TRUE))  %>% -->
+<!-- #         addFullscreenControl()  %>%      -->
+<!-- #     addLegend(colors = c('#FFFFFF','#fdd49e', '#fc8d59', '#d7301f', '#b30000', '#7f0000'), -->
+<!-- #               labels= c("0", "1-249", "250-499", "500-999", "1000 - 1499", "1500 o más"), position ="bottomright")  -->
+<!-- #  -->
+<!-- # ``` -->
 
 
 ## PBA: 2° Cordón
@@ -336,54 +357,77 @@ Como población se considera la proyectada por INDEC para el 2020.
 
 
 
-### Movilidad 2° Cordón
 
-```{r movilidad2, echo=FALSE, fig.align='center', message=FALSE, warning=FALSE, paged.print=FALSE, out.width='100%'}
+### Casos diarios Promedio 2
+Los casos diarios promediados a 7 días
 
-  datos <- datos_mov %>% filter(NAME_2 %in% segundo) %>% 
-  select(polygon_name=NAME_2, ds, all_day_bing_tiles_visited_relative_change) %>% unique() 
 
-# unique(datos_mov$NAME_2)
-  datos$movilidad <- round(datos$all_day_bing_tiles_visited_relative_change*100, 1)
-  datos$fecha <- datos$ds
-  
-  dos <-  datos %>% ggplot(mapping=aes(x=fecha, y=movilidad)) +
-    geom_line(color="#67a9cf") +
-    geom_point(color="#67a9cf") +
-    geom_smooth(method = 'loess',
-                formula = 'y ~ x', alpha = 0.2, size = 1, span = .3, se=FALSE, color="#ef8a62") +
-    labs(title = paste("COVID-19: Variación de la movilidad en el 2° cordón de PBA "), 
-         y = "Movilidad", 
-         x = "Fecha") +
-    facet_wrap(~ polygon_name, scales = "free_y", ncol = 2) #+ theme_elegante_std(base_family = "Assistant")
-  
-  ggplotly(dos, name="Movilidad",  height = 900)%>% layout(showlegend=F)
-  
-  
+```{r segrProm, echo=FALSE, fig.align='center', message=FALSE, warning=FALSE, paged.print=FALSE, out.width='100%'}
+ primer <- amba %>% filter(CORDON=="2do") %>% select(cordon=CORDON, dia=fecha, distrito=Partido, cantidad=diarios)
+
+
+primer <- primer %>% group_by(distrito) %>%  mutate(prom = round(roll_mean(cantidad, n=7, fill = 0),0) ) 
+
+fig <- plot_ly(primer, x = ~dia, y = ~prom, color = ~distrito, 
+               text= ~round(prom, 0),  textposition = 'outside', type = "bar")
+fig <- layout(fig, title="Evolución de casos diarios por Distrito \n (promedio de 7 días)",
+              xaxis = list(title = "día"), yaxis = list(title = "casos"))
+fig
+
 ```
 
-### Mapa de Incidencia
 
-La incidencia se calcula en base a los datos reportados por los Ministerios de Salud de la Ciudad de Buenos Aires y de la provincia de Buenos Aires. 
-Como población se considera la proyectada por INDEC para el 2020.
 
-```{r inc2, echo=FALSE, fig.align='center', message=FALSE, warning=FALSE, paged.print=FALSE, out.width='100%'}
+
+
+<!-- ### Movilidad 2° Cordón -->
+
+<!-- # ```{r movilidad2, echo=FALSE, fig.align='center', message=FALSE, warning=FALSE, paged.print=FALSE, out.width='100%'} -->
+
+<!--   datos <- datos_mov %>% filter(NAME_2 %in% segundo) %>%  -->
+<!--   select(polygon_name=NAME_2, ds, all_day_bing_tiles_visited_relative_change) %>% unique()  -->
+
+<!-- # unique(datos_mov$NAME_2) -->
+<!--   datos$movilidad <- round(datos$all_day_bing_tiles_visited_relative_change*100, 1) -->
+<!--   datos$fecha <- datos$ds -->
+
+<!--   dos <-  datos %>% ggplot(mapping=aes(x=fecha, y=movilidad)) + -->
+<!--     geom_line(color="#67a9cf") + -->
+<!--     geom_point(color="#67a9cf") + -->
+<!--     geom_smooth(method = 'loess', -->
+<!--                 formula = 'y ~ x', alpha = 0.2, size = 1, span = .3, se=FALSE, color="#ef8a62") + -->
+<!--     labs(title = paste("COVID-19: Variación de la movilidad en el 2° cordón de PBA "),  -->
+<!--          y = "Movilidad",  -->
+<!--          x = "Fecha") + -->
+<!--     facet_wrap(~ polygon_name, scales = "free_y", ncol = 2) #+ theme_elegante_std(base_family = "Assistant") -->
+
+<!--   ggplotly(dos, name="Movilidad",  height = 900)%>% layout(showlegend=F) -->
+
+  
+<!-- ``` -->
+
+<!-- ### Mapa de Incidencia -->
+
+<!-- La incidencia se calcula en base a los datos reportados por los Ministerios de Salud de la Ciudad de Buenos Aires y de la provincia de Buenos Aires.  -->
+<!-- Como población se considera la proyectada por INDEC para el 2020. -->
+
+<!-- # ```{r inc2, echo=FALSE, fig.align='center', message=FALSE, warning=FALSE, paged.print=FALSE, out.width='100%'} -->
  
-# deptos_covid$departam_1
-  leaflet(data = deptos_covid2) %>% 
-    addTiles(urlTemplate = urlign, attribution="IGN") %>%
-    addPolygons( color = "#444444", weight = 1,
-                 fillColor = color(deptos_covid2$incidencia), fillOpacity = 0.6,
-                 label = paste0(deptos_covid2$departam_1, ": ", deptos_covid2$CASOS),
-                 popup = paste0(deptos_covid2$departam_1,
-                               " <br/> Casos: ", deptos_covid2$CASOS,
-                               " <br/>- Incidencia: ", deptos_covid2$incidencia),
-                 highlightOptions = highlightOptions(color = "white", weight = 2, bringToFront = TRUE))  %>%
-        addFullscreenControl()  %>%     
-    addLegend(colors = c('#FFFFFF','#fdd49e', '#fc8d59', '#d7301f', '#b30000', '#7f0000'),
-              labels= c("0", "1-249", "250-499", "500-999", "1000 - 1499", "1500 o más"), position ="bottomright") 
+<!-- # deptos_covid$departam_1 -->
+<!--   leaflet(data = deptos_covid2) %>%  -->
+<!--     addTiles(urlTemplate = urlign, attribution="IGN") %>% -->
+<!--     addPolygons( color = "#444444", weight = 1, -->
+<!--                  fillColor = color(deptos_covid2$incidencia), fillOpacity = 0.6, -->
+<!--                  label = paste0(deptos_covid2$departam_1, ": ", deptos_covid2$CASOS), -->
+<!--                  popup = paste0(deptos_covid2$departam_1, -->
+<!--                                " <br/> Casos: ", deptos_covid2$CASOS, -->
+<!--                                " <br/>- Incidencia: ", deptos_covid2$incidencia), -->
+<!--                  highlightOptions = highlightOptions(color = "white", weight = 2, bringToFront = TRUE))  %>% -->
+<!--         addFullscreenControl()  %>%      -->
+<!--     addLegend(colors = c('#FFFFFF','#fdd49e', '#fc8d59', '#d7301f', '#b30000', '#7f0000'), -->
+<!--               labels= c("0", "1-249", "250-499", "500-999", "1000 - 1499", "1500 o más"), position ="bottomright")  -->
 
-```
+<!-- ``` -->
 
 
 
@@ -433,53 +477,73 @@ Casos acumulados del Tercer cordón
 
 
 
-
-### Movilidad 3° Cordón
-
-```{r movilidad3, echo=FALSE, fig.align='center', message=FALSE, warning=FALSE, paged.print=FALSE, out.width='100%'}
-
-  datos <- datos_mov %>% filter(NAME_2 %in% tercer) %>% 
-  select(polygon_name=NAME_2, ds, all_day_bing_tiles_visited_relative_change) %>% unique() 
-
-  datos$movilidad <- round(datos$all_day_bing_tiles_visited_relative_change*100, 1)
-  datos$fecha <- datos$ds
-  
-  tres <-  datos %>% ggplot(mapping=aes(x=fecha, y=movilidad)) +
-    geom_line(color="#67a9cf") +
-    geom_point(color="#67a9cf") +
-    geom_smooth(method = 'loess',
-                formula = 'y ~ x', alpha = 0.2, size = 1, span = .3, se=FALSE, color="#ef8a62") +
-    labs(title = paste("COVID-19: Variación de la movilidad en el 2° cordón de PBA "), 
-         y = "Movilidad", 
-         x = "Fecha") +
-    facet_wrap(~ polygon_name, scales = "free_y", ncol = 2) #+ theme_elegante_std(base_family = "Assistant")
-  
-  ggplotly(tres, name="Movilidad",  height = 900)%>% layout(showlegend=F)
-  
-  
-```
+### Casos diarios Promedio 3
+Los casos diarios promediados a 7 días
 
 
+```{r terProm, echo=FALSE, fig.align='center', message=FALSE, warning=FALSE, paged.print=FALSE, out.width='100%'}
+ primer <- amba %>% filter(CORDON=="3ro") %>% select(cordon=CORDON, dia=fecha, distrito=Partido, cantidad=diarios)
 
-### Mapa de Incidencia
 
-La incidencia se calcula en base a los datos reportados por los Ministerios de Salud de la Ciudad de Buenos Aires y de la provincia de Buenos Aires. 
-Como población se considera la proyectada por INDEC para el 2020.
+primer <- primer %>% group_by(distrito) %>%  mutate(prom = round(roll_mean(cantidad, n=7, fill = 0),0) ) 
 
-```{r inc3, echo=FALSE, fig.align='center', message=FALSE, warning=FALSE, paged.print=FALSE, out.width='100%'}
- 
-# deptos_covid$departam_1
-  leaflet(data = deptos_covid3) %>% 
-    addTiles(urlTemplate = urlign, attribution="IGN") %>%
-    addPolygons( color = "#444444", weight = 1,
-                 fillColor = color(deptos_covid3$incidencia), fillOpacity = 0.6,
-                 label = paste0(deptos_covid3$departam_1, ": ", deptos_covid3$CASOS),
-                 popup = paste0(deptos_covid3$departam_1,
-                               " <br/> Casos: ", deptos_covid3$CASOS,
-                               " <br/>- Incidencia: ", deptos_covid3$incidencia),
-                 highlightOptions = highlightOptions(color = "white", weight = 2, bringToFront = TRUE))  %>%
-        addFullscreenControl()  %>%     
-    addLegend(colors = c('#FFFFFF','#fdd49e', '#fc8d59', '#d7301f', '#b30000', '#7f0000'),
-              labels= c("0", "1-249", "250-499", "500-999", "1000 - 1499", "1500 o más"), position ="bottomright") 
+fig <- plot_ly(primer, x = ~dia, y = ~prom, color = ~distrito, 
+               text= ~round(prom, 0),  textposition = 'outside', type = "bar")
+fig <- layout(fig, title="Evolución de casos diarios por Distrito \n (promedio de 7 días)",
+              xaxis = list(title = "día"), yaxis = list(title = "casos"))
+fig
 
 ```
+
+
+
+
+<!-- ### Movilidad 3° Cordón -->
+
+<!-- ```{r movilidad3, echo=FALSE, fig.align='center', message=FALSE, warning=FALSE, paged.print=FALSE, out.width='100%'} -->
+
+<!--   datos <- datos_mov %>% filter(NAME_2 %in% tercer) %>%  -->
+<!--   select(polygon_name=NAME_2, ds, all_day_bing_tiles_visited_relative_change) %>% unique()  -->
+
+<!--   datos$movilidad <- round(datos$all_day_bing_tiles_visited_relative_change*100, 1) -->
+<!--   datos$fecha <- datos$ds -->
+
+<!--   tres <-  datos %>% ggplot(mapping=aes(x=fecha, y=movilidad)) + -->
+<!--     geom_line(color="#67a9cf") + -->
+<!--     geom_point(color="#67a9cf") + -->
+<!--     geom_smooth(method = 'loess', -->
+<!--                 formula = 'y ~ x', alpha = 0.2, size = 1, span = .3, se=FALSE, color="#ef8a62") + -->
+<!--     labs(title = paste("COVID-19: Variación de la movilidad en el 2° cordón de PBA "),  -->
+<!--          y = "Movilidad",  -->
+<!--          x = "Fecha") + -->
+<!--     facet_wrap(~ polygon_name, scales = "free_y", ncol = 2) #+ theme_elegante_std(base_family = "Assistant") -->
+
+<!--   ggplotly(tres, name="Movilidad",  height = 900)%>% layout(showlegend=F) -->
+
+
+<!-- ``` -->
+
+
+
+<!-- ### Mapa de Incidencia -->
+
+<!-- La incidencia se calcula en base a los datos reportados por los Ministerios de Salud de la Ciudad de Buenos Aires y de la provincia de Buenos Aires.  -->
+<!-- Como población se considera la proyectada por INDEC para el 2020. -->
+
+<!-- ```{r inc3, echo=FALSE, fig.align='center', message=FALSE, warning=FALSE, paged.print=FALSE, out.width='100%'} -->
+
+<!-- # deptos_covid$departam_1 -->
+<!--   leaflet(data = deptos_covid3) %>%  -->
+<!--     addTiles(urlTemplate = urlign, attribution="IGN") %>% -->
+<!--     addPolygons( color = "#444444", weight = 1, -->
+<!--                  fillColor = color(deptos_covid3$incidencia), fillOpacity = 0.6, -->
+<!--                  label = paste0(deptos_covid3$departam_1, ": ", deptos_covid3$CASOS), -->
+<!--                  popup = paste0(deptos_covid3$departam_1, -->
+<!--                                " <br/> Casos: ", deptos_covid3$CASOS, -->
+<!--                                " <br/>- Incidencia: ", deptos_covid3$incidencia), -->
+<!--                  highlightOptions = highlightOptions(color = "white", weight = 2, bringToFront = TRUE))  %>% -->
+<!--         addFullscreenControl()  %>%      -->
+<!--     addLegend(colors = c('#FFFFFF','#fdd49e', '#fc8d59', '#d7301f', '#b30000', '#7f0000'), -->
+<!--               labels= c("0", "1-249", "250-499", "500-999", "1000 - 1499", "1500 o más"), position ="bottomright")  -->
+
+<!-- ``` -->

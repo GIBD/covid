@@ -239,7 +239,7 @@ Los datos con los que se trabajarán son de procesamiento propio en base a los i
      
      fig %>% layout(title="<b> Evolución de COVID-19 en Argentina</b>",
                     xaxis = list(title = "día"), yaxis = list(title = ""),
-                    annotations=a) %>% layout(showlegend = FALSE, annotations=b) 
+                    annotations=a) %>% layout(showlegend = FALSE, annotations=b, width = 800) 
        
 ```
 
@@ -320,18 +320,20 @@ Si presiona sobre los rectángulos mas pequeños ampliará la provincia/jurisdic
 Los pormedios de casos confirmados y fallecidos semanales se muestran en el gráfico a continuación
 
 ```{r promSem, echo=FALSE, message=FALSE, warning=FALSE }
-  promedios<-  argCov %>% select(dia, casosD, Altas, muertesD) %>% 
-      mutate(casosP=roll_mean(casosD, n=7, align="right", fill = NA),
+ argCov<-argCov %>% mutate(Activos=casosD-Altas - muertesD)
+
+promedios<-  argCov %>% select(dia, casosD, Altas, muertesD, Activos) %>% 
+      mutate(casosP=round(roll_mean(casosD, n=7, align="right", fill = NA),0),
              altasP=roll_mean(Altas, n=7, align="right", fill = NA),
-             muertesP=roll_mean(muertesD, n=7, align="right", fill = NA)) %>% 
-  select(dia, casosP, altasP, muertesP) %>% unique()
+             muertesP=round(roll_mean(muertesD, n=7, align="right", fill = NA),0)) %>% 
+  select(dia, casosP, altasP, muertesP, Activos) %>% unique()
 
 
   fig <- plot_ly(promedios, x = ~dia, y = ~muertesP, type = 'bar', name = 'Fallecidos', marker = list(color = 'rgba(222,45,38,0.8)'))
-  fig <- fig %>% add_trace(y = ~altasP, type = 'bar', name = 'Altas', marker = list(color = '#66C2A5'))
+  # fig <- fig %>% add_trace(y = ~Activos, type = 'bar', name = 'Activos', marker = list(color = '#66C2A5'))
   fig <- fig %>% add_trace(y = ~casosP, name = 'Casos', marker = list(color = 'rgb(55, 83, 109)'))
   
-  fig <- fig %>% layout(title = '\n Promedio (7 días) de casos, altas y fallecimientos diarios',
+  fig <- fig %>% layout(title = '\n Promedio (7 días) de casos y fallecimientos diarios',
            xaxis = list(
              title = "",
              tickfont = list(size = 14, color = 'rgb(107, 107, 107)')),
@@ -340,7 +342,7 @@ Los pormedios de casos confirmados y fallecidos semanales se muestran en el grá
              titlefont = list(size = 14, color = 'rgb(107, 107, 107)'),
              tickfont = list( size = 14, color = 'rgb(107, 107, 107)')),
          legend = list(x = 0, y = 1, bgcolor = 'rgba(255, 255, 255, 0)', bordercolor = 'rgba(255, 255, 255, 0)'),
-         barmode = 'group', bargap = 0.15, bargroupgap = 0.1)
+         barmode = 'group', bargap = 0.15, bargroupgap = 0.1, width = 800)
 
     fig
 
@@ -697,7 +699,8 @@ También se muestra al final la media móvil (7 días) de los casos darios por p
 
 
 
-### Promedios diarios
+
+## Promedios diarios
 Para seleccionar sólo una provincia haga doble click sobre el nombre de la misma en la leyenda
 ```{r promProvSem, echo=FALSE, fig.align='center', message=FALSE, warning=FALSE, out.width='100%' }
   
@@ -708,7 +711,7 @@ Para seleccionar sólo una provincia haga doble click sobre el nombre de la mism
 
   fig <- plot_ly(prom, x = ~fecha, y = ~prom, color = ~provincia, type = "bar") #, mode='lines+markers') 
   fig <- layout(fig,
-                 autosize = F, width = 800, height=550,#   automargin = FALSE, margin = 1,
+                 autosize = F, width = 900, height=550,#   automargin = FALSE, margin = 1,
                 title="Evolución de casos diarios por Provincia \n (promedio de 7 días)",
                 xaxis = list(title = "día"), yaxis = list(title = "casos"))
   fig
@@ -717,7 +720,9 @@ Para seleccionar sólo una provincia haga doble click sobre el nombre de la mism
 
 
 
-### Incidencia diaria
+
+
+## Incidencia diaria
 Para seleccionar sólo una provincia haga doble click sobre el nombre de la misma en la leyenda
 ```{r incProvDiaria, echo=FALSE, fig.align='center', message=FALSE, warning=FALSE, out.width='100%' }
   
@@ -730,7 +735,7 @@ Para seleccionar sólo una provincia haga doble click sobre el nombre de la mism
     # filter(!is.na(prom) & prom>0)
 
   fig <- plot_ly(incidProv, x = ~fecha, y = ~IncP, color = ~provincia, alpha = 1,  size = 20, type = 'area') #,"bar" mode='lines+markers') 
-  fig <- layout(fig,  autosize = F, width = 800, height=550,# 
+  fig <- layout(fig,  autosize = F, width = 900, height=550,# 
                 title="Evolución de la Incidencia diaria por Provincia",
                 xaxis = list(title = "día"), yaxis = list(title = "casos c/100 mil Hab"))
   fig
@@ -739,7 +744,8 @@ Para seleccionar sólo una provincia haga doble click sobre el nombre de la mism
 
 
 
-### Días Transcurridos
+
+## Días Transcurridos
 
 Los días transcurridos dese que el Ministerio de Salud de Nación no reporta casos para cada una de las provincias son:
 
@@ -831,7 +837,8 @@ Al día de la fecha las incidencias acumuladas por cada 100.000 habitantes en la
   
 ```
 
-#### Gráfica
+
+### Gráfica
 ```{r sud_tasainc, echo=FALSE, message=FALSE, warning=FALSE, paged.print=FALSE, out.width='100%', fig.align='center'}
  
 
@@ -1085,6 +1092,16 @@ A continuación se visualiará la evolución en la proporción de los casos dete
   
 ```
 
+##### Diarios
+```{r DiariosTestD, echo=FALSE, fig.align='center', message=FALSE, warning=FALSE, out.width='100%'}
+  p4 <- plot_ly(argCov, x = ~dia, y = ~MuestraD, type = "bar",  text =~MuestraD, textposition = 'outside', name = "Test Negativos") %>% 
+            
+        layout(title="Cantidad de Test Diarios Realizados", yaxis = list(title = "Pruebas Diarias"), barmode = "stack")
+  p4
+  
+```
+
+
 
 #### Positividad por Provincia
 ```{r positProv, out.width='100%'}
@@ -1111,16 +1128,66 @@ A continuación se visualiará la evolución en la proporción de los casos dete
 
 
 
-## Casos por Inicio de Síntomas
-Considerando la fecha de inicio de síntomas, o en caso de no existir la menor entre las fechas de apertura o diagnóstico se obtienen las siguientes curvas para cada provincia.
-* Para seleccionar una sola o mas hacer doble clik sobre el nombre de la/s misma/s en la leyenda
-```{r iniSint, out.width='100%'}
+
+
+
+## Curva Epidémica
+Considerando la fecha de inicio de síntomas, o en caso de no existir la menor entre las fechas de apertura o diagnóstico se obtienen la siguiente curva de casos a nivel nacional.
+```{r iniSintGral, out.width='100%'}
   confirmados <- casos_pronvinciales %>% filter(clasificacion_resumen=="Confirmado")
   
   confirmados$fis <- if_else(is.na(confirmados$fecha_inicio_sintomas),
                            min(confirmados$fecha_apertura, confirmados$fecha_diagnostico), 
                            confirmados$fecha_inicio_sintomas)
   confirmados$fis<- as.Date(confirmados$fis, "%d/%m/%Y")
+
+
+  
+ csos_fis <- casos_pronvinciales %>% filter(clasificacion_resumen=="Confirmado") %>% 
+  mutate(fis=if_else(is.na(fecha_inicio_sintomas), fecha_apertura, fecha_inicio_sintomas)) %>% 
+  group_by(fis) %>% mutate(casos= as.integer(n())) %>% 
+  select(fis, casos) %>% unique() %>% ungroup() %>% arrange(fis) %>% 
+  mutate(prom = round(roll_mean(casos, n=7, align="right", fill = NA),0) ) %>%
+  filter(month(fis)>02 & !is.na(prom))
+
+
+  #CASOS en azul
+  fig <- plot_ly(csos_fis, x = ~fis, y = ~casos, type = 'bar',  name = 'Casos',
+               marker = list(color =  'rgb(55, 83, 109)'))
+   fig <- fig %>% add_trace(x = ~fis, y = ~prom, name = 'Promedio',  type = 'scatter', mode = 'lines', 
+                           # mode = "lines",
+                           # marker = list(color = 'rgb(55, 83, 109)'), 
+                           line = list(color = 'rgb(55, 83, 109)', width =4))
+  # fig <- fig %>% add_lines(x = ~fis, y = ~prom, name = 'Promedio',  
+  #                          mode = "lines",
+  #                          # marker = list(color = 'rgb(55, 83, 109)'), 
+  #                          line = list(color = 'rgb(55, 83, 109)', width =4))
+  fig <- fig %>% layout(title = 'Casos diarios por Fe. Inicio de Síntomas ',
+                        width = 800, height=550,
+                        xaxis = list(title = "", tickfont = list(size = 14, color = 'rgb(107, 107, 107)')),
+                        yaxis = list( title = 'Cantidad', titlefont = list(size = 16, color = 'rgb(107, 107, 107)'),
+                                      tickfont = list( size = 14, color = 'rgb(107, 107, 107)')),
+                        legend = list(x = 0, y = 1, bgcolor = 'rgba(255, 255, 255, 0)',
+                                      bordercolor = 'rgba(255, 255, 255, 0)'))
+  fig
+
+  
+```
+
+
+
+
+
+## Casos por Inicio de Síntomas
+Considerando la fecha de inicio de síntomas, o en caso de no existir la menor entre las fechas de apertura o diagnóstico se obtienen las siguientes curvas para cada provincia.
+* Para seleccionar una sola o mas hacer doble clik sobre el nombre de la/s misma/s en la leyenda
+```{r iniSint, out.width='100%'}
+  # confirmados <- casos_pronvinciales %>% filter(clasificacion_resumen=="Confirmado")
+  # 
+  # confirmados$fis <- if_else(is.na(confirmados$fecha_inicio_sintomas),
+  #                          min(confirmados$fecha_apertura, confirmados$fecha_diagnostico), 
+  #                          confirmados$fecha_inicio_sintomas)
+  # confirmados$fis<- as.Date(confirmados$fis, "%d/%m/%Y")
 
   tProv <- confirmados %>%  arrange(fis) %>% 
             group_by(carga_provincia_nombre, fis) %>% 

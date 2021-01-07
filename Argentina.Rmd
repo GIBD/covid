@@ -1139,8 +1139,8 @@ Considerando la fecha de inicio de síntomas, o en caso de no existir la menor e
   confirmados$fis <- if_else(is.na(confirmados$fecha_inicio_sintomas),
                            min(confirmados$fecha_apertura, confirmados$fecha_diagnostico), 
                            confirmados$fecha_inicio_sintomas)
-  confirmados$fis<- as.Date(confirmados$fis, "%d/%m/%Y")
-
+  confirmados$fis <- as.Date(confirmados$fis, "%d/%m/%Y")
+  
 
   
  csos_fis <- casos_pronvinciales %>% filter(clasificacion_resumen=="Confirmado") %>% 
@@ -1148,7 +1148,7 @@ Considerando la fecha de inicio de síntomas, o en caso de no existir la menor e
   group_by(fis) %>% mutate(casos= as.integer(n())) %>% 
   select(fis, casos) %>% unique() %>% ungroup() %>% arrange(fis) %>% 
   mutate(prom = round(roll_mean(casos, n=7, align="right", fill = NA),0) ) %>%
-  filter(month(fis)>02 & !is.na(prom))
+  filter(fis>'2020-02-01' & !is.na(prom))
 
 
   #CASOS en azul

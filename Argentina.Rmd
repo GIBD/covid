@@ -709,6 +709,8 @@ Para seleccionar sólo una provincia haga doble click sobre el nombre de la mism
     mutate(prom= round(roll_mean(cant,  n=7, align="right", fill = NA), 0)) %>%  
     filter(!is.na(prom) & prom>0)
 
+
+
   fig <- plot_ly(prom, x = ~fecha, y = ~prom, color = ~provincia, type = "bar") #, mode='lines+markers') 
   fig <- layout(fig,
                  autosize = F, width = 900, height=550,#   automargin = FALSE, margin = 1,

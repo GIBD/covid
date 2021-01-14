@@ -46,8 +46,19 @@ covid_er <- entre_rios_casos <- read_excel("data/entre_rios_casos.xlsx", "CASOS1
 localidades <- read_excel("data/entre_rios_casos.xlsx", "LOCALIDADES")
 covid_er_fall <-  read_excel("data/entre_rios_casos.xlsx", "ALTAS")
 
+
 diasH <- covid_er %>%  group_by(DEPARTAMENTO, FECHA) %>% mutate(casos = sum(CASOS)) %>% 
   select(departamento=DEPARTAMENTO, fecha=FECHA, casos) %>% unique()
+
+## Razon
+casos14 <- diasH %>% ungroup() %>%  group_by(departamento) %>%  filter(fecha >= today()-14) %>%  
+  mutate(casos14 = sum(casos)) %>% 
+  select(departamento, casos14) %>% unique()
+casos28 <- diasH %>%  ungroup() %>%  group_by(departamento) %>% filter(fecha >= today() - 28 & fecha < today()-14) %>%  
+  mutate(casos28 = sum(casos)) %>% 
+  select(departamento, casos28) %>% unique()
+razon <- casos14 %>% left_join(casos28)
+razon$razon <- round(razon$casos14/razon$casos28, 1)
 
 # casos a hoy
 casosH <- diasH %>% ungroup() %>% 
@@ -70,6 +81,7 @@ names(poblac_er) <- c("departamento", "poblacion")
 
 ### Base Nación
 covid19ER <- read_csv("data/Covid19Casos.csv")
+
 names(covid19ER) <- c("id_evento_caso", "sexo", "edad", "edad_anos_meses", 
                       "residencia_pais_nombre", "residencia_provincia_nombre",
                       "residencia_departamento_nombre", "carga_provincia_nombre",
@@ -293,6 +305,23 @@ fig
 ```
 
 
+#### Todos
+```{r promERDptos, echo=FALSE, fig.align='center', message=FALSE, warning=FALSE, out.width='100%' }
+diario %>% filter(!(DEPARTAMENTO %in% c("Otros", "Turistas"))) %>% 
+  ggplot(mapping=aes(x=FECHA, color=DEPARTAMENTO, y=promD, label = max(promD))) +
+  geom_line(show.legend = F,alpha = 0.5) + 
+  geom_point(show.legend = F, alpha = 0.5) + 
+  geom_smooth(method = 'loess', formula = 'y ~ x', alpha = 0.2,
+              size = 2, span = .3, se=FALSE, show.legend=F) +
+  labs(title = paste("COVID-19 ENTRE RÍOS - Casos diarios por Departamento"), 
+       subtitle = paste0("Escala libre") ,
+       y = "Casos",  x = "Fecha", width = 800) +
+  facet_wrap(~ DEPARTAMENTO, 
+             scales = "free_y",
+             ncol = 6)
+
+```
+
 
 
 
@@ -375,7 +404,7 @@ localidades_er_hoy <- covid_er %>% filter(FECHA==max(FECHA)) %>%
   group_by(Lat2, Long2) %>% mutate(cant=sum(CASOS), Lat=as.double(Lat), Long=as.double(Long)) %>% 
   select(LOCALIDAD, Lat, Long, cant) %>% unique()
 localidades_er_hoy <- as.data.frame(lapply(localidades_er_hoy, rep, localidades_er_hoy$cant))
-
+# write.csv(localidades_er_hoy, "localidades_er_hoy.csv")
 leaflet(height = 900, width = 900) %>% addTiles() %>% 
   addProviderTiles(providers$OpenStreetMap) %>% 
   addPolygons(data=deptos_er, fill=FALSE, weight = 1, color = "#000")  %>% 
@@ -451,6 +480,43 @@ incDep %>%
 
 
 
+## Incidencia Acumulada
+Evolución de la incidencia acumulada cada 14 días por por departamentos. 
+
+###  {.tabset  .tabset-fade .tabset-pills}
+#### Acum 14 días
+```{r incDptal14, echo=FALSE, fig.align='center', message=FALSE, warning=FALSE, out.width='100%' }
+incDep2 <- diario %>% filter(FECHA > "2020-06-14") %>% 
+  left_join(poblac_er, by=c("DEPARTAMENTO"="departamento")) %>% 
+  mutate(casos = roll_sum(cantidad,  n=14, align="right", fill = 0),
+         incidP =  round(casos/poblacion*100000, 0)) %>%
+  arrange(DEPARTAMENTO, FECHA)
+
+
+fig <- plot_ly(incDep2, x = ~FECHA, y = ~incidP, color = ~DEPARTAMENTO, alpha = 1,  size = 20, type = 'area')
+fig <- layout(fig,  autosize = F, width = 800,
+              title="Incidencia Acumulada en 14 por Departamento",
+              xaxis = list(title = "día"), yaxis = list(title = "casos c/100 mil Hab"))
+fig
+
+```
+
+
+#### Tabla
+```{r incDpto2, echo=FALSE, message=FALSE, warning=FALSE, paged.print=FALSE}
+incDep2 %>%
+  select(DEPARTAMENTO, FECHA, casos, incidP) %>% 
+  arrange(DEPARTAMENTO, FECHA) %>% 
+  datatable(extensions = 'Buttons', rownames = FALSE,
+            colnames = c("Departamento", "Fecha", "Casos", "Incid. Acum. 14 días"),
+            options = list(dom = 'Blfrtip',
+                           buttons = c('copy', 'csv', 'excel', 'pdf', 'print'),
+                           lengthMenu = list(c(10,25,50,-1), c(10,25,50,"All"))))
+```
+
+
+
+
 
 
 ## Positividad por Departamento
@@ -509,7 +575,7 @@ localidades_er <- covid_er %>% left_join(localidades, by=c("DEPARTAMENTO"="DEPAR
   group_by(Lat2, Long2) %>% mutate(cant=sum(CASOS), Lat=as.double(Lat), Long=as.double(Long)) %>% 
   select(LOCALIDAD, Lat, Long, cant) %>% unique()
 localidades_er <- as.data.frame(lapply(localidades_er, rep, localidades_er$cant))
-
+write.csv(localidades_er, "casos.csv")
 leaflet( ) %>%
   addTiles() %>% 
   addProviderTiles(providers$OpenStreetMap) %>% 
@@ -807,13 +873,16 @@ Para simplificar la lectura se graficará la cantidad de casos confirmados y des
 ```{r descartados, echo=FALSE, message=FALSE, warning=FALSE, paged.print=FALSE}
 
  # descartadosER <- covid19ER_Desc_Sem  # %>%  filter(carga_provincia_nombre=="Entre Ríos")
- confirmadosER <- covid19ER_Conf %>%  filter(carga_provincia_nombre=="Entre Ríos") %>% 
-   group_by(sepi_apertura) %>% 
-   mutate(conf =n(), desde=min(fecha_apertura), hasta=max(fecha_apertura)) %>% 
+ confirmadosER <- covid19ER_Conf %>%  filter(carga_provincia_nombre=="Entre Ríos") %>% mutate(anio = year(fecha_apertura)) %>% 
+   group_by(anio, sepi_apertura) %>% 
+   mutate(conf =n(), desde=min(fecha_apertura), hasta=max(fecha_apertura)) %>% ungroup() %>% 
+  mutate(sepi_apertura=paste0(anio, " - ", sepi_apertura)) %>% 
    select(sepi_apertura, desde, hasta, conf)
    
- sem <- covid19ER_Desc_Sem %>% group_by(sepi_apertura) %>% 
-   mutate(cant =n(), desde=min(fecha_apertura), hasta=max(fecha_apertura)) %>% 
+ sem <- covid19ER_Desc_Sem %>%  mutate(anio = year(fecha_apertura))%>% 
+   group_by(anio, sepi_apertura) %>% 
+   mutate(cant =n(), desde=min(fecha_apertura), hasta=max(fecha_apertura)) %>% ungroup() %>% 
+   mutate(sepi_apertura=paste0(anio, " - ", sepi_apertura)) %>% 
   select(sepi_apertura, desde, hasta, cant)  %>% unique() %>% 
    left_join(confirmadosER, by=c("sepi_apertura"="sepi_apertura")) %>% 
    select(sepi_apertura, desde.x, hasta.x, cant, conf) %>% unique()
@@ -948,12 +1017,13 @@ tabla <- covider %>%
    left_join(descartados, by=c("departamento"="departamento")) %>% 
    left_join(sospechosos, by=c("departamento"="departamento")) %>% 
    left_join(dupl, by=c("departamento"="departamento")) %>% 
-   select(departamento, casos, nexo, lab, altas, fallecidos, fallS, descartado, sospechosos, dias) %>%
+  left_join(razon,by=c("departamento"="departamento" )) %>% 
+   select(departamento, casos, nexo, lab, altas, fallecidos, fallS, descartado, sospechosos, dias, razon) %>%
   unique() %>% arrange(departamento)
 
 tabla %>% datatable(extensions = 'Buttons', rownames = FALSE,
                     colnames = c("Departamento", "Casos Detectados", "Por Nexo", "Por Lab.", 
-                                 "Recuperados", "Fallecidos", "Fall. SISA", "Descartados", "Sospechosos", "Dias Dupl."),
+                                 "Recuperados", "Fallecidos", "Fall. SISA", "Descartados", "Sospechosos", "Dias Dupl.", "Razón"),
                     options = list(dom = 'Blfrtip',
                                    buttons = c('copy', 'csv', 'excel', 'pdf', 'print'),
                                    lengthMenu = list(c(10,25,50,-1), c(10,25,50,"All"))))

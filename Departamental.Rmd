@@ -1,0 +1,162 @@
+---
+title: "Departamental"
+output:
+  html_document:
+    toc: true
+    toc_float: true
+    collapsed: false
+    number_sections: false
+    toc_depth: 3
+---
+
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+```{r, cargaD, message=FALSE, warning=FALSE, include=FALSE, paged.print=FALSE}
+  library(readr)
+  library(dplyr)
+  library(tidyr)
+  library(ggplot2)
+  library(lubridate)
+  library(knitr)
+  library(kableExtra)
+  library(highcharter)
+  library(rjson)
+  library(plotly)
+  library(gganimate)
+  library(stringr)
+  library(leaflet)
+  library(leaflet.extras)
+  library(sf)
+  library(tmap)
+  library(googlesheets4)
+  library(readxl)
+
+  deptos <- st_read(dsn ="data/mapas/departamentos.shp") 
+  poblacion <- read_excel("data/poblaciones/Deptos.xlsx")
+  
+  covid19casos <- read_csv("data/Covid19Casos.csv")
+  
+  deptal28 <- covid19casos %>% filter(clasificacion_resumen=="Confirmado" &
+                                        residencia_provincia_nombre==carga_provincia_nombre &
+                                        fecha_apertura >= today()- 29 & fecha_apertura < today()- 15 ) %>% 
+    group_by(residencia_provincia_nombre, residencia_departamento_nombre) %>%  mutate(casos28 = n()) %>% 
+    select(provincia=residencia_provincia_nombre, depto = residencia_departamento_nombre, casos28) %>% unique()
+  
+  deptal14 <- covid19casos %>% filter(clasificacion_resumen=="Confirmado" &
+                                        residencia_provincia_nombre==carga_provincia_nombre &
+                                        fecha_apertura >= today()- 15 ) %>%
+    group_by(residencia_provincia_nombre, residencia_departamento_nombre) %>% mutate(casos14 = n()) %>%
+    select(provincia=residencia_provincia_nombre, depto = residencia_departamento_nombre, casos14) %>% unique()
+  
+  deptosCov <- deptal14 %>% left_join(deptal28, by=c("provincia"="provincia", "depto"= "depto"))      
+  deptosCov <- deptosCov %>% left_join(poblacion, by=c("provincia"="provincia", "depto"= "departamento")) %>% 
+    filter(!(depto=="SIN ESPECIFICAR")) %>% 
+    mutate(razon = if_else(is.na(casos28), 1.2, round(casos14/casos28,1)),
+           incidencia = round(casos14/P_2020*100000,0))
+
+  colorR <- function(c, d){ c <- if_else(c < 150 & d<1.2, '#009900', #verde
+                                         if_else((c >= 150 & d<1.2)| (c < 150 & d>=1.2), "#F5F93D", #amarillo
+                                            if_else((c >= 150 & d>=1.2), '#FF0000', '#FFFFFF'))) #rojo
+  return(c)}
+
+  
+  
+  urlign <- "https://wms.ign.gob.ar/geoserver/gwc/service/tms/1.0.0/capabaseargenmap@EPSG%3A3857@png/{z}/{x}/{-y}.png"
+      
+```
+
+
+## Distribución por Departamentos
+Los datos del siguiente mapa son extraídos del portal de datos abiertos del Ministerio de Salud Argentina. Para la localización se utiliza la provincia y el partido de residencia cargado en el Sistema Nacional de Vigilancia en Salud.
+
+Se muestra la distribución de casos a nivel departamental de las provincias.
+
+```{r dptoArg, echo=FALSE, message=FALSE, warning=FALSE, out.width='100%', out.height='850px'}
+
+## Con datos abiertos de Nación
+ deptosCov$depto <- if_else(deptosCov$provincia=="Buenos Aires" & 
+                              deptosCov$depto=="Coronel de Marina L. Rosales", "Coronel de Marina Leonardo Rosales",
+                            as.character(deptosCov$depto))
+
+  deptosCov$provincia <- if_else(deptosCov$provincia=="Tierra del Fuego", "Tierra del Fuego, Antártida e Islas del Atlántico Sur",
+                                 as.character(deptosCov$provincia))
+  deptosCov$depto <- if_else(deptosCov$provincia=="Salta" &   deptosCov$depto=="Grl. José de San Martín",
+                             "General José de San Martín", deptosCov$depto)
+  deptosCov$depto <- if_else(deptosCov$provincia=="Chaco" &   deptosCov$depto=="1º de Mayo",
+                             "1ro. de Mayo", deptosCov$depto)
+  deptosCov$depto <- if_else(deptosCov$provincia=="Formosa" & deptosCov$depto=="Laishi",
+                             "Laishí", deptosCov$depto)
+  deptosCov$depto <- if_else(deptosCov$provincia=="Misiones" &  deptosCov$depto=="Libertador Grl. San Martín",
+                             "Libertador General San Martín", deptosCov$depto)
+  deptosCov$depto <- if_else(deptosCov$provincia=="Misiones" &   deptosCov$depto=="25 de Mayo",
+                             "25de Mayo", deptosCov$depto)
+  deptosCov$depto <- if_else(deptosCov$provincia=="Santiago del Estero" &  deptosCov$depto=="Silípica",
+                             "Silipica", deptosCov$depto)
+  deptosCov$depto <- if_else(deptosCov$provincia=="La Rioja" &  deptosCov$depto=="San Blas de los Sauces",
+                             "San Blas de Los Sauces", deptosCov$depto)
+  deptosCov$depto <- if_else(deptosCov$provincia=="San Juan" &   deptosCov$depto=="Jáchal",
+                             "Jachal", deptosCov$depto)
+  deptosCov$depto <- if_else(deptosCov$provincia=="San Juan" &  deptosCov$depto=="Ullúm",
+                             "Ullum", deptosCov$depto)
+  deptosCov$depto <- if_else(deptosCov$provincia=="Mendoza" &   deptosCov$depto=="Luján de Cuyo",
+                             "Cuyo", deptosCov$depto)
+  deptosCov$depto <- if_else(deptosCov$provincia=="San Luis" &  deptosCov$depto=="Luján de Cuyo",
+                             "Cuyo", deptosCov$depto)
+  deptosCov$depto <- if_else(deptosCov$provincia=="Neuquén" & deptosCov$depto=="Ñorquín",
+                             "?orquín", deptosCov$depto)
+ deptosCov$depto <- if_else(deptosCov$provincia=="Río Negro" &   deptosCov$depto=="Ñorquín",
+                            "?orquín", deptosCov$depto)  
+ deptosCov$depto <- if_else(deptosCov$provincia=="Río Negro" &  deptosCov$depto=="9 de Julio",
+                            "9 de julio", deptosCov$depto)  
+ deptosCov$depto <- if_else(deptosCov$provincia=="Río Negro" &   deptosCov$depto=="Ñorquincó",
+                            "?orquinco", deptosCov$depto)  
+ deptosCov$depto <- if_else(deptosCov$provincia=="Catamarca" &   deptosCov$depto=="Valle Viejo",
+                            "Valle Viejo", deptosCov$depto)  
+ 
+ deptosCov$depto <- gsub("COMUNA", "Comuna", deptosCov$depto)
+ deptosCov$depto <- if_else(deptosCov$provincia=="CABA" & deptosCov$depto=="Comuna 01", "Comuna 1", deptosCov$depto)
+ deptosCov$depto <- if_else(deptosCov$provincia=="CABA" & deptosCov$depto=="Comuna 02", "Comuna 2", deptosCov$depto)
+ deptosCov$depto <- if_else(deptosCov$provincia=="CABA" & deptosCov$depto=="Comuna 03", "Comuna 3", deptosCov$depto)
+ deptosCov$depto <- if_else(deptosCov$provincia=="CABA" & deptosCov$depto=="Comuna 04", "Comuna 4", deptosCov$depto)
+ deptosCov$depto <- if_else(deptosCov$provincia=="CABA" & deptosCov$depto=="Comuna 05", "Comuna 5", deptosCov$depto)
+ deptosCov$depto <- if_else(deptosCov$provincia=="CABA" & deptosCov$depto=="Comuna 06", "Comuna 6", deptosCov$depto)
+ deptosCov$depto <- if_else(deptosCov$provincia=="CABA" & deptosCov$depto=="Comuna 07", "Comuna 7", deptosCov$depto)
+ deptosCov$depto <- if_else(deptosCov$provincia=="CABA" & deptosCov$depto=="Comuna 08", "Comuna 8", deptosCov$depto)
+ deptosCov$depto <- if_else(deptosCov$provincia=="CABA" & deptosCov$depto=="Comuna 09", "Comuna 9", deptosCov$depto)
+
+ deptosCov$depto <- gsub("ñ", "?", deptosCov$depto)
+ deptos$provincia <- if_else( deptos$provincia=="Ciudad Autónoma de Buenos Aires", "CABA", as.character(deptos$provincia))
+
+deptos_covid <- deptos %>%
+  left_join(deptosCov, by=c("departamen" = "depto", "provincia"="provincia")) %>%
+  unique()
+ deptos_covid$razon <- if_else(is.na(deptos_covid$razon), 0, as.double(deptos_covid$razon))
+ deptos_covid$incidencia <- if_else(is.na(deptos_covid$incidencia), 0, as.double(deptos_covid$incidencia))
+ 
+  # deptos_covid$Confirmado <- if_else(deptos_covid$departamen=="Islas Malvinas", 13, as.double(deptos_covid$Confirmado))
+  # write.csv(vacios, "vacios.csv")
+# vacios<- deptos_covid %>% filter(incidencia ==0 & razon==0) %>% select(provincia, departamen)
+
+ 
+leaflet(data = deptos_covid) %>% 
+  addTiles(urlTemplate = urlign, attribution="IGN") %>%
+  addPolygons( color = "#444444", weight = 1,
+               fillColor = colorR(deptos_covid$incidencia, deptos_covid$razon), fillOpacity = 0.6,
+               label = paste0(deptos_covid$provincia, " \n ", deptos_covid$departamen),
+               popup = paste0(deptos_covid$provincia, " <br/> ", deptos_covid$departamen,
+                             " <br/>- Incidencia: ", deptos_covid$incidencia,
+                             " <br/>- Razón: ",deptos_covid$razon),
+               highlightOptions = highlightOptions(color = "white", weight = 2,
+                                                   bringToFront = TRUE))  %>%
+      addFullscreenControl()  %>%     
+  addLegend(colors = c('#009900',"#F5F93D", '#FF0000', '#FFFFFF'),
+            labels= c("Bajo", "Medio", "Alto", "Sin.inf."), position ="bottomright")
+
+ 
+```
+
+
+

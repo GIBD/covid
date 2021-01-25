@@ -15,7 +15,10 @@ output:
 	echo = FALSE,
 	message = FALSE,
 	warning = FALSE,
-	cache = FALSE
+	cache = FALSE,
+	# out.height='700px',
+	out.width = '800px'
+
 )
 ```
 
@@ -58,6 +61,16 @@ names(argCov) <- c("dia", "casosD", "Detectados", "muertesD", "Fallecidos", "Alt
 argCov$dia <- as.Date(argCov$dia, '%d/%m/%Y')
 covidArg <- read_excel("data/argentina.xlsx", "casos_provincias")
 covidArg$FECHA <- as.Date(covidArg$FECHA, '%d/%m/%Y')
+
+
+casos14 <- covidArg %>% filter(FECHA >= today()-14) %>% group_by(PROVINCIA) %>% mutate(casos14 = sum(CASOS)) %>% 
+  select(PROVINCIA, casos14) %>% unique()
+
+casos28 <- covidArg %>% filter(FECHA >= today()-28 & FECHA < today()-14) %>% group_by(PROVINCIA) %>% mutate(casos28 = sum(CASOS)) %>% 
+  select(PROVINCIA, casos28) %>% unique()
+
+razon <- casos14 %>% left_join(casos28)
+razon$razon <- round(razon$casos14/razon$casos28, 1)
 
 ### Detalle fallecidos
 muertosArg <- covidArg %>% select(FECHA, PROVINCIA, MUERTES)
@@ -615,7 +628,7 @@ También se muestra al final la media móvil (7 días) de los casos darios por p
 
 ###  {.tabset  .tabset-fade .tabset-pills}
 #### Casos
-```{r ev_prov, echo=FALSE, fig.align='center', message=FALSE, warning=FALSE, out.width='100%'}
+```{r ev_prov, echo=FALSE, fig.align='center', message=FALSE, out.height='650px',warning=FALSE, out.width='100%'}
 
   tabla_prov<- covidArg %>% 
     group_by(PROVINCIA, FECHA) %>% mutate(casos=sum(CASOS)) %>% select(PROVINCIA, FECHA, casos) %>% unique()
@@ -633,7 +646,8 @@ También se muestra al final la media móvil (7 días) de los casos darios por p
     group_by(provincia) %>% arrange(fecha) %>% mutate(dia1 = row_number()) 
   
   fig <- plot_ly(p, x = ~fecha, y = ~cant, color = ~provincia, type = "scatter", mode='lines+markers') 
-  fig <- layout(fig, autosize = F, width = 800, height=550,  # automargin = FALSE, margin = 1,
+  fig <- layout(fig, autosize = F, width = 800, #
+                height=550,  # automargin = FALSE, margin = 1,
                 title="Evolución de casos confirmados por Provincia",
                 xaxis = list(title = "día"), yaxis = list(title = "casos"))
   
@@ -644,9 +658,9 @@ También se muestra al final la media móvil (7 días) de los casos darios por p
 
 
 #### Casos (Log)
-```{r ev_provLog, echo=FALSE, fig.align='center', message=FALSE, warning=FALSE, out.width='100%'}
+```{r ev_provLog, echo=FALSE, fig.align='center', message=FALSE, out.height='650px',warning=FALSE, out.width='100%'}
     fig <- plot_ly(p, x = ~fecha, y = ~cant, color = ~provincia, type = "scatter", mode='lines+markers')
-    fig <- layout(fig,  autosize = F, width = 800, height=550,  # automargin = FALSE, margin = 1,
+    fig <- layout(fig,  autosize = F, width = 800, #height=550,  # automargin = FALSE, margin = 1,
                   title="Evolución de casos confirmados por Provincia (Log)",
                   xaxis = list(title = "día"), yaxis = list(type = "log", title = "casos"))
     fig
@@ -654,9 +668,8 @@ También se muestra al final la media móvil (7 días) de los casos darios por p
 ```
 
 
-
 #### Fallecidos
-```{r ev_provFall, echo=FALSE, fig.align='center', message=FALSE, warning=FALSE, out.width='100%'}
+```{r ev_provFall, echo=FALSE, fig.align='center', message=FALSE, warning=FALSE, out.height='650px', out.width='100%'}
 
    tabla_prov_m<- muertosArg %>% 
       group_by(PROVINCIA, FECHA) %>% mutate(muertes=sum(MUERTES, na.rm = T)) %>% select(Provincia=PROVINCIA, fecha=FECHA, muertes) %>% unique() 
@@ -678,7 +691,7 @@ También se muestra al final la media móvil (7 días) de los casos darios por p
       group_by(provincia) %>% arrange(fecha) %>% mutate(dia1 = row_number()) 
     
     fig <- plot_ly(p, x = ~fecha, y = ~cant, color = ~provincia, type = "scatter", mode='lines+markers') 
-    fig <- layout(fig,  autosize = F, width = 800, height=550, #  automargin = FALSE, margin = 1,
+    fig <- layout(fig,  autosize = F, width = 800, #height=550, #  automargin = FALSE, margin = 1,
                   title="Evolución fallecidos por Provincia",
                   xaxis = list(title = "día"), yaxis = list(title = "fallecimientos"))
     fig
@@ -687,9 +700,9 @@ También se muestra al final la media móvil (7 días) de los casos darios por p
 
 
 #### Fallecidos (Log)
-```{r ev_provFallLog, echo=FALSE, fig.align='center', message=FALSE, warning=FALSE, out.width='100%'}
+```{r ev_provFallLog, echo=FALSE, fig.align='center',out.height='650px',message=FALSE, warning=FALSE, out.width='100%'}
     fig <- plot_ly(p, x = ~fecha, y = ~cant, color = ~provincia, type = "scatter", mode='lines+markers') 
-    fig <- layout(fig,  autosize = F, width = 800, height=550, #  automargin = FALSE, margin = 1,
+    fig <- layout(fig,  autosize = F, width = 800, #height=550, #  automargin = FALSE, margin = 1,
                   title="Evolución fallecidos por Provincia",
                   xaxis = list(title = "día"), yaxis = list(title = "fallecimientos", type = "log"))
     fig
@@ -700,9 +713,10 @@ También se muestra al final la media móvil (7 días) de los casos darios por p
 
 
 
+
 ## Promedios diarios
 Para seleccionar sólo una provincia haga doble click sobre el nombre de la misma en la leyenda
-```{r promProvSem, echo=FALSE, fig.align='center', message=FALSE, warning=FALSE, out.width='100%' }
+```{r promProvSem, echo=FALSE, fig.align='center', out.height='650px', message=FALSE, warning=FALSE, out.width='100%' }
   
   prom <- tabla_prov %>% 
     group_by(provincia) %>% filter(tipo=="casos") %>% 
@@ -713,7 +727,7 @@ Para seleccionar sólo una provincia haga doble click sobre el nombre de la mism
 
   fig <- plot_ly(prom, x = ~fecha, y = ~prom, color = ~provincia, type = "bar") #, mode='lines+markers') 
   fig <- layout(fig,
-                 autosize = F, width = 900, height=550,#   automargin = FALSE, margin = 1,
+                 autosize = F, width = 800,  height=550,#   automargin = FALSE, margin = 1,
                 title="Evolución de casos diarios por Provincia \n (promedio de 7 días)",
                 xaxis = list(title = "día"), yaxis = list(title = "casos"))
   fig
@@ -726,7 +740,7 @@ Para seleccionar sólo una provincia haga doble click sobre el nombre de la mism
 
 ## Incidencia diaria
 Para seleccionar sólo una provincia haga doble click sobre el nombre de la misma en la leyenda
-```{r incProvDiaria, echo=FALSE, fig.align='center', message=FALSE, warning=FALSE, out.width='100%' }
+```{r incProvDiaria, echo=FALSE, fig.align='center',out.height='650px', message=FALSE, warning=FALSE, out.width='100%' }
   
   incidProv <- tabla_prov %>% left_join(poblacionArg) %>% filter(tipo=="casos") %>% 
     mutate(incid = round(cant/poblacion*100000, 1),
@@ -737,21 +751,24 @@ Para seleccionar sólo una provincia haga doble click sobre el nombre de la mism
     # filter(!is.na(prom) & prom>0)
 
   fig <- plot_ly(incidProv, x = ~fecha, y = ~IncP, color = ~provincia, alpha = 1,  size = 20, type = 'area') #,"bar" mode='lines+markers') 
-  fig <- layout(fig,  autosize = F, width = 900, height=550,# 
+  fig <- layout(fig,  
+                autosize = F,  width = 800, height=550,# 
                 title="Evolución de la Incidencia diaria por Provincia",
                 xaxis = list(title = "día"), yaxis = list(title = "casos c/100 mil Hab"))
   fig
+  
+  
 
 ```
 
 
 
 
-## Días Transcurridos
 
+## Días Transcurridos
 Los días transcurridos dese que el Ministerio de Salud de Nación no reporta casos para cada una de las provincias son:
 
-```{r diasProv}
+```{r diasProv, echo=FALSE, fig.align='center', message=FALSE, warning=FALSE, out.width='100%'}
 
    dias <- tabla_prov %>% filter(tipo== "casos" & cant > 0) %>% group_by(provincia) %>% 
       mutate(ultimo=max(fecha)) %>% select(provincia, ultimo) %>% unique() %>%  
@@ -1106,7 +1123,7 @@ A continuación se visualiará la evolución en la proporción de los casos dete
 
 
 #### Positividad por Provincia
-```{r positProv, out.width='100%'}
+```{r positProv, out.height='650px', out.width='100%'}
     testProv <- positiv_lab %>% 
             group_by(carga_provincia_nombre)%>% arrange(fecha_apertura) %>% 
             filter(fecha_apertura > "2020-04-30" & fecha_apertura!=max(fecha_apertura)) %>% 
@@ -1121,7 +1138,7 @@ A continuación se visualiará la evolución en la proporción de los casos dete
       
       fig <- plot_ly(testProv, x = ~fecha_apertura, y = ~positP, 
                     color = ~carga_provincia_nombre, type = "scatter", mode='lines+markers') 
-      fig <- layout(fig,   autosize = F, width = 800, height=550,# 
+      fig <- layout(fig,   autosize = F, width = 800,  height=550,# 
                     title="Evolución de la Tasa de Positividad por Provincia \n (promedio a 7 días)",
                     xaxis = list(title = "día"), yaxis = list(title = "% Posit."))
       fig
@@ -1165,7 +1182,7 @@ Considerando la fecha de inicio de síntomas, o en caso de no existir la menor e
   #                          # marker = list(color = 'rgb(55, 83, 109)'), 
   #                          line = list(color = 'rgb(55, 83, 109)', width =4))
   fig <- fig %>% layout(title = 'Casos diarios por Fe. Inicio de Síntomas ',
-                        width = 800, height=550,
+                        width = 800, #height=550,
                         xaxis = list(title = "", tickfont = list(size = 14, color = 'rgb(107, 107, 107)')),
                         yaxis = list( title = 'Cantidad', titlefont = list(size = 16, color = 'rgb(107, 107, 107)'),
                                       tickfont = list( size = 14, color = 'rgb(107, 107, 107)')),
@@ -1183,7 +1200,7 @@ Considerando la fecha de inicio de síntomas, o en caso de no existir la menor e
 ## Casos por Inicio de Síntomas
 Considerando la fecha de inicio de síntomas, o en caso de no existir la menor entre las fechas de apertura o diagnóstico se obtienen las siguientes curvas para cada provincia.
 * Para seleccionar una sola o mas hacer doble clik sobre el nombre de la/s misma/s en la leyenda
-```{r iniSint, out.width='100%'}
+```{r iniSint, out.height='650px', out.width='100%'}
   # confirmados <- casos_pronvinciales %>% filter(clasificacion_resumen=="Confirmado")
   # 
   # confirmados$fis <- if_else(is.na(confirmados$fecha_inicio_sintomas),
@@ -1214,7 +1231,7 @@ En la siguiente gráfica se muestra la cantidad de fallecidos diarios consideran
 Para este gráfico se considera la provincia que carga el caso cuando no se especifique la provincia de residencia de la persona
 
 * Para seleccionar una sola o mas hacer doble clik sobre el nombre de la/s misma/s en la leyenda
-```{r fallFeFall, out.width='100%'}
+```{r fallFeFall, out.height='650px', out.width='100%'}
   fallecidos <- casos_pronvinciales %>% filter(clasificacion_resumen=="Confirmado" & !(is.na(fecha_fallecimiento)))
  
 
@@ -1241,3 +1258,7 @@ Para este gráfico se considera la provincia que carga el caso cuando no se espe
   
   
 ```
+
+
+
+

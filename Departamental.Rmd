@@ -70,9 +70,9 @@ knitr::opts_chunk$set(echo = TRUE)
 
 
 ## Distribución por Departamentos
-Los datos del siguiente mapa son extraídos del portal de datos abiertos del Ministerio de Salud Argentina. Para la localización se utiliza la provincia y el partido de residencia cargado en el Sistema Nacional de Vigilancia en Salud.
+Los datos del siguiente mapa son extraídos del portal de datos abiertos del Ministerio de Salud Argentina. Para la localización se utiliza la provincia y el departamento/partido de residencia cargado en el Sistema Nacional de Vigilancia en Salud.
 
-Se muestra la distribución de casos a nivel departamental de las provincias.
+Se muestra el indicador de riesgo de cada departamento basado en la Incidencia acumulada en 14 días cada 100000 habitantes y en la razón de crecimiento de casos en los últimos 14 días.
 
 ```{r dptoArg, echo=FALSE, message=FALSE, warning=FALSE, out.width='100%', out.height='850px'}
 
@@ -135,6 +135,7 @@ deptos_covid <- deptos %>%
   unique()
  deptos_covid$razon <- if_else(is.na(deptos_covid$razon), 0, as.double(deptos_covid$razon))
  deptos_covid$incidencia <- if_else(is.na(deptos_covid$incidencia), 0, as.double(deptos_covid$incidencia))
+ 
  
   # deptos_covid$Confirmado <- if_else(deptos_covid$departamen=="Islas Malvinas", 13, as.double(deptos_covid$Confirmado))
   # write.csv(vacios, "vacios.csv")

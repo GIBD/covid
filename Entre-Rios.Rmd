@@ -433,7 +433,9 @@ Para seleccionar sólo un departamento haga doble click sobre el nombre del mism
 ###  {.tabset  .tabset-fade .tabset-pills}
 #### A 7 días
 ```{r incDptalvDiaria, echo=FALSE, fig.align='center', message=FALSE, warning=FALSE, out.width='100%' }
-incDep <- diario %>% filter(FECHA > "2020-06-14") %>% 
+incDep <- diario %>% 
+  filter(FECHA > "2020-06-14" & 
+           !(DEPARTAMENTO %in% c("Otros", "Turistas"))) %>% 
   left_join(poblac_er, by=c("DEPARTAMENTO"="departamento")) %>% 
   mutate(incid = round(cantidad/poblacion*100000, 1),
          incidP =  round(roll_mean(incid,  n=7, align="right", fill = 0), 1)) %>% #NA), 0)) %>% 
@@ -486,7 +488,8 @@ Evolución de la incidencia acumulada cada 14 días por por departamentos.
 ###  {.tabset  .tabset-fade .tabset-pills}
 #### Acum 14 días
 ```{r incDptal14, echo=FALSE, fig.align='center', message=FALSE, warning=FALSE, out.width='100%' }
-incDep2 <- diario %>% filter(FECHA > "2020-06-14") %>% 
+incDep2 <- diario %>% filter(FECHA > "2020-06-14"& 
+           !(DEPARTAMENTO %in% c("Otros", "Turistas"))) %>% 
   left_join(poblac_er, by=c("DEPARTAMENTO"="departamento")) %>% 
   mutate(casos = roll_sum(cantidad,  n=14, align="right", fill = 0),
          incidP =  round(casos/poblacion*100000, 0)) %>%

@@ -999,7 +999,7 @@ En la siguiente tabla se muestran los datos de Cantidad de Casos detectados, Alt
 
 Los datos pueden ser descargados en diversos formatos
 ```{r datosER, echo=FALSE, message=FALSE, warning=FALSE, paged.print=FALSE, out.width='100%'}
- 
+inc14 <- incDep2 %>% filter(FECHA==max(FECHA)) %>% select(DEPARTAMENTO, incidP) %>% unique()
 sospechosos <- covid19ER_Sosp %>% group_by(residencia_departamento_nombre) %>% mutate(sospechosos=sum(sospechosos)) %>% 
   select(departamento=residencia_departamento_nombre, sospechosos) %>% unique()
 
@@ -1021,12 +1021,13 @@ tabla <- covider %>%
    left_join(sospechosos, by=c("departamento"="departamento")) %>% 
    left_join(dupl, by=c("departamento"="departamento")) %>% 
   left_join(razon,by=c("departamento"="departamento" )) %>% 
-   select(departamento, casos, nexo, lab, altas, fallecidos, fallS, descartado, sospechosos, dias, razon) %>%
+  left_join(inc14, by=c("departamento"="DEPARTAMENTO" )) %>% 
+   select(departamento, casos, nexo, lab, altas, fallecidos, fallS, descartado, sospechosos, dias, razon, incidP) %>%
   unique() %>% arrange(departamento)
 
 tabla %>% datatable(extensions = 'Buttons', rownames = FALSE,
                     colnames = c("Departamento", "Casos Detectados", "Por Nexo", "Por Lab.", 
-                                 "Recuperados", "Fallecidos", "Fall. SISA", "Descartados", "Sospechosos", "Dias Dupl.", "Razón"),
+                                 "Recuperados", "Fallecidos", "Fall. SISA", "Descartados", "Sospechosos", "Dias Dupl.", "Razón", "Inc. 14 Días"),
                     options = list(dom = 'Blfrtip',
                                    buttons = c('copy', 'csv', 'excel', 'pdf', 'print'),
                                    lengthMenu = list(c(10,25,50,-1), c(10,25,50,"All"))))

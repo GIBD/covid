@@ -49,91 +49,94 @@ library(DT)
   urlign <- "https://wms.ign.gob.ar/geoserver/gwc/service/tms/1.0.0/capabaseargenmap@EPSG%3A3857@png/{z}/{x}/{-y}.png"
   
       
-  deptos <- st_read(dsn ="data/mapas/AMBA_dptos.shp")
-  poligonosMovil <- read_csv("data/poligonosMovil.csv",  locale = locale(encoding = "ISO-8859-1"))
+  # deptos <- st_read(dsn ="data/mapas/AMBA_dptos.shp")
+  # poligonosMovil <- read_csv("data/poligonosMovil.csv",  locale = locale(encoding = "ISO-8859-1"))
   
-  movement <- read_delim("data/movement-range.txt", 
-                         "\t", escape_double = FALSE, locale = locale(encoding = "ISO-8859-1"), 
-                         trim_ws = TRUE) %>% filter(country=="ARG") 
+  # movement <- read_delim("data/movement-range.txt", 
+  #                        "\t", escape_double = FALSE, locale = locale(encoding = "ISO-8859-1"), 
+  #                        trim_ws = TRUE) %>% filter(country=="ARG") 
   # datos_mov <- movement %>% left_join(poligonosMovil, by=c("polygon_id" = "GID_2"))
-  # write.csv2(datos_mov, "datos_mov.csv")
+
   
   cordones <- read_excel("data/argentina.xlsx", "POBLAC_AMBA")
-    
- # covid19casos <- read_excel("data/covid19casos.xlsx")
- covid19casos <- read_csv("data/Covid19Casos.csv")
+  
+ 
+ # covid19casos <- read_csv("data/Covid19Casos.csv")
+ covid19casos <- read_rds("data/casos_pronvinciales.rds")
   names(covid19casos) <- c("id_evento_caso", "sexo", "edad", 	"edad_anos_meses", 	"residencia_pais_nombre", 	"residencia_provincia_nombre", 	"residencia_departamento_nombre", 	"carga_provincia_nombre", 	"fecha_inicio_sintomas", 	"fecha_apertura", 	"sepi_apertura", 	"fecha_internacion", 	"cuidado_intensivo", 	"fecha_cui_intensivo", "fallecido", 	"fecha_fallecimiento",	"asistencia_respiratoria_mecanica",	"carga_provincia_id",	"origen_financiamiento",	"clasificacion", 	"clasificacion_resumen",	"residencia_provincia_id", 	"fecha_diagnostico", 	"residencia_departamento_id",	"ultima_actualizacion")
 
   
   amba <- covid19casos %>%  
-    filter(#residencia_provincia_nombre==carga_provincia_nombre & 
+    filter(residencia_provincia_nombre==carga_provincia_nombre & 
              residencia_provincia_nombre %in% c("Buenos Aires", "CABA")) %>% 
-    select(fecha_apertura,fecha_inicio_sintomas,  fecha_diagnostico, residencia_provincia_nombre, residencia_departamento_nombre,
-           edad, edad_anos_meses, sexo, fecha_internacion, cuidado_intensivo,
-           fecha_cui_intensivo, asistencia_respiratoria_mecanica, fallecido, fecha_fallecimiento, 
-           origen_financiamiento,  clasificacion_resumen, clasificacion) 
+    select(fecha_apertura, fecha_inicio_sintomas,  fecha_diagnostico, residencia_provincia_nombre, residencia_departamento_nombre,
+           # edad, edad_anos_meses, sexo, fecha_internacion, cuidado_intensivo,
+           # fecha_cui_intensivo, asistencia_respiratoria_mecanica, fallecido, fecha_fallecimiento, 
+           # origen_financiamiento,  
+           clasificacion_resumen, clasificacion) 
   
   amba$residencia_departamento_nombre <- if_else( amba$residencia_provincia_nombre=="CABA", "CABA",
                                                 as.character(amba$residencia_departamento_nombre))
   
-  falle <- amba %>% filter(fallecido=="SI" & clasificacion_resumen=="Confirmado") %>%
-          group_by(residencia_provincia_nombre, residencia_departamento_nombre, fecha_fallecimiento) %>%
-          mutate(fallecidos=n()) %>%
-          select(residencia_provincia_nombre, residencia_departamento_nombre, fecha_fallecimiento, fallecidos)
-  
-  altas <- amba %>% filter(fallecido=="NO" & clasificacion_resumen=="Confirmado" & 
-                                     clasificacion %in% c("Caso confirmado - No activo (por laboratorio y tiempo de evolución)",
-                                                           "Caso confirmado - No Activo por criterio de laboratorio", 
-                                                           "Caso confirmado - No activo (por tiempo de evolución)")) %>%
-    group_by(residencia_provincia_nombre, residencia_departamento_nombre) %>%
-    mutate(altas=n()) %>%
-    select(residencia_provincia_nombre, residencia_departamento_nombre, altas) %>% unique()
-  
-  Tdeptal <- amba %>% 
+  # falle <- amba %>% filter(fallecido=="SI" & clasificacion_resumen=="Confirmado") %>%
+  #         group_by(residencia_provincia_nombre, residencia_departamento_nombre, fecha_fallecimiento) %>%
+  #         mutate(fallecidos=n()) %>%
+  #         select(residencia_provincia_nombre, residencia_departamento_nombre, fecha_fallecimiento, fallecidos)
+
+  # altas <- amba %>% filter(fallecido=="NO" & clasificacion_resumen=="Confirmado" &
+  #                                    clasificacion %in% c("Caso confirmado - No activo (por laboratorio y tiempo de evolución)",
+  #                                                          "Caso confirmado - No Activo por criterio de laboratorio",
+  #                                                          "Caso confirmado - No activo (por tiempo de evolución)")) %>%
+  #   group_by(residencia_provincia_nombre, residencia_departamento_nombre) %>%
+  #   mutate(altas=n()) %>%
+  #   select(residencia_provincia_nombre, residencia_departamento_nombre, altas) %>% unique()
+
+  Tdeptal <- amba %>%
           group_by(residencia_provincia_nombre, residencia_departamento_nombre, fecha_apertura, clasificacion_resumen) %>%
           mutate(cantidad= n()) %>%
-          select(residencia_provincia_nombre, residencia_departamento_nombre, 
+          select(residencia_provincia_nombre, residencia_departamento_nombre,
                  fecha_apertura, clasificacion_resumen, cantidad) %>%
-          unique() %>%  spread(clasificacion_resumen, cantidad) %>%
-    left_join(falle, by=c("residencia_provincia_nombre"="residencia_provincia_nombre",
-                          "residencia_departamento_nombre"="residencia_departamento_nombre",
-                          "fecha_apertura"="fecha_fallecimiento")) %>% unique()
-  
-  Tdeptal$fecha_apertura <- as.Date(Tdeptal$fecha_apertura,  '%d/%m/%Y')
+          unique() %>%  spread(clasificacion_resumen, cantidad) %>% unique()
+  # %>% left_join(falle, by=c("residencia_provincia_nombre"="residencia_provincia_nombre",
+  #                         "residencia_departamento_nombre"="residencia_departamento_nombre",
+  #                         "fecha_apertura"="fecha_fallecimiento"))
+
+  # Tdeptal$fecha_apertura <- as.Date(Tdeptal$fecha_apertura,  '%d-%m-%Y')
   Tdeptal$Confirmado <- if_else(is.na(Tdeptal$Confirmado), 0, as.double(Tdeptal$Confirmado))
-  
-  Tdeptal <- Tdeptal %>% group_by(residencia_provincia_nombre, residencia_departamento_nombre) %>% 
+
+  Tdeptal <- Tdeptal %>% group_by(residencia_provincia_nombre, residencia_departamento_nombre) %>%
     mutate(acumulados= cumsum(as.integer(Confirmado)))
-  
-  # amba$fecha <- as.Date(amba$fecha,"%d/%m/%Y")
-  last_date <- last(Tdeptal$fecha_apertura)
-  Tdeptal$residencia_departamento_nombre <-  if_else( Tdeptal$residencia_departamento_nombre=="CABA", "CABA",
-                                                as.character(Tdeptal$residencia_departamento_nombre))
+
+  # amba$fecha_apertura <- as.Date(amba$fecha_apertura,"%d-%m-%Y")
+  last_date <- last(amba$fecha_apertura)
+  # Tdeptal$residencia_departamento_nombre <-  if_else( Tdeptal$residencia_departamento_nombre=="CABA", "CABA",
+  #                                               as.character(Tdeptal$residencia_departamento_nombre))
     
   amba <- Tdeptal %>% left_join(cordones, by=c("residencia_departamento_nombre"="Partido")) %>% 
     select(provincia=residencia_provincia_nombre, Partido=residencia_departamento_nombre, diarios=Confirmado,
            fecha=fecha_apertura, 
-           CASOS=acumulados, descartados=Descartado, sospechosos=Sospechoso, fallecidos, zona=ZONA, CORDON, POBLACION)
+           CASOS=acumulados, descartados=Descartado, sospechosos=Sospechoso,  zona=ZONA, CORDON, POBLACION)
   
     # amba2 <- read_excel("data/argentina.xlsx", "GBA")
-    
-  datos_mov <- movement %>% left_join(poligonosMovil, by=c("polygon_id" = "GID_2")) %>% 
-    filter(NAME_1 %in% c("Ciudad de Buenos Aires", "Buenos Aires") & 
-    NAME_2 %in%  c("Distrito Federal",  "Avellaneda", "General San Martín", 
-                   "La Matanza", "Lanús", "Lomas de Zamora", 
-                   "Morón", "San Isidro",  "Tres de Febrero", "Vicente López", 
-                   
-                   "Almirante Brown", "Berazategui", "Esteban Echeverría", 
-                   "Ezeiza",  "Florencio Varela", "Hurlingham",
-                   "Ituzaingó","José C. Paz",  "Malvinas Argentinas",  
-                   "Merlo", "Moreno",  "Quilmes", "San Fernando", 
-                   "San Miguel", "Tigre",
-                   
-                  "Beriso", "Ensenada", "Escobar",
-                  "General Rodríguez", "La Plata",  "Marcos Paz",  
-                  "Pilar",  "Presidente Perón",  "San Vicente"))
+  #   
+  # datos_mov <- movement %>% left_join(poligonosMovil, by=c("polygon_id" = "GID_2")) %>% 
+  #   filter(NAME_1 %in% c("Ciudad de Buenos Aires", "Buenos Aires") & 
+  #   NAME_2 %in%  c("Distrito Federal",  "Avellaneda", "General San Martín", 
+  #                  "La Matanza", "Lanús", "Lomas de Zamora", 
+  #                  "Morón", "San Isidro",  "Tres de Febrero", "Vicente López", 
+  #                  
+  #                  "Almirante Brown", "Berazategui", "Esteban Echeverría", 
+  #                  "Ezeiza",  "Florencio Varela", "Hurlingham",
+  #                  "Ituzaingó","José C. Paz",  "Malvinas Argentinas",  
+  #                  "Merlo", "Moreno",  "Quilmes", "San Fernando", 
+  #                  "San Miguel", "Tigre",
+  #                  
+  #                 "Beriso", "Ensenada", "Escobar",
+  #                 "General Rodríguez", "La Plata",  "Marcos Paz",  
+  #                 "Pilar",  "Presidente Perón",  "San Vicente"))
  # unique(datos_mov$NAME_2)
-   primer <- c("CABA","Ciudad de Buenos Aires", "Distrito Federal",  "Avellaneda", "General San Martín", "La Matanza", "Lanús", "Lomas de Zamora", 
+   primer <- c("CABA","Ciudad de Buenos Aires", "Distrito Federal",  
+               "Avellaneda", "General San Martín", "La Matanza", "Lanús", "Lomas de Zamora", 
                "Morón",  "San Isidro",  "Tres de Febrero", "Vicente López")
    segundo <- c("Almirante Brown", "Berazategui", "Esteban Echeverría", "Ezeiza",  "Florencio Varela", "Hurlingham",
                    "Ituzaingó","José C. Paz",  "Malvinas Argentinas",  "Merlo", "Moreno",  "Quilmes", "San Fernando", 
@@ -141,8 +144,8 @@ library(DT)
    tercer <- c("Beriso",   "Ensenada", "Escobar", "General Rodríguez", "La Plata",  "Marcos Paz",  "Pilar", 
                   "Presidente Perón",  "San Vicente")
    
-  deptos$departam_1 <- if_else( deptos$departam_1=="Ciudad Autónoma de Buenos Aires", "CABA",
-                               as.character(deptos$departam_1))
+  # deptos$departam_1 <- if_else( deptos$departam_1=="Ciudad Autónoma de Buenos Aires", "CABA",
+  #                              as.character(deptos$departam_1))
  
   # amba <- amba %>% group_by(provincia, Partido) %>% mutate(casos=cumsum(CASOS))
   
@@ -154,14 +157,14 @@ library(DT)
   # casos_hoy$Partido <- gsub("Tres De Febrero", "Tres de Febrero", casos_hoy$Partido)
   # casos_hoy$Partido <- gsub("Lomas De Zamora", "Lomas de Zamora", casos_hoy$Partido)
   # write.csv(casos_hoy, "casos_hoy.csv")
-  deptos_covid <- deptos %>% left_join(casos_hoy, by=c("departam_1" = "Partido"))
+  # deptos_covid <- deptos %>% left_join(casos_hoy, by=c("departam_1" = "Partido"))
   # deptos_covid$departam_1
 
   # primer <- gsub("Distrito Federal", "CABA", primer)
 
-  deptos_covid1 <- deptos_covid %>% filter(departam_1 %in% primer)
-  deptos_covid2 <- deptos_covid %>% filter(departam_1 %in% segundo)
-  deptos_covid3 <- deptos_covid %>% filter(departam_1 %in% tercer)
+  # deptos_covid1 <- deptos_covid %>% filter(departam_1 %in% primer)
+  # deptos_covid2 <- deptos_covid %>% filter(departam_1 %in% segundo)
+  # deptos_covid3 <- deptos_covid %>% filter(departam_1 %in% tercer)
     
   
 ```

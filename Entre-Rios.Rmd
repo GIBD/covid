@@ -80,8 +80,8 @@ poblac_er <-  read_delim("data/poblaciones/poblacion_entre_rios.csv",  ";", esca
 names(poblac_er) <- c("departamento", "poblacion")
 
 ### Base Nación
-covid19ER <- read_csv("data/Covid19Casos.csv")
-
+# covid19ER <- read_csv("data/Covid19Casos.csv")
+covid19ER <- read_rds("data/casos_pronvinciales.rds")
 names(covid19ER) <- c("id_evento_caso", "sexo", "edad", "edad_anos_meses", 
                       "residencia_pais_nombre", "residencia_provincia_nombre",
                       "residencia_departamento_nombre", "carga_provincia_nombre",
@@ -307,18 +307,18 @@ fig
 
 #### Todos
 ```{r promERDptos, echo=FALSE, fig.align='center', message=FALSE, warning=FALSE, out.width='100%' }
-diario %>% filter(!(DEPARTAMENTO %in% c("Otros", "Turistas"))) %>% 
-  ggplot(mapping=aes(x=FECHA, color=DEPARTAMENTO, y=promD, label = max(promD))) +
-  geom_line(show.legend = F,alpha = 0.5) + 
-  geom_point(show.legend = F, alpha = 0.5) + 
-  geom_smooth(method = 'loess', formula = 'y ~ x', alpha = 0.2,
-              size = 2, span = .3, se=FALSE, show.legend=F) +
-  labs(title = paste("COVID-19 ENTRE RÍOS - Casos diarios por Departamento"), 
-       subtitle = paste0("Escala libre") ,
-       y = "Casos",  x = "Fecha", width = 800) +
-  facet_wrap(~ DEPARTAMENTO, 
-             scales = "free_y",
-             ncol = 6)
+  diario %>% filter(!(DEPARTAMENTO %in% c("Otros", "Turistas")) & FECHA >="2020-07-01") %>% 
+    ggplot(mapping=aes(x=FECHA, color=DEPARTAMENTO, y=promD, label = max(promD))) +
+    geom_line(show.legend = F,alpha = 0.5) + 
+    geom_point(show.legend = F, alpha = 0.5) + 
+    geom_smooth(method = 'loess', formula = 'y ~ x', alpha = 0.2,
+                size = 2, span = .3, se=FALSE, show.legend=F) +
+    labs(title = paste("COVID-19 ENTRE RÍOS - Casos diarios por Departamento"), 
+         subtitle = paste0("Escala libre") ,
+         y = "Casos",  x = "Fecha", width = 800) +
+    facet_wrap(~ DEPARTAMENTO, 
+               scales = "free_y",
+               ncol = 6)
 
 ```
 
@@ -377,7 +377,7 @@ fig
 A continuación se muestran los casos confirmados por la provincia el día `r max(covid_er$FECHA)` en base a la distribución departamental
 
 ```{r casosDia, echo=FALSE, message=FALSE, warning=FALSE}
-covid_er_hoy <- covid_er %>% filter(FECHA==max(FECHA)) %>% group_by(DEPARTAMENTO) %>% 
+covid_er_hoy <- covid_er %>% filter(!(DEPARTAMENTO %in% c("Otros", "Turistas")) & FECHA==max(FECHA)) %>% group_by(DEPARTAMENTO) %>% 
   mutate(CASOS=sum(CASOS)) %>% 
   select(DEPARTAMENTO,FECHA, CASOS) %>% unique()
 covid_er_hoy$parents <- "Confirmados"
@@ -1010,7 +1010,7 @@ dupl <- dupl %>% select(departamento, dias)
 covid19ER_Nexo <- covid19ER_Nexo %>%  select(departamento = residencia_departamento_nombre, nexo)
 covid19ER_Lab <- covid19ER_Lab %>%  select(departamento= residencia_departamento_nombre, lab)
     
-tabla <- covider %>% 
+tabla <- covider %>%# filter(!(DEPARTAMENTO %in% c("Otros", "Turistas"))) %>% 
   left_join(covid19ER_Rec, by=c("DEPARTAMENTO"="residencia_departamento_nombre")) %>% 
   select(departamento=DEPARTAMENTO, casos=cantidad, altas) %>% 
    left_join(covid19ER_Nexo, by=c("departamento"="departamento")) %>% 
@@ -1023,7 +1023,8 @@ tabla <- covider %>%
   left_join(razon,by=c("departamento"="departamento" )) %>% 
   left_join(inc14, by=c("departamento"="DEPARTAMENTO" )) %>% 
    select(departamento, casos, nexo, lab, altas, fallecidos, fallS, descartado, sospechosos, dias, razon, incidP) %>%
-  unique() %>% arrange(departamento)
+  unique() %>% 
+  arrange(departamento)
 
 tabla %>% datatable(extensions = 'Buttons', rownames = FALSE,
                     colnames = c("Departamento", "Casos Detectados", "Por Nexo", "Por Lab.", 

@@ -37,14 +37,33 @@ knitr::opts_chunk$set(echo = TRUE)
   deptos <- st_read(dsn ="data/mapas/departamentos.shp") 
   poblacion <- read_excel("data/poblaciones/Deptos.xlsx")
   
-  covid19casos <- read_csv("data/Covid19Casos.csv")
+  # covid19casos <- read_csv("data/Covid19Casos.csv")
+  covid19casos <- read_rds("data/casos_pronvinciales.rds")
+  
+  # fecha <- as.Date("2020-01-14", "%d-%m-%Y")
+  # fecha1 <- as.Date("2020-01-01", "%d-%m-%Y")
+  # fecha2 <- as.Date("2020-12-19", "%d-%m-%Y")
+  # 
+  # # head(covid19casos$fecha_apertura)
+  # deptal28 <- covid19casos %>% filter(clasificacion_resumen=="Confirmado" &
+  #                                       residencia_provincia_nombre==carga_provincia_nombre &
+  #                                       fecha_apertura >= today()-43 & fecha_apertura < today()-29 ) %>% 
+  #   group_by(residencia_provincia_nombre, residencia_departamento_nombre) %>%  mutate(casos28 = n()) %>% 
+  #   select(provincia=residencia_provincia_nombre, depto = residencia_departamento_nombre, casos28) %>% unique()
+  # 
+  # deptal14 <- covid19casos %>% filter(clasificacion_resumen=="Confirmado" &
+  #                                       residencia_provincia_nombre==carga_provincia_nombre &
+  #                                       fecha_apertura >=today()-15 ) %>%
+  #   group_by(residencia_provincia_nombre, residencia_departamento_nombre) %>% mutate(casos14 = n()) %>%
+  #   select(provincia=residencia_provincia_nombre, depto = residencia_departamento_nombre, casos14) %>% unique()
+
   
   deptal28 <- covid19casos %>% filter(clasificacion_resumen=="Confirmado" &
                                         residencia_provincia_nombre==carga_provincia_nombre &
-                                        fecha_apertura >= today()- 29 & fecha_apertura < today()- 15 ) %>% 
-    group_by(residencia_provincia_nombre, residencia_departamento_nombre) %>%  mutate(casos28 = n()) %>% 
+                                        fecha_apertura >= today()- 29 & fecha_apertura < today()- 15 ) %>%
+    group_by(residencia_provincia_nombre, residencia_departamento_nombre) %>%  mutate(casos28 = n()) %>%
     select(provincia=residencia_provincia_nombre, depto = residencia_departamento_nombre, casos28) %>% unique()
-  
+
   deptal14 <- covid19casos %>% filter(clasificacion_resumen=="Confirmado" &
                                         residencia_provincia_nombre==carga_provincia_nombre &
                                         fecha_apertura >= today()- 15 ) %>%
@@ -72,7 +91,7 @@ knitr::opts_chunk$set(echo = TRUE)
 ## Distribución por Departamentos
 Los datos del siguiente mapa son extraídos del portal de datos abiertos del Ministerio de Salud Argentina. Para la localización se utiliza la provincia y el departamento/partido de residencia cargado en el Sistema Nacional de Vigilancia en Salud.
 
-Se muestra el indicador de riesgo de cada departamento basado en la Incidencia acumulada en 14 días cada 100000 habitantes y en la razón de crecimiento de casos en los últimos 14 días.
+Se muestra el indicador de riesgo de cada departamento basado en la Incidencia acumulada en 14 días cada 100.000 habitantes y en la razón de crecimiento de casos en los últimos 14 días.
 
 ```{r dptoArg, echo=FALSE, message=FALSE, warning=FALSE, out.width='100%', out.height='850px'}
 
@@ -138,7 +157,7 @@ deptos_covid <- deptos %>%
  
  
   # deptos_covid$Confirmado <- if_else(deptos_covid$departamen=="Islas Malvinas", 13, as.double(deptos_covid$Confirmado))
-  # write.csv(vacios, "vacios.csv")
+  # write.csv(deptosCov, "deptosCov28.csv")
 # vacios<- deptos_covid %>% filter(incidencia ==0 & razon==0) %>% select(provincia, departamen)
 
  

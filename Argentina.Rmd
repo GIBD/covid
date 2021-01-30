@@ -42,6 +42,7 @@ library(googlesheets4)
 library(readxl)
 library(RcppRoll)
 library(DT)
+# library(data.table)
 
 sep.miles <- function(x){format(x,big.mark=".")}
  
@@ -77,6 +78,10 @@ muertosArg <- covidArg %>% select(FECHA, PROVINCIA, MUERTES)
 
 ### Datos abiertos
 casos_pronvinciales <- read_csv("data/Covid19Casos.csv")
+
+# casos_pronvinciales <- fread("data/Covid19Casos.csv")
+saveRDS(casos_pronvinciales, "data/casos_pronvinciales.rds")
+# system.time(saveRDS(casos_pronvinciales, "data/casos_pronvinciales.rds"))
 
 edades <-  casos_pronvinciales %>% 
   filter(clasificacion_resumen=="Confirmado") %>% group_by(sexo, edad, edad_años_meses) %>%

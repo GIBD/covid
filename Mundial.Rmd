@@ -78,8 +78,10 @@ output:
         mutate(casos =  sum(confirmados)) %>% 
         select(pais, fecha, casos) %>% unique()
       
-      mundial$fecha <-paste0(mundial$fecha,'20')
-      mundial$fecha <-as.Date(mundial$fecha ,"%m/%d/%Y")
+      # if_else(substr(mundial$fecha, 
+                     
+      # mundial$fecha <-paste0(mundial$fecha,'20')
+      mundial$fecha <-as.Date(mundial$fecha , "%m/%d/%y")
       
       mundial<-mundial %>%
         filter(casos > 0) %>% 
@@ -96,8 +98,8 @@ output:
       mundial_m <- mundial_m %>% group_by(pais, fecha) %>% 
         mutate(muertes =sum(muertes)) %>% select(pais, fecha, muertes) %>% unique()
       
-      mundial_m$fecha <-paste0(mundial_m$fecha,'20')
-      mundial_m$fecha <-as.Date(mundial_m$fecha ,"%m/%d/%Y")
+      # mundial_m$fecha <-paste0(mundial_m$fecha,'20')
+      mundial_m$fecha <-as.Date(mundial_m$fecha ,"%m/%d/%y")
       
       mundial_m<-mundial_m %>%
         filter(muertes > 0) %>% 
@@ -114,8 +116,8 @@ output:
       mundial_r <- mundial_r %>% group_by(pais, fecha) %>% 
         mutate(recuperados =sum(recuperados)) %>% select(pais, fecha, recuperados) %>% unique()
       
-      mundial_r$fecha <-paste0(mundial_r$fecha,'20')
-      mundial_r$fecha <-as.Date(mundial_r$fecha ,"%m/%d/%Y")
+      # mundial_r$fecha <-paste0(mundial_r$fecha,'20')
+      mundial_r$fecha <-as.Date(mundial_r$fecha ,"%m/%d/%y")
       
       mundial_r<-mundial_r %>%
         filter(recuperados > 0) %>% 

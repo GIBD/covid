@@ -174,7 +174,7 @@ output:
 ## Casos actuales
 El 30 de enero, la Organización Mundial de la Salud declaró la emergencia de salud pública internacional por el brote epidémico de coronavirus. 
 
-La cifra de contagios confirmados del nuevo coronavirus SARS-CoV-2 superó la barrera del millón, siendo en la actualidad **`r  sep.miles(as.integer(sum(covid19[,ncol(covid19)]))) `** los casos confirmados.
+La cifra de casos confirmados del nuevo coronavirus SARS-CoV-2es en la actualidad **`r  sep.miles(as.integer(sum(covid19[,ncol(covid19)]))) `** personas.
 
 Las muertes por la pandemia alcanzan las **`r   sep.miles(as.integer(sum(covid19_m[,ncol(covid19_m)]))) `**, de acuerdo con los datos de la universidad estadounidense Johns Hopkins, uno de las fuentes más consultadas del mundo.
 

@@ -578,7 +578,7 @@ localidades_er <- covid_er %>% left_join(localidades, by=c("DEPARTAMENTO"="DEPAR
   group_by(Lat2, Long2) %>% mutate(cant=sum(CASOS), Lat=as.double(Lat), Long=as.double(Long)) %>% 
   select(LOCALIDAD, Lat, Long, cant) %>% unique()
 localidades_er <- as.data.frame(lapply(localidades_er, rep, localidades_er$cant))
-write.csv(localidades_er, "casos.csv")
+# write.csv(localidades_er, "casos.csv")
 leaflet( ) %>%
   addTiles() %>% 
   addProviderTiles(providers$OpenStreetMap) %>% 

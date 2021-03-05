@@ -57,16 +57,17 @@ knitr::opts_chunk$set(echo = TRUE)
   #   group_by(residencia_provincia_nombre, residencia_departamento_nombre) %>% mutate(casos14 = n()) %>%
   #   select(provincia=residencia_provincia_nombre, depto = residencia_departamento_nombre, casos14) %>% unique()
 
+  covid19casos$fis <- if_else(is.na(covid19casos$fecha_inicio_sintomas), min(covid19casos$fecha_apertura, covid19casos$fecha_diagnostico), covid19casos$fecha_inicio_sintomas)
   
   deptal28 <- covid19casos %>% filter(clasificacion_resumen=="Confirmado" &
                                         residencia_provincia_nombre==carga_provincia_nombre &
-                                        fecha_apertura >= today()- 29 & fecha_apertura < today()- 15 ) %>%
+                                        fis >= today()- 29 & fis < today()- 15 ) %>%
     group_by(residencia_provincia_nombre, residencia_departamento_nombre) %>%  mutate(casos28 = n()) %>%
     select(provincia=residencia_provincia_nombre, depto = residencia_departamento_nombre, casos28) %>% unique()
 
   deptal14 <- covid19casos %>% filter(clasificacion_resumen=="Confirmado" &
                                         residencia_provincia_nombre==carga_provincia_nombre &
-                                        fecha_apertura >= today()- 15 ) %>%
+                                        fis >= today()- 15 ) %>%
     group_by(residencia_provincia_nombre, residencia_departamento_nombre) %>% mutate(casos14 = n()) %>%
     select(provincia=residencia_provincia_nombre, depto = residencia_departamento_nombre, casos14) %>% unique()
   
@@ -92,6 +93,8 @@ knitr::opts_chunk$set(echo = TRUE)
 Los datos del siguiente mapa son extraídos del portal de datos abiertos del Ministerio de Salud Argentina. Para la localización se utiliza la provincia y el departamento/partido de residencia cargado en el Sistema Nacional de Vigilancia en Salud.
 
 Se muestra el indicador de riesgo de cada departamento basado en la Incidencia acumulada en 14 días cada 100.000 habitantes y en la razón de crecimiento de casos en los últimos 14 días.
+
+Ambos indicadores son calculados en base a la fecha de inicio de síntomas 
 
 ```{r dptoArg, echo=FALSE, message=FALSE, warning=FALSE, out.width='100%', out.height='850px'}
 

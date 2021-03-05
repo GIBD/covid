@@ -51,8 +51,13 @@ sep.miles <- function(x){format(x,big.mark=".")}
 #################
 capUti <-3981
 ## Mapas y Poblaciones
-argentina <- fromJSON(file = "data/mapas/ar-all.geo.json")
+colorR <- function(c, d){ c <- if_else(c < 150 & d<1.2, '#009900', #verde
+                                         if_else((c >= 150 & d<1.2)| (c < 150 & d>=1.2), "#F5F93D", #amarillo
+                                            if_else((c >= 150 & d>=1.2), '#FF0000', '#FFFFFF'))) #rojo
+  return(c)}
 
+argentina <- fromJSON(file = "data/mapas/ar-all.geo.json")
+  
   
 poblacionArg <- read_delim("data/poblaciones/prov_argentina.csv", ";", escape_double = FALSE,  
                            locale = locale(decimal_mark = ",", grouping_mark = ".", encoding = "ISO-8859-1"),trim_ws = TRUE)
@@ -74,15 +79,23 @@ casos28 <- covidArg %>% filter(FECHA >= today()-28 & FECHA < today()-14) %>% gro
 
 razon <- casos14 %>% left_join(casos28)
 razon$razon <- round(razon$casos14/razon$casos28, 1)
+# poblacionArg
+incid14 <- casos14 %>% left_join(poblacionArg, by = c("PROVINCIA"="provincia"))
+incid14$incid <- round(incid14$casos14/incid14$poblacion*100000,0)
+
+indicadores <- incid14 %>% left_join(razon) %>% select(PROVINCIA, razon, incid)
+rm(casos14, casos28, razon, incid14)
+
 
 ### Detalle fallecidos
 muertosArg <- covidArg %>% select(FECHA, PROVINCIA, MUERTES)
 
 ### Datos abiertos
 casos_pronvinciales <- read_csv("data/Covid19Casos.csv")
+# casos_pronvinciales <- read_rds("data/casos_pronvinciales.rds")
+saveRDS(casos_pronvinciales, "data/casos_pronvinciales.rds")
 
 # casos_pronvinciales <- fread("data/Covid19Casos.csv")
-saveRDS(casos_pronvinciales, "data/casos_pronvinciales.rds")
 # system.time(saveRDS(casos_pronvinciales, "data/casos_pronvinciales.rds"))
 
 edades <-  casos_pronvinciales %>% 
@@ -102,29 +115,29 @@ edades$grupo <- if_else(edades$edad < 10, "0 a 9",
                      if_else(edades$edad < 70, "60 a 69", 
                      if_else(edades$edad < 80, "70 a 79", "80 o mas"))))))))
 
-edades <- edades %>% group_by(sexo, grupo) %>% mutate(cantidad=sum(cantidad)) %>% 
-  select(sexo, grupo, cantidad) %>% unique()
-
-fallecidos_edad <- casos_pronvinciales %>% 
-  filter(clasificacion_resumen=="Confirmado" & fallecido=="SI") %>%
-  group_by(sexo, edad, edad_años_meses) %>%
-  mutate(cantidad = n()) %>% select(sexo, edad, edad_años_meses, cantidad) %>% unique()
-
-fallecidos_edad$edad <- if_else(fallecidos_edad$edad_años_meses=="Meses", 1, fallecidos_edad$edad)
-
-fallecidos_edad <- fallecidos_edad %>% 
-  group_by(sexo, edad) %>%
-  mutate(cantidad=sum(cantidad)) %>% 
-  select(sexo, edad, cantidad) %>% unique()
-     
-      fallecidos_edad$grupo <- if_else(fallecidos_edad$edad < 10, "0 a 9", 
-                     if_else(fallecidos_edad$edad < 20, "10 a 19", 
-                     if_else(fallecidos_edad$edad < 30, "20 a 29", 
-                     if_else(fallecidos_edad$edad < 40, "30 a 39", 
-                     if_else(fallecidos_edad$edad < 50, "40 a 49", 
-                     if_else(fallecidos_edad$edad < 60, "50 a 59", 
-                     if_else(fallecidos_edad$edad < 70, "60 a 69", 
-                     if_else(fallecidos_edad$edad < 80, "70 a 79", "80 o mas"))))))))
+  edades <- edades %>% group_by(sexo, grupo) %>% mutate(cantidad=sum(cantidad)) %>% 
+    select(sexo, grupo, cantidad) %>% unique()
+  
+  fallecidos_edad <- casos_pronvinciales %>% 
+    filter(clasificacion_resumen=="Confirmado" & fallecido=="SI") %>%
+    group_by(sexo, edad, edad_años_meses) %>%
+    mutate(cantidad = n()) %>% select(sexo, edad, edad_años_meses, cantidad) %>% unique()
+  
+  fallecidos_edad$edad <- if_else(fallecidos_edad$edad_años_meses=="Meses", 1, fallecidos_edad$edad)
+  
+  fallecidos_edad <- fallecidos_edad %>% 
+    group_by(sexo, edad) %>%
+    mutate(cantidad=sum(cantidad)) %>% 
+    select(sexo, edad, cantidad) %>% unique()
+       
+        fallecidos_edad$grupo <- if_else(fallecidos_edad$edad < 10, "0 a 9", 
+                       if_else(fallecidos_edad$edad < 20, "10 a 19", 
+                       if_else(fallecidos_edad$edad < 30, "20 a 29", 
+                       if_else(fallecidos_edad$edad < 40, "30 a 39", 
+                       if_else(fallecidos_edad$edad < 50, "40 a 49", 
+                       if_else(fallecidos_edad$edad < 60, "50 a 59", 
+                       if_else(fallecidos_edad$edad < 70, "60 a 69", 
+                       if_else(fallecidos_edad$edad < 80, "70 a 79", "80 o mas"))))))))
      
      fallecidos_edad <- fallecidos_edad %>% group_by(sexo, grupo) %>% mutate(cantidad=sum(cantidad)) %>% 
         select(sexo, grupo, cantidad) %>% unique()
@@ -133,16 +146,26 @@ fallecidos_edad <- fallecidos_edad %>%
                                                       clasificacion_resumen=="Confirmado") %>% 
         group_by(carga_provincia_nombre, fecha_apertura) %>% mutate(confirmados = n()) %>% 
         select(carga_provincia_nombre, fecha_apertura, confirmados) %>% unique()
-     
-     # unique(recuperados$clasificacion)
-     recuperados <- casos_pronvinciales %>% 
-       filter( carga_provincia_nombre== residencia_provincia_nombre & 
-                clasificacion_resumen == "Confirmado" & 
-                clasificacion %in% c("Caso confirmado por laboratorio - No Activo por criterio de laboratorio",
-                                     "Caso confirmado por laboratorio - No activo (por tiempo de evolución)", 
-                                     "Caso confirmado por criterio clínico-epidemiológico  - No activo (por tiempo de evolución)")) %>% 
-        group_by(carga_provincia_nombre, fecha_apertura) %>% mutate(altas = n()) %>% 
+     	
+     	
+     # total <- data.frame(table(casos_pronvinciales$clasificacion))
+     recuperados <- casos_pronvinciales %>%
+       filter( carga_provincia_nombre== residencia_provincia_nombre &
+                clasificacion_resumen == "Confirmado" &
+                clasificacion %in% c("Caso confirmado por laboratorio - No activo (por tiempo de evolución)",
+     	"Caso confirmado por criterio clínico-epidemiológico - No activo (por tiempo de evolución)",
+     	"Caso confirmado por laboratorio - No Activo por criterio de laboratorio")) %>%
+        group_by(carga_provincia_nombre, fecha_apertura) %>% mutate(altas = n()) %>%
         select(carga_provincia_nombre, fecha_apertura, altas) %>% unique()
+     
+     # recuperados <- casos_pronvinciales %>% 
+     #   filter( carga_provincia_nombre== residencia_provincia_nombre & 
+     #            clasificacion_resumen == "Confirmado" & 
+     #            clasificacion %in% c("Caso confirmado por laboratorio - No Activo por criterio de laboratorio",
+     #                                 "Caso confirmado por laboratorio - No activo (por tiempo de evolución)", 
+     #                                 "Caso confirmado por criterio clínico-epidemiológico  - No activo (por tiempo de evolución)")) %>% 
+     #    group_by(carga_provincia_nombre) %>% mutate(altas = n()) %>% 
+     #    select(carga_provincia_nombre, altas) %>% unique()
      
      confirmados_lab <- casos_pronvinciales %>% 
         filter(carga_provincia_nombre== residencia_provincia_nombre & 
@@ -174,25 +197,41 @@ fallecidos_edad <- fallecidos_edad %>%
                                                  as.double(positiv_lab$positividad))
        
        
-     descartados <- casos_pronvinciales %>% filter(carga_provincia_nombre== residencia_provincia_nombre & 
-                                                      clasificacion_resumen=="Descartado" ) %>% 
-        group_by(carga_provincia_nombre, fecha_apertura) %>% mutate(descartados = n()) %>% 
+     descartados <- casos_pronvinciales %>% filter(carga_provincia_nombre== residencia_provincia_nombre &
+                                                      clasificacion_resumen=="Descartado" ) %>%
+        group_by(carga_provincia_nombre, fecha_apertura) %>% mutate(descartados = n()) %>%
         select(carga_provincia_nombre, fecha_apertura, descartados) %>% unique()
-     
-     fallecidos <- casos_pronvinciales %>% filter(carga_provincia_nombre== residencia_provincia_nombre & 
+     # 
+       # descartados <- casos_pronvinciales %>% filter(carga_provincia_nombre== residencia_provincia_nombre & 
+       #                                                clasificacion_resumen=="Descartado" ) %>% 
+       #  group_by(carga_provincia_nombre) %>% mutate(descartados = n()) %>% 
+       #  select(carga_provincia_nombre, descartados) %>% unique()
+      
+     fallecidos <- casos_pronvinciales %>% filter(carga_provincia_nombre== residencia_provincia_nombre &
                                                       clasificacion_resumen=="Confirmado" &
-                                                     fallecido=="SI") %>% 
-       group_by(carga_provincia_nombre, fecha_apertura) %>% mutate(fallecidos = n()) %>% 
+                                                     fallecido=="SI") %>%
+       group_by(carga_provincia_nombre, fecha_apertura) %>% mutate(fallecidos = n()) %>%
        select(carga_provincia_nombre, fecha_apertura, fallecidos) %>% unique()
-     
-     casos_provincias <- confirmados %>% 
+     # 
+      
+       # fallecidos <- casos_pronvinciales %>% filter(carga_provincia_nombre== residencia_provincia_nombre & 
+       #                                                clasificacion_resumen=="Confirmado" &
+       #                                               fallecido=="SI") %>% 
+       # group_by(carga_provincia_nombre) %>% mutate(fallecidos = n()) %>% 
+       # select(carga_provincia_nombre, fallecidos) %>% unique()
+        
+     casos_provincias <- confirmados %>%
        left_join(descartados, by=c("carga_provincia_nombre"="carga_provincia_nombre",
                                    "fecha_apertura"="fecha_apertura")) %>%
        left_join(recuperados, by=c("carga_provincia_nombre"="carga_provincia_nombre",
-                                   "fecha_apertura"="fecha_apertura")) %>% 
+                                   "fecha_apertura"="fecha_apertura")) %>%
        left_join(fallecidos, by=c("carga_provincia_nombre"="carga_provincia_nombre",
                                    "fecha_apertura"="fecha_apertura"))
-
+    # casos_provincias <- confirmados %>% 
+    #    left_join(descartados, by=c("carga_provincia_nombre"="carga_provincia_nombre")) %>%
+    #    left_join(recuperados, by=c("carga_provincia_nombre"="carga_provincia_nombre")) %>% 
+    #    left_join(fallecidos, by=c("carga_provincia_nombre"="carga_provincia_nombre"))
+    
      casos_provincias$positividad <- round(casos_provincias$confirmados/
                                                 (casos_provincias$confirmados + casos_provincias$descartados)*100, 1)
      
@@ -207,8 +246,9 @@ fallecidos_edad <- fallecidos_edad %>%
                                                  as.double(casos_provincias$positividad))
      
      casos_provincias$activos <- casos_provincias$confirmados - 
-                    casos_provincias$altas - casos_provincias$fallecidos
-
+                    casos_provincias$altas - casos_provincias$fallecidos 
+    # sum(casos_provincias$activos)
+  
      color <- function(d){
           c <- if_else(d==0, '#FFFFFF',
                if_else(d < 25, '#fdd49e',
@@ -467,9 +507,11 @@ La cantidad de casos Activos se ha calculado en base a los informes provinciales
 Debido a que no todas las provincias lo informan diariamente pueden existir algunas diferencias con las situaciones actuales.
 
 ```{r mapaActivos, echo=FALSE, message=FALSE, warning=FALSE, fig.align='center',  out.height='100%'}
-    activos <- casos_provincias %>% group_by(carga_provincia_nombre) %>% 
+    # activos <- casos_provincias %>% group_by(carga_provincia_nombre) %>% filter()
+    #     mutate(activos=sum(activos)) %>% select(carga_provincia_nombre, activos) %>% unique()
+    activos <- casos_provincias %>% group_by(carga_provincia_nombre) %>%
         mutate(activos=sum(activos)) %>% select(carga_provincia_nombre, activos) %>% unique()
-  
+        
     activos$carga_provincia_nombre <- if_else(activos$carga_provincia_nombre=="CABA", 
                                               "Ciudad de Buenos Aires",
                                               activos$carga_provincia_nombre)
@@ -861,7 +903,7 @@ Al día de la fecha las incidencias acumuladas por cada 100.000 habitantes en la
 
   # ia_prov$provincia <- if_else(ia_prov$provincia=="Ciudad de Buenos Aires", "CABA", ia_prov$provincia)
 
-  tabiaprov <- ia_prov %>% select(provincia, cant, ia) %>% arrange(desc(ia))
+  tabiaprov <- ia_prov %>% select(provincia, cant, ia) %>% arrange(desc(ia)) %>% unique()
   tabiaprov$provincia <- if_else(tabiaprov$provincia=="Ciudad de Buenos Aires", "CABA", tabiaprov$provincia)
   tabiaprov %>%  datatable(extensions = 'Buttons', rownames = FALSE,
                           colnames = c("Provincia", "Casos Detectados", "Incidencia cada 100.000 Hab."),
@@ -921,7 +963,7 @@ La **tasa de mortalidad general** de cada una de las provincias viene dada por c
   p <- muertosArg  %>% group_by(PROVINCIA) %>% mutate(fall = sum(MUERTES, na.rm = T)) %>% 
     select(PROVINCIA, fall) %>% unique() %>% 
     left_join(poblacionArg, by = c("PROVINCIA"="provincia")) %>% 
-    mutate(tasa_mor = round(fall/poblacion * 1000000, 0)) %>% arrange(desc(tasa_mor))
+    mutate(tasa_mor = round(fall/poblacion * 1000000, 0)) %>% arrange(desc(tasa_mor)) %>% unique()
   
 
   fig <- plot_ly(p, type="bar")
@@ -1232,5 +1274,44 @@ Para este gráfico se considera la provincia que carga el caso cuando no se espe
 ```
 
 
+## Indicadores Sanitarios
+En base a los indicadores definidos por el Min. de Salud de Nación se establece un semáforo de riesgo para cada provincia.
+Los indicadores son:
+
+Razón de Crecimiento: casos acumulados en los últimos 14 días vs casos acumulados en 14 días previos
+
+Incidencia Acumulada: cantidad de casos acumulados en los últimos 14 días cada 100.000 habitantes
+
+
+El riesgo se define como:
+
+* Riesgo Alto: incidencia acumulada en los últimos 14 días mayor o igual a 150 casos cada 100.000 habitantes y Razón mayor o igual a 1,2
+
+* Riesgo Medio: incidencia acumulada en los últimos 14 días mayor o igual a 150 casos cada 100.000 habitantes o Razón mayor o igual a 1,2
+
+* Riesgo Bajo: incidencia acumulada en los últimos 14 días menor a 150 casos cada 100.000 habitantes y Razón menor a 1,2
+
+```{r mapaIndic, echo=FALSE, message=FALSE, warning=FALSE, fig.align='center',  out.height='100%'}
+
+   indicadores$PROVINCIA <- if_else(indicadores$PROVINCIA=="CABA",  "Ciudad de Buenos Aires", indicadores$PROVINCIA)
+  
+  indicadores$color <- colorR(indicadores$incid, indicadores$razon)
+  indicadores$Riesgo <- if_else(indicadores$color=="#009900", "Bajo", if_else(indicadores$color=="#F5F93D", "Medio",  if_else(indicadores$color=="#FF0000", "Alto","")))
+  
+  highchart(width = 900) %>%
+    hc_title(text = "<i>COVID-19: Indicadores de Riesgo por Provincia en Argentina</i> - <b>GIBD</b>",
+             margin = 5, align = "center",  style = list(color = "#000000", useHTML = TRUE, fontWeight = "bold")) %>% 
+    hc_tooltip(followPointer =  FALSE) %>%
+    hc_add_series_map(argentina, indicadores, name = "Riesgo",
+                      value = "Riesgo", joinBy = c("name", "PROVINCIA"),
+                      dataLabels = list(enabled = TRUE, format = '{point.properties.woe-name}')) %>%
+    # hc_colorAxis(indicadores$color) %>%
+    hc_legend(enabled = FALSE) %>%
+    hc_mapNavigation(enabled = TRUE) %>%
+    hc_add_theme(hc_theme_ffx()) %>%
+    hc_add_annotation(xValue = 0, yValue = 0,  title = list(text = 'Fuente: Ministerios de Salud Provinciales')) %>% 
+    hc_chart(borderColor = "#000000", borderRadius = 10, borderWidth = 2)
+                 
+```
 
 

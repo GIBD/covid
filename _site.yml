@@ -17,5 +17,7 @@ navbar:
       href: Amba.html  
     - text: "Entre Rios"
       href: Entre-Rios.html  
+    - text: "Vacunas ER"
+      href: Vacunas.html        
 output_dir: "docs"
 exclude: "data"

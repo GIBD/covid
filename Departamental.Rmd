@@ -33,59 +33,55 @@ knitr::opts_chunk$set(echo = TRUE)
   library(tmap)
   library(googlesheets4)
   library(readxl)
+  library(RcppRoll)
 
   deptos <- st_read(dsn ="data/mapas/departamentos.shp") 
   poblacion <- read_excel("data/poblaciones/Deptos.xlsx")
   
-  # covid19casos <- read_csv("data/Covid19Casos.csv")
   covid19casos <- read_rds("data/casos_pronvinciales.rds")
   
-  # fecha <- as.Date("2020-01-14", "%d-%m-%Y")
-  # fecha1 <- as.Date("2020-01-01", "%d-%m-%Y")
-  # fecha2 <- as.Date("2020-12-19", "%d-%m-%Y")
-  # 
-  # # head(covid19casos$fecha_apertura)
-  # deptal28 <- covid19casos %>% filter(clasificacion_resumen=="Confirmado" &
-  #                                       residencia_provincia_nombre==carga_provincia_nombre &
-  #                                       fecha_apertura >= today()-43 & fecha_apertura < today()-29 ) %>% 
-  #   group_by(residencia_provincia_nombre, residencia_departamento_nombre) %>%  mutate(casos28 = n()) %>% 
-  #   select(provincia=residencia_provincia_nombre, depto = residencia_departamento_nombre, casos28) %>% unique()
-  # 
-  # deptal14 <- covid19casos %>% filter(clasificacion_resumen=="Confirmado" &
-  #                                       residencia_provincia_nombre==carga_provincia_nombre &
-  #                                       fecha_apertura >=today()-15 ) %>%
-  #   group_by(residencia_provincia_nombre, residencia_departamento_nombre) %>% mutate(casos14 = n()) %>%
-  #   select(provincia=residencia_provincia_nombre, depto = residencia_departamento_nombre, casos14) %>% unique()
-
-  covid19casos$fis <- if_else(is.na(covid19casos$fecha_inicio_sintomas), min(covid19casos$fecha_apertura, covid19casos$fecha_diagnostico), covid19casos$fecha_inicio_sintomas)
+  poblacion$departamento <- if_else(poblacion$provincia=="Chaco" & 
+                                    poblacion$departamento=="Mayor Luis J. Fontana",
+                                    "Mayor Luis Jorge Fontana", poblacion$departamento)
   
-  deptal28 <- covid19casos %>% filter(clasificacion_resumen=="Confirmado" &
-                                        residencia_provincia_nombre==carga_provincia_nombre &
-                                        fis >= today()- 29 & fis < today()- 15 ) %>%
-    group_by(residencia_provincia_nombre, residencia_departamento_nombre) %>%  mutate(casos28 = n()) %>%
-    select(provincia=residencia_provincia_nombre, depto = residencia_departamento_nombre, casos28) %>% unique()
+  covid19casos$fis <- if_else(is.na(covid19casos$fecha_apertura), 
+                              max(covid19casos$fecha_inicio_sintomas, covid19casos$fecha_diagnostico, na.rm = T),
+                              covid19casos$fecha_apertura)
+  
+  casos <- covid19casos %>%  filter(clasificacion_resumen=="Confirmado") %>% 
+    group_by(residencia_provincia_nombre, residencia_departamento_nombre, fis) %>% 
+    mutate(casos=n()) %>% 
+    select(residencia_provincia_nombre, residencia_departamento_nombre, fis, casos) %>%
+    unique()
 
-  deptal14 <- covid19casos %>% filter(clasificacion_resumen=="Confirmado" &
-                                        residencia_provincia_nombre==carga_provincia_nombre &
-                                        fis >= today()- 15 ) %>%
-    group_by(residencia_provincia_nombre, residencia_departamento_nombre) %>% mutate(casos14 = n()) %>%
+  fecha <- max(casos$fis)
+  
+  deptal28 <- casos %>% 
+    filter(fis > fecha - 28 & fis <= fecha - 14 ) %>%
+    group_by(residencia_provincia_nombre, residencia_departamento_nombre) %>%  mutate(casos28 = sum(casos)) %>%
+    select(provincia=residencia_provincia_nombre, depto = residencia_departamento_nombre, casos28) %>% unique()
+     
+  deptal14 <- casos %>% 
+    filter(fis > fecha-14 ) %>%
+    group_by(residencia_provincia_nombre, residencia_departamento_nombre) %>%  mutate(casos14 = sum(casos)) %>%
     select(provincia=residencia_provincia_nombre, depto = residencia_departamento_nombre, casos14) %>% unique()
+  
   
   deptosCov <- deptal14 %>% left_join(deptal28, by=c("provincia"="provincia", "depto"= "depto"))      
   deptosCov <- deptosCov %>% left_join(poblacion, by=c("provincia"="provincia", "depto"= "departamento")) %>% 
     filter(!(depto=="SIN ESPECIFICAR")) %>% 
-    mutate(razon = if_else(is.na(casos28), 1.2, round(casos14/casos28,1)),
+    mutate(razon = if_else(is.na(casos28), 1.20, round(casos14/casos28,2)),
            incidencia = round(casos14/P_2020*100000,0))
 
-  colorR <- function(c, d){ c <- if_else(c < 150 & d<1.2, '#009900', #verde
-                                         if_else((c >= 150 & d<1.2)| (c < 150 & d>=1.2), "#F5F93D", #amarillo
-                                            if_else((c >= 150 & d>=1.2), '#FF0000', '#FFFFFF'))) #rojo
+  colorR <- function(c, d){ 
+    c <- if_else(c < 150 & d<1.20, '#009900', #verde
+          if_else((c >= 150 & d<1.20)| (c < 150 & d>=1.20), "#F5F93D", #amarillo
+                  if_else((c >= 150 & d>=1.20), '#FF0000', '#FFFFFF'))) #rojo
   return(c)}
-
-  
   
   urlign <- "https://wms.ign.gob.ar/geoserver/gwc/service/tms/1.0.0/capabaseargenmap@EPSG%3A3857@png/{z}/{x}/{-y}.png"
-      
+  
+ 
 ```
 
 
@@ -94,7 +90,8 @@ Los datos del siguiente mapa son extraídos del portal de datos abiertos del Min
 
 Se muestra el indicador de riesgo de cada departamento basado en la Incidencia acumulada en 14 días cada 100.000 habitantes y en la razón de crecimiento de casos en los últimos 14 días.
 
-Ambos indicadores son calculados en base a la fecha de inicio de síntomas 
+Ambos indicadores son calculados en base a la fecha de inicio de síntomas y se descartarán los últimos 7 días debido a la demora en la carga y/o diagnóstico.
+
 
 ```{r dptoArg, echo=FALSE, message=FALSE, warning=FALSE, out.width='100%', out.height='850px'}
 
@@ -103,27 +100,28 @@ Ambos indicadores son calculados en base a la fecha de inicio de síntomas
                               deptosCov$depto=="Coronel de Marina L. Rosales", "Coronel de Marina Leonardo Rosales",
                             as.character(deptosCov$depto))
 
+# Mayor Luis Jorge Fontana
   deptosCov$provincia <- if_else(deptosCov$provincia=="Tierra del Fuego", "Tierra del Fuego, Antártida e Islas del Atlántico Sur",
                                  as.character(deptosCov$provincia))
-  deptosCov$depto <- if_else(deptosCov$provincia=="Salta" &   deptosCov$depto=="Grl. José de San Martín",
+  deptosCov$depto <- if_else(deptosCov$provincia=="Salta" & deptosCov$depto=="Grl. José de San Martín",
                              "General José de San Martín", deptosCov$depto)
-  deptosCov$depto <- if_else(deptosCov$provincia=="Chaco" &   deptosCov$depto=="1º de Mayo",
+  deptosCov$depto <- if_else(deptosCov$provincia=="Chaco" & deptosCov$depto=="1º de Mayo",
                              "1ro. de Mayo", deptosCov$depto)
   deptosCov$depto <- if_else(deptosCov$provincia=="Formosa" & deptosCov$depto=="Laishi",
                              "Laishí", deptosCov$depto)
   deptosCov$depto <- if_else(deptosCov$provincia=="Misiones" &  deptosCov$depto=="Libertador Grl. San Martín",
                              "Libertador General San Martín", deptosCov$depto)
-  deptosCov$depto <- if_else(deptosCov$provincia=="Misiones" &   deptosCov$depto=="25 de Mayo",
+  deptosCov$depto <- if_else(deptosCov$provincia=="Misiones" &  deptosCov$depto=="25 de Mayo",
                              "25de Mayo", deptosCov$depto)
   deptosCov$depto <- if_else(deptosCov$provincia=="Santiago del Estero" &  deptosCov$depto=="Silípica",
                              "Silipica", deptosCov$depto)
   deptosCov$depto <- if_else(deptosCov$provincia=="La Rioja" &  deptosCov$depto=="San Blas de los Sauces",
                              "San Blas de Los Sauces", deptosCov$depto)
-  deptosCov$depto <- if_else(deptosCov$provincia=="San Juan" &   deptosCov$depto=="Jáchal",
+  deptosCov$depto <- if_else(deptosCov$provincia=="San Juan" &  deptosCov$depto=="Jáchal",
                              "Jachal", deptosCov$depto)
   deptosCov$depto <- if_else(deptosCov$provincia=="San Juan" &  deptosCov$depto=="Ullúm",
                              "Ullum", deptosCov$depto)
-  deptosCov$depto <- if_else(deptosCov$provincia=="Mendoza" &   deptosCov$depto=="Luján de Cuyo",
+  deptosCov$depto <- if_else(deptosCov$provincia=="Mendoza" & deptosCov$depto=="Luján de Cuyo",
                              "Cuyo", deptosCov$depto)
   deptosCov$depto <- if_else(deptosCov$provincia=="San Luis" &  deptosCov$depto=="Luján de Cuyo",
                              "Cuyo", deptosCov$depto)

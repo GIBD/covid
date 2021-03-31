@@ -91,9 +91,9 @@ rm(casos14, casos28, razon, incid14)
 muertosArg <- covidArg %>% select(FECHA, PROVINCIA, MUERTES)
 
 ### Datos abiertos
-casos_pronvinciales <- read_rds("data/casos_pronvinciales.rds")
-# casos_pronvinciales <- read_csv("data/Covid19Casos.csv")
-# saveRDS(casos_pronvinciales, "data/casos_pronvinciales.rds")
+# casos_pronvinciales <- read_rds("data/casos_pronvinciales.rds")
+casos_pronvinciales <- read_csv("data/Covid19Casos.csv")
+saveRDS(casos_pronvinciales, "data/casos_pronvinciales.rds")
 
 
 edades <-  casos_pronvinciales %>% 

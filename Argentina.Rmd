@@ -59,9 +59,9 @@ colorR <- function(c, d){ c <- if_else(c < 150 & d <1.2, '#009900', #verde
 argentina <- fromJSON(file = "data/mapas/ar-all.geo.json")
   
 ### Datos abiertos
-# casos_pronvinciales <- read_rds("data/casos_pronvinciales.rds")
-casos_pronvinciales <- read_csv("data/Covid19Casos.csv")
-saveRDS(casos_pronvinciales, "data/casos_pronvinciales.rds")
+casos_pronvinciales <- read_rds("data/casos_pronvinciales.rds")
+# casos_pronvinciales <- read_csv("data/Covid19Casos.csv")
+# saveRDS(casos_pronvinciales, "data/casos_pronvinciales.rds")
   
 poblacionArg <- read_delim("data/poblaciones/prov_argentina.csv", ";", escape_double = FALSE,  
                            locale = locale(decimal_mark = ",", grouping_mark = ".", encoding = "ISO-8859-1"),trim_ws = TRUE)
@@ -1048,70 +1048,71 @@ muertosArg$PROVINCIA <- if_else(muertosArg$PROVINCIA=="CABA", "Ciudad de Buenos 
 
 
 
-## Distribución de Casos por Tipo
-Los tipos de Casos confirmados se clasifican en:
-*Importados* (cuando se registra trasmisión relacionada viajes al exterior del país)
+<!-- ## Distribución de Casos por Tipo -->
+<!-- Los tipos de Casos confirmados se clasifican en: -->
+<!-- *Importados* (cuando se registra trasmisión relacionada viajes al exterior del país) -->
 
-*Contacto estrecho/Conglomerado*: casos en los que se puede determinar la cadena de transmisión por contacto estrecho con infectados
+<!-- *Contacto estrecho/Conglomerado*: casos en los que se puede determinar la cadena de transmisión por contacto estrecho con infectados -->
 
-*Comunitario*: aquellos casos en los que no se puede relacionar a los casos confirmados con cadenas de trasmisión conocidas. 
+<!-- *Comunitario*: aquellos casos en los que no se puede relacionar a los casos confirmados con cadenas de trasmisión conocidas.  -->
 
-*Investigación*: casos que se encuentran en estudio para definir el tipo de transmisión. En algún momento tiene que pasar a alguno de los otros 3 casos
+<!-- *Investigación*: casos que se encuentran en estudio para definir el tipo de transmisión. En algún momento tiene que pasar a alguno de los otros 3 casos -->
 
-La evolución y distribución de los casos según el tipo en Argentina es:
+<!-- La evolución y distribución de los casos según el tipo en Argentina es: -->
 
 
-###  {.tabset  .tabset-fade .tabset-pills}
-#### Distribución
-```{r distrCasos, echo=FALSE, fig.align='center', message=FALSE, warning=FALSE, out.width='100%'}
+<!-- ###  {.tabset  .tabset-fade .tabset-pills} -->
+<!-- #### Distribución -->
+ <!-- ```{r distrCasos, echo=FALSE, fig.align='center', message=FALSE, warning=FALSE, out.width='100%'} -->
 
-  distCasos <- argCov %>% mutate(porImportados = Importados/Detectados,
-                                porEstrecho = Estrecho/Detectados,
-                                porComunitaria = Comunitaria/Detectados,
-                                porInvestigacion = Investigacion/Detectados) %>% 
-    select(dia, porImportados, porEstrecho, porComunitaria, porInvestigacion) %>% arrange(dia)
+  <!-- distCasos <- argCov %>% mutate(porImportados = Importados/Detectados, -->
+  <!--                               porEstrecho = Estrecho/Detectados, -->
+  <!--                               porComunitaria = Comunitaria/Detectados, -->
+  <!--                               porInvestigacion = Investigacion/Detectados) %>%  -->
+  <!--   select(dia, porImportados, porEstrecho, porComunitaria, porInvestigacion) %>% arrange(dia) -->
+
+  <!-- distCasos$dia <- as.Date(distCasos$dia, '%d/%m/%Y') -->
+
+  <!-- plot_ly(distCasos, x = ~dia, y = ~porInvestigacion, type = "bar", name = "En Investigación", color = I("orchid3"), -->
+  <!--         hoverinfo = 'text', -->
+  <!--         text = ~paste('</br> Fecha: ', dia , -->
+  <!--                       '</br> Importados: ', round(porImportados*100, 2),'%', -->
+  <!--                     '</br> Contactos Estrechos: ', round(porEstrecho*100, 2),'%', -->
+  <!--                     '</br> Circulación Comunitaria: ', round(porComunitaria*100, 2),'%', -->
+  <!--                     '</br> En Investigación: ', round(porInvestigacion*100, 2),'%')) %>%  -->
+  <!--   add_trace(y = ~porComunitaria, name = "Circulación Comunitaria", color = I("indianred3")) %>%  -->
+  <!--   add_trace(y = ~porEstrecho, name = "Contactos Estrechos", color = I("olivedrab3")) %>%  -->
+  <!--   add_trace(y = ~porImportados, name = "Importados",  color = I("steelblue3")) %>%  -->
+  <!--   layout(yaxis = list(title = "% según Tipo de Caso", tickformat = "%"),  -->
+  <!--          xaxis=list(title=""), -->
+  <!--          barmode = "stack", -->
+  <!--          legend = list(orientation = 'h', font = list(size = 10))) -->
   
-  distCasos$dia <- as.Date(distCasos$dia, '%d/%m/%Y')
- 
-  plot_ly(distCasos, x = ~dia, y = ~porInvestigacion, type = "bar", name = "En Investigación", color = I("orchid3"),
-          hoverinfo = 'text',
-          text = ~paste('</br> Fecha: ', dia ,
-                        '</br> Importados: ', round(porImportados*100, 2),'%',
-                      '</br> Contactos Estrechos: ', round(porEstrecho*100, 2),'%',
-                      '</br> Circulación Comunitaria: ', round(porComunitaria*100, 2),'%',
-                      '</br> En Investigación: ', round(porInvestigacion*100, 2),'%')) %>% 
-    add_trace(y = ~porComunitaria, name = "Circulación Comunitaria", color = I("indianred3")) %>% 
-    add_trace(y = ~porEstrecho, name = "Contactos Estrechos", color = I("olivedrab3")) %>% 
-    add_trace(y = ~porImportados, name = "Importados",  color = I("steelblue3")) %>% 
-    layout(yaxis = list(title = "% según Tipo de Caso", tickformat = "%"), 
-           xaxis=list(title=""),
-           barmode = "stack",
-           legend = list(orientation = 'h', font = list(size = 10)))
+<!-- ``` -->
+
+
+
+<!-- #### Cantidades -->
+<!--  ```{r estudioCasos, echo=FALSE, fig.align='center', message=FALSE, warning=FALSE, out.width='100%'} -->
+<!-- #  -->
+<!-- #   tipoCaso <- argCov %>% select(dia, Importados, Estrecho, Comunitaria, Investigacion) -->
+<!-- #    -->
+<!-- #   tipoCaso$dia <- as.Date(tipoCaso$dia, '%d/%m/%Y') -->
+<!-- #   -->
+<!-- #   plot_ly(tipoCaso, x = ~dia, y = ~Importados, type = "bar", name = "Importados",  color = I("steelblue3"), -->
+<!-- #           hoverinfo = 'text', -->
+<!-- #           text = ~paste('</br> Importados: ', Importados, -->
+<!-- #                       '</br> Contactos Estrechos: ', Estrecho, -->
+<!-- #                       '</br> Circulación Comunitaria: ', Comunitaria, -->
+<!-- #                       '</br> En Investigación: ', Investigacion)) %>%  -->
+<!-- #     add_trace(y = ~Estrecho, name = "Contactos Estrechos", color = I("olivedrab3")) %>%  -->
+<!-- #     add_trace(y = ~Comunitaria, name = "Circulación Comunitaria", color = I("indianred3")) %>%  -->
+<!-- #     add_trace(y = ~Investigacion, name = "En Investigación",  color = I("orchid3")) %>%  -->
+<!-- #     layout(yaxis = list(title = "Tipos de casos"), barmode = "stack", -->
+<!-- #            legend = list(x = 0.029, y = 1.038, font = list(size = 10))) -->
   
-```
+<!-- ``` -->
 
-
-
-#### Cantidades
-```{r estudioCasos, echo=FALSE, fig.align='center', message=FALSE, warning=FALSE, out.width='100%'}
-
-  tipoCaso <- argCov %>% select(dia, Importados, Estrecho, Comunitaria, Investigacion)
-  
-  tipoCaso$dia <- as.Date(tipoCaso$dia, '%d/%m/%Y')
- 
-  plot_ly(tipoCaso, x = ~dia, y = ~Importados, type = "bar", name = "Importados",  color = I("steelblue3"),
-          hoverinfo = 'text',
-          text = ~paste('</br> Importados: ', Importados,
-                      '</br> Contactos Estrechos: ', Estrecho,
-                      '</br> Circulación Comunitaria: ', Comunitaria,
-                      '</br> En Investigación: ', Investigacion)) %>% 
-    add_trace(y = ~Estrecho, name = "Contactos Estrechos", color = I("olivedrab3")) %>% 
-    add_trace(y = ~Comunitaria, name = "Circulación Comunitaria", color = I("indianred3")) %>% 
-    add_trace(y = ~Investigacion, name = "En Investigación",  color = I("orchid3")) %>% 
-    layout(yaxis = list(title = "Tipos de casos"), barmode = "stack",
-           legend = list(x = 0.029, y = 1.038, font = list(size = 10)))
-  
-```
 
 ## Test
 

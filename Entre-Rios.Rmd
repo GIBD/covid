@@ -1010,7 +1010,7 @@ dupl <- dupl %>% select(departamento, dias)
 covid19ER_Nexo <- covid19ER_Nexo %>%  select(departamento = residencia_departamento_nombre, nexo)
 covid19ER_Lab <- covid19ER_Lab %>%  select(departamento= residencia_departamento_nombre, lab)
     
-tabla <- covider %>%# filter(!(DEPARTAMENTO %in% c("Otros", "Turistas"))) %>% 
+tabla <- covider %>% filter(!(DEPARTAMENTO %in% c("Otros", "Turistas"))) %>% 
   left_join(covid19ER_Rec, by=c("DEPARTAMENTO"="residencia_departamento_nombre")) %>% 
   select(departamento=DEPARTAMENTO, casos=cantidad, altas) %>% 
    left_join(covid19ER_Nexo, by=c("departamento"="departamento")) %>% 

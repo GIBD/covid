@@ -34,6 +34,7 @@ knitr::opts_chunk$set(echo = TRUE)
   library(googlesheets4)
   library(readxl)
   library(RcppRoll)
+library(DT)
 
   deptos <- st_read(dsn ="data/mapas/departamentos.shp") 
   poblacion <- read_excel("data/poblaciones/Deptos.xlsx")
@@ -72,20 +73,29 @@ knitr::opts_chunk$set(echo = TRUE)
     filter(!(depto=="SIN ESPECIFICAR")) %>% 
     mutate(razon = if_else(is.na(casos28), 1.20, round(casos14/casos28,2)),
            incidencia = round(casos14/P_2020*100000,0))
-
-  colorR <- function(c, d){ 
-    c <- if_else(c < 150 & d<1.20, '#009900', #verde
-          if_else((c >= 150 & d<1.20)| (c < 150 & d>=1.20), "#F5F93D", #amarillo
-                  if_else((c >= 150 & d>=1.20), '#FF0000', '#FFFFFF'))) #rojo
+  colorR <- function(c, d){
+    c <- if_else(c>250,'#FF0000',#rojo
+                 if_else(c<50 | d<0.8, '#009900', #verde
+                if_else(c<50 & d>0.8, '#F5F93D', #verde                         
+                if_else(c < 150 & c>50  & d>1.2,  "#F5F93D", #amarill
+                 if_else(c < 250 & c>50  & d<=1.2,  "#F5F93D", #amarill
+                if_else(c < 250 & c>150  & d>=1.2,'#FF0000', #rojo
+                if_else(c>250  & d>=0.8,'#FF0000', '#FFFFFF'))))))) #rojo
   return(c)}
+  # colorR <- function(c, d){
+  #   c <- if_else(c < 150 & d<1.20, '#009900', #verde
+  #         if_else((c >= 150 & d<1.20)| (c < 150 & d>=1.20), "#F5F93D", #amarillo
+  #                 if_else((c >= 150 & d>=1.20), '#FF0000', '#FFFFFF'))) #rojo
+  # return(c)}
   
-  urlign <- "https://wms.ign.gob.ar/geoserver/gwc/service/tms/1.0.0/capabaseargenmap@EPSG%3A3857@png/{z}/{x}/{-y}.png"
+  # urlign <- "https://wms.ign.gob.ar/geoserver/gwc/service/tms/1.0.0/capabaseargenmap@EPSG%3A3857@png/{z}/{x}/{-y}.png"
   
  
 ```
 
 
-## Distribución por Departamentos
+###  {.tabset  .tabset-fade .tabset-pills}
+#### Distribución por Departamentos
 Los datos del siguiente mapa son extraídos del portal de datos abiertos del Ministerio de Salud Argentina. Para la localización se utiliza la provincia y el departamento/partido de residencia cargado en el Sistema Nacional de Vigilancia en Salud.
 
 Se muestra el indicador de riesgo de cada departamento basado en la Incidencia acumulada en 14 días cada 100.000 habitantes y en la razón de crecimiento de casos en los últimos 14 días.
@@ -153,21 +163,20 @@ Ambos indicadores son calculados en base a la fecha de inicio de síntomas y se 
 deptos_covid <- deptos %>%
   left_join(deptosCov, by=c("departamen" = "depto", "provincia"="provincia")) %>%
   unique()
+
  deptos_covid$razon <- if_else(is.na(deptos_covid$razon), 0, as.double(deptos_covid$razon))
  deptos_covid$incidencia <- if_else(is.na(deptos_covid$incidencia), 0, as.double(deptos_covid$incidencia))
- 
- 
-  # deptos_covid$Confirmado <- if_else(deptos_covid$departamen=="Islas Malvinas", 13, as.double(deptos_covid$Confirmado))
-  # write.csv(deptosCov, "deptosCov28.csv")
-# vacios<- deptos_covid %>% filter(incidencia ==0 & razon==0) %>% select(provincia, departamen)
+
 
  
 leaflet(data = deptos_covid) %>% 
-  addTiles(urlTemplate = urlign, attribution="IGN") %>%
+  # addTiles(urlTemplate = urlign, attribution="IGN") %>%
   addPolygons( color = "#444444", weight = 1,
                fillColor = colorR(deptos_covid$incidencia, deptos_covid$razon), fillOpacity = 0.6,
                label = paste0(deptos_covid$provincia, " \n ", deptos_covid$departamen),
                popup = paste0(deptos_covid$provincia, " <br/> ", deptos_covid$departamen,
+                              " <br/>- Casos 14:", deptos_covid$casos14,
+                              " <br/>- Casos 28:", deptos_covid$casos28,
                              " <br/>- Incidencia: ", deptos_covid$incidencia,
                              " <br/>- Razón: ",deptos_covid$razon),
                highlightOptions = highlightOptions(color = "white", weight = 2,
@@ -180,4 +189,16 @@ leaflet(data = deptos_covid) %>%
 ```
 
 
+
+#### Tabla
+```{r tDptal, echo=FALSE, message=FALSE, warning=FALSE}
+deptosCov  %>%
+  select(provincia, depto, casos14, casos28, razon, incidencia, P_2020) %>% 
+  datatable(extensions = 'Buttons', rownames = FALSE,
+            colnames = c("Prov", "Dpto", "Casos Ult. 14", "Casos Ult. 28", "Razon", "Incid", "Poblacion"),
+            options = list(dom = 'Blfrtip',
+                           buttons = c('copy', 'csv', 'excel', 'pdf', 'print'),
+                           lengthMenu = list(c(10,25,50,-1),
+                                             c(10,25,50,"All"))))
+```
 

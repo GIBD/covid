@@ -91,15 +91,14 @@ library(DT)
   #   mutate(altas=n()) %>%
   #   select(residencia_provincia_nombre, residencia_departamento_nombre, altas) %>% unique()
 
-  Tdeptal <- amba %>%
-          group_by(residencia_provincia_nombre, residencia_departamento_nombre, fecha_apertura, clasificacion_resumen) %>%
+  Tdeptal <- amba %>% #filter(clasificacion_resumen=="Confirmado") %>% 
+          group_by(residencia_provincia_nombre, residencia_departamento_nombre, 
+                   fecha_apertura, clasificacion_resumen) %>%
           mutate(cantidad= n()) %>%
           select(residencia_provincia_nombre, residencia_departamento_nombre,
                  fecha_apertura, clasificacion_resumen, cantidad) %>%
           unique() %>%  spread(clasificacion_resumen, cantidad) %>% unique()
-  # %>% left_join(falle, by=c("residencia_provincia_nombre"="residencia_provincia_nombre",
-  #                         "residencia_departamento_nombre"="residencia_departamento_nombre",
-  #                         "fecha_apertura"="fecha_fallecimiento"))
+  
 
   # Tdeptal$fecha_apertura <- as.Date(Tdeptal$fecha_apertura,  '%d-%m-%Y')
   Tdeptal$Confirmado <- if_else(is.na(Tdeptal$Confirmado), 0, as.double(Tdeptal$Confirmado))
@@ -118,7 +117,7 @@ library(DT)
            CASOS=acumulados, descartados=Descartado, sospechosos=Sospechoso,  zona=ZONA, CORDON, POBLACION)
   
     # amba2 <- read_excel("data/argentina.xlsx", "GBA")
-  #   
+  #   write.csv(amba, "amba.csv")
   # datos_mov <- movement %>% left_join(poligonosMovil, by=c("polygon_id" = "GID_2")) %>% 
   #   filter(NAME_1 %in% c("Ciudad de Buenos Aires", "Buenos Aires") & 
   #   NAME_2 %in%  c("Distrito Federal",  "Avellaneda", "General San Martín", 
@@ -165,7 +164,7 @@ library(DT)
   # deptos_covid1 <- deptos_covid %>% filter(departam_1 %in% primer)
   # deptos_covid2 <- deptos_covid %>% filter(departam_1 %in% segundo)
   # deptos_covid3 <- deptos_covid %>% filter(departam_1 %in% tercer)
-    
+    # casos_hoy
   
 ```
 

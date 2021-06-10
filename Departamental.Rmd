@@ -73,6 +73,7 @@ library(DT)
     filter(!(depto=="SIN ESPECIFICAR")) %>% 
     mutate(razon = if_else(is.na(casos28), 1.20, round(casos14/casos28,2)),
            incidencia = round(casos14/P_2020*100000,0))
+  
   colorR <- function(c, d){
     c <- if_else(c>250,'#FF0000',#rojo
                  if_else(c<50 | d<0.8, '#009900', #verde

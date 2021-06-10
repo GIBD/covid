@@ -89,7 +89,7 @@ names(covid19ER) <- c("id_evento_caso", "sexo", "edad", "edad_anos_meses",
                       "sepi_apertura", 	"fecha_internacion", 	"cuidado_intensivo", 	"fecha_cui_intensivo",
                       "fallecido", 	"fecha_fallecimiento",	"asistencia_respiratoria_mecanica",
                       "carga_provincia_id",	"origen_financiamiento",	"Clasificacion", "clasificacion_resumen",	
-                      "residencia_provincia_id", 	"fecha_diagnostico", "residencia_departamento_id",	"ultima_actualizacion")
+                      "residencia_provincia_id", 	"fecha_diagnostico", "residencia_departamento_id","ultima_actualizacion")
 
 covid19ER <- covid19ER %>% filter(residencia_provincia_nombre=="Entre Ríos" & carga_provincia_nombre=="Entre Ríos")
 # write.csv(covid19ER, "covidER.csv")
@@ -315,7 +315,7 @@ fig
                 size = 2, span = .3, se=FALSE, show.legend=F) +
     labs(title = paste("COVID-19 ENTRE RÍOS - Casos diarios por Departamento"), 
          subtitle = paste0("Escala libre") ,
-         y = "Casos",  x = "Fecha", width = 850) +
+         y = "Casos",  x = "Fecha", width = 860) +
     facet_wrap(~ DEPARTAMENTO, 
                scales = "free_y",
                ncol = 5)
@@ -330,12 +330,22 @@ La siguiente información es extraída de los datos abiertos proporcionados por 
 
 ### Total Provincial
 ```{r fallD, echo=FALSE, fig.align='center', message=FALSE, warning=FALSE, paged.print=FALSE, out.width='100%'}
-FallDiario <-  covid19ER_Fall_sisa %>% group_by(fecha_fallecimiento) %>%
-  mutate(fallD = n()) %>% select(FECHA=fecha_fallecimiento, fallD) %>% unique()
 
-fig <- plot_ly(FallDiario, x = ~FECHA, y = ~fallD, type = 'bar', name = 'Fall. Diarios',
+  FallDiario <-  covid19ER_Fall_sisa %>% group_by(fecha_fallecimiento) %>%
+  mutate(fallD = n()) %>% select(FECHA=fecha_fallecimiento, fallD) %>% unique()%>% ungroup() %>% 
+      arrange(FECHA) %>%
+      mutate(promF = round(roll_mean(fallD, n=7, align="right", fill = NA),0)) %>% 
+      select(FECHA, fallD, promF) %>% unique()
+
+  fig <- plot_ly(FallDiario, x = ~FECHA, y = ~fallD, type = 'bar', name = 'Fall. Diarios',
                text= ~fallD, textposition = 'outside', 
                marker = list(color = 'rgba(222,45,38,0.8)'), width = 800)
+  
+  fig <- fig %>% add_trace(x = ~FECHA, y = ~promF, name = 'Promedio',  type = 'scatter', mode = 'lines',
+                           line = list(color = 'rgba(222,45,38,0.8)', width =4))
+
+ 
+  
 fig <- fig %>% layout(title = 'Fallecidos por Fecha de fallecimiento',
                       xaxis = list( title = "", tickfont = list(size = 14, color = 'rgb(107, 107, 107)')),
                       yaxis = list( title = 'Cantidad', titlefont = list(size = 16, color = 'rgb(107, 107, 107)'),
@@ -377,22 +387,6 @@ fig
 A continuación se muestran los casos confirmados por la provincia el día `r max(covid_er$FECHA)` en base a la distribución departamental
 
 ```{r casosDia, echo=FALSE, message=FALSE, warning=FALSE}
-# covid_er_hoy <- covid_er %>% filter(!(DEPARTAMENTO %in% c("Otros", "Turistas")) & FECHA>="2021-04-22") %>% group_by(DEPARTAMENTO) %>% 
-#   mutate(CASOS=sum(CASOS)) %>% 
-#   select(DEPARTAMENTO, CASOS) %>% unique()
-# 
-# incid <- covid_er_hoy %>% left_join(poblac_er, by=c("DEPARTAMENTO"="departamento"))
-# incid$incid <- round(incid$CASOS/incid$poblacion*100000,0)
-# 
-# incid$parents <- "Confirmados"
-# plot_ly(data = incid, type= "treemap",
-#         values = ~incid,
-#         labels= ~DEPARTAMENTO,
-#         parents=  ~parents,
-#         domain = list(column=0),
-#         name = "Confirmados",
-#         textinfo="label+value+percent parent") %>%
-#   layout(title = paste("Covid19 ER - Distribución de la Incidencia del 22 al 28 de Abril"))
 
 
 covid_er_hoy <- covid_er %>% filter(!(DEPARTAMENTO %in% c("Otros", "Turistas")) & FECHA==max(FECHA)) %>% group_by(DEPARTAMENTO) %>% 
@@ -477,8 +471,7 @@ fig
 ```{r incDptalvDiaria14, echo=FALSE, fig.align='center', message=FALSE, warning=FALSE, out.width='100%' }
 incDep <- incDep %>% 
  
-  mutate(#incid = round(cantidad/poblacion*100000, 1),
-         incidP2 =  round(roll_mean(incid,  n=14, align="right", fill = 0), 1)) %>% #NA), 0)) %>% 
+  mutate(incidP2 =  round(roll_mean(incid,  n=14, align="right", fill = 0), 1)) %>%
   arrange(DEPARTAMENTO, FECHA)
 
 fig <- plot_ly(incDep, x = ~FECHA, y = ~incidP2, color = ~DEPARTAMENTO, alpha = 1,  size = 20, type = 'area')
@@ -587,10 +580,16 @@ posit %>%  group_by(departamento) %>%
 
 
 
+
+
+
 ## Mapa por Departamento
+
 A continuación se muestran la cantidad de casos de COVID-19 confirmados por el Ministerio de Salud de Entre Ríos, discriminados por departamento y localidad
 
 
+###  {.tabset  .tabset-fade .tabset-pills}
+#### Casos
 ```{r mapaER, echo=FALSE, message=FALSE, warning=FALSE, paged.print=FALSE}
 
 covider <- covid_er %>% group_by(DEPARTAMENTO) %>%
@@ -611,67 +610,26 @@ highchart( ) %>%
   hc_chart(borderColor = "#FFFFFF", borderRadius = 10, borderWidth = 2)
   
 ```
-
-
-
-<!-- ## Por Ciudad -->
-<!-- Cantidad de casos totales acumulados por ciudad de residencia informada por la provincia de Entre Ríos -->
-
-<!-- ```{r locER, echo=FALSE, message=FALSE, warning=FALSE, paged.print=FALSE} -->
-
-<!-- localidades_er <- covid_er %>% left_join(localidades, by=c("DEPARTAMENTO"="DEPARTAMENTO", "LOCALIDAD"="LOCALIDAD")) %>%  -->
-<!--   group_by(Lat2, Long2) %>% mutate(cant=sum(CASOS), Lat=as.double(Lat), Long=as.double(Long)) %>%  -->
-<!--   select(LOCALIDAD, Lat, Long, cant) %>% unique() -->
-<!-- localidades_er <- as.data.frame(lapply(localidades_er, rep, localidades_er$cant)) -->
-<!-- # write.csv(localidades_er, "casos.csv") -->
-<!-- leaflet( ) %>% -->
-<!--   addTiles() %>%  -->
-<!--   addProviderTiles(providers$OpenStreetMap) %>%  -->
-<!--   addPolygons(data=deptos_er, fill=FALSE, weight = 1, color = "#000")  %>%  -->
-<!--   addFullscreenControl()  %>% -->
-<!--   addMarkers(data=localidades_er, lng = localidades_er$Long, lat = localidades_er$Lat, -->
-<!--              clusterOptions = markerClusterOptions(singleMarkerMode= T), clusterId = "pointsCluster") %>% -->
-<!--   addEasyButton( easyButton(states =  list(easyButtonState(  -->
-<!--     stateName="unfrozen-markers", icon="ion-toggle", -->
-<!--     title="Freeze Clusters", -->
-<!--     onClick = JS("function(btn, map) {var  clusterManager = map.layerManager.getLayer('cluster', 'pointsCluster'); -->
-<!--                  clusterManager.freezeAtZoom(); btn.state('frozen-markers');}")), -->
-<!--     easyButtonState( stateName="frozen-markers", icon="ion-toggle-filled", -->
-<!--     title="UnFreeze Clusters", onClick = JS("function(btn, map) { -->
-<!--     var clusterManager = map.layerManager.getLayer('cluster', 'pointsCluster'); -->
-<!--     clusterManager.unfreeze(); btn.state('unfrozen-markers');}")) -->
-<!--     ))) -->
-
-<!-- ``` -->
-
-
-
-
-
-
-
-## Casos Activos
+#### Casos Activos
 A continuación se muestran la cantidad de casos Activos de COVID-19. Los casos activos son los confirmados menos los recuperados y fallecidos
-
-
-###  {.tabset  .tabset-fade .tabset-pills}
-#### Departamental
+<!-- ###  {.tabset  .tabset-fade .tabset-pills} -->
+<!-- #### Departamental -->
 ```{r mapaERAct, echo=FALSE, message=FALSE, warning=FALSE, paged.print=FALSE}
 covider$provincia <- "Entre Ríos"
-activos <- covider %>% 
-  left_join(covid_er_altas, by=c("DEPARTAMENTO"="residencia_departamento_nombre")) %>% 
+activos <- covider %>%
+  left_join(covid_er_altas, by=c("DEPARTAMENTO"="residencia_departamento_nombre")) %>%
   left_join(covid_er_fall, by = c("DEPARTAMENTO"="DEPARTAMENTO"))
-activos$altas <- if_else(is.na(activos$altas), 0, as.double(activos$altas))  
+activos$altas <- if_else(is.na(activos$altas), 0, as.double(activos$altas))
 
-activos$FALLECIDOS <- if_else(is.na(activos$FALLECIDOS), 0, as.double(activos$FALLECIDOS))  
+activos$FALLECIDOS <- if_else(is.na(activos$FALLECIDOS), 0, as.double(activos$FALLECIDOS))
 activos$activos <- activos$cantidad - activos$altas - activos$FALLECIDOS
 colors <- c("#ffffcc", "#ffeda0", "#fed976", "#feb24c", "#fd8d3c", "#fc4e2a", "#e31a1c", "#bd0026", "#800026")
 
 
 highchart( ) %>%
   hc_title(text = "<i>Casos Activos COVID-19 por Departamento en Entre Ríos</i> - <b>GIBD</b>",
-           margin = 5, align = "center", 
-           style = list(color = "#bd0026", useHTML = TRUE, fontWeight = "bold")) %>% 
+           margin = 5, align = "center",
+           style = list(color = "#bd0026", useHTML = TRUE, fontWeight = "bold")) %>%
   hc_tooltip(followPointer =  FALSE) %>%
   hc_add_series_map(entrerios, activos, name = "Activos", value = "activos",
                     joinBy = c("nam", "DEPARTAMENTO"),
@@ -680,25 +638,21 @@ highchart( ) %>%
   hc_colorAxis(stops=color_stops(n=length(colors), colors = colors)) %>%
   hc_legend(align = "center", x = 0, y = -10) %>%
   hc_mapNavigation(enabled = TRUE) %>%
-  hc_add_theme(hc_theme_ffx()) %>% 
-  hc_add_annotation(xValue = 0, yValue = 0, title = list(text = 'Fuente: Ministerios de Salud Nación')) %>% 
+  hc_add_theme(hc_theme_ffx()) %>%
+  hc_add_annotation(xValue = 0, yValue = 0, title = list(text = 'Fuente: Ministerios de Salud Nación')) %>%
   hc_chart(borderColor = "#bd0026", borderRadius = 10, borderWidth = 2)
 
 ```
 
 
 
-
-
-## Fallecidos
+#### Fallecidos
 A continuación se muestra el mapa departamental de los fallecidos COVID-19 en la provincia de Entre Ríos.
 
-###  {.tabset  .tabset-fade .tabset-pills}
-#### Mapa
+<!-- ###  {.tabset  .tabset-fade .tabset-pills} -->
+<!-- #### Mapa -->
 ```{r mapaERFall, echo=FALSE, message=FALSE, warning=FALSE, paged.print=FALSE}
-# fallecidos <- covider %>% 
-#   left_join(covid_er_altas, by=c("DEPARTAMENTO"="DEPARTAMENTO"))
-# fallecidos$FALLECIDOS <- if_else(is.na(fallecidos$FALLECIDOS), 0, as.double(fallecidos$FALLECIDOS))
+
 
 colors <- c("#ffffcc", "#ffeda0", "#fed976", "#feb24c", "#fd8d3c", "#fc4e2a", "#e31a1c", "#bd0026", "#800026")
 
@@ -719,6 +673,7 @@ highchart( ) %>%
   hc_chart(borderColor = "#bd0026", borderRadius = 10, borderWidth = 2)
   
 ```
+
 
 
 ## Incidencia Acumulada
@@ -928,13 +883,31 @@ plot_ly(edades_d_f2, x = ~semana, text = ~prop_f,
    edadERF$sexo <- if_else(edadERF$sexo=="M",  "Hombre", "Mujer")
    edadERF <- edadERF %>%  ungroup() %>% mutate(prop = round(cant/sum(cant)*100,2))
    edadERF$prop <- if_else(edadERF$sexo=="Hombre",  edadERF$prop*(-1), edadERF$prop)
-  
+     # 
+     # plot_ly(edades_m, x = ~prop, y = ~grupo, color = ~genero, width = 900) %>%
+     #   add_bars(orientation = "h",
+     #      hoverinfo = "y+text+name", 
+     #      # text = ~paste(abs(prop), " %", '\n Cant.: (', total,')'), 
+     #      text =  ~paste(abs(round(prop,1)), "%", '\n(',total,')'),  
+     #      textposition = 'outside',
+     #      colors =  c("#5e3c99", "#fdb863")) %>% 
+     #      # colors = c("#2c7fb8", "#fa9fb5")) %>%
+     #   layout(bargap = 0.1, barmode = "overlay", 
+     #       title = "Piramide Poblaciónal de Personas Fallecidas", 
+     #       xaxis = list(tickmode = "array",
+     #                    tickvals = c(-100, -50, -25, -20, -15, -10, -5, 0, 
+     #                                 5, 10, 15, 20, 25, 50, 100),
+     #                    ticktext = c("100", "50%", "25%", "20%", "15%", "10%","5%", "0",
+     #                                 "5%", "10%", "15%","20%", "25%", "50%", "100%"),
+     #                    title = "Fallecidos"),
+     #       yaxis = list(title = "Grupo Edad"))
+     
    plot_ly(edadERF, x = ~prop, y = ~grEdad, color = ~sexo, width = 900, height = 700) %>%
      add_bars(orientation = "h",
            hoverinfo = "y+text+name", 
            text =  ~paste(abs(round(prop,1)), "%", '\n(',cant,')'),  
            textposition = 'outside',
-           colors = c("#2c7fb8", "#fa9fb5")) %>%
+           colors = c("#5e3c99", "#fdb863")) %>%
      layout(bargap = 0.1, barmode = "overlay", 
             title = "Piramide Poblaciónal de los Fallecidos en Entre Ríos", 
             xaxis = list(tickmode = "array", 
@@ -1141,7 +1114,8 @@ A continuación se grafica el cambio en la movilidad de cada departamento tomand
   datos_mov$fecha <- datos_mov$ds
 
   p<- datos_mov %>%
-     filter(NAME_2 =="Colón" & ds>="2020-06-01") %>%
+     filter(#NAME_2 =="Colón" & 
+     ds>="2020-06-01") %>%
     ggplot(mapping=aes(x=fecha, y=movilidad)) +
     geom_line(color="#67a9cf") +
     geom_point(color="#67a9cf") +

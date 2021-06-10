@@ -39,8 +39,9 @@ library(tmap)
 library(readxl)
 library(RcppRoll)
 library(DT)
-
+library(ggpmisc)
 # library(data.table)
+
 
 sep.miles <- function(x){format(x,big.mark=".")}
 ```
@@ -50,53 +51,59 @@ sep.miles <- function(x){format(x,big.mark=".")}
 #################
 # Carga de Datos
 #################
-capUti <-3981
-## Mapas y Poblaciones
-colorR <- function(c, d){ c <- if_else(c < 150 & d <1.2, '#009900', #verde
-                                         if_else((c >= 150 & d < 1.2)| (c < 150 & d >= 1.2), "#F5F93D", #amarillo
-                                            if_else((c >= 150 & d>=1.2), '#FF0000', '#FFFFFF'))) #rojo
-  return(c)}
+  capUti <-3981
+  ## Mapas y Poblaciones
+  colorR <- function(c, d){ c <- if_else(c < 150 & d <1.2, '#009900', #verde
+                                           if_else((c >= 150 & d < 1.2)| (c < 150 & d >= 1.2), "#F5F93D", #amarillo
+                                              if_else((c >= 150 & d>=1.2), '#FF0000', '#FFFFFF'))) #rojo
+    return(c)}
+  
+  argentina <- fromJSON(file = "data/mapas/ar-all.geo.json")
+    
+  ## Datos abiertos
+  casos_pronvinciales <- read_rds("data/casos_pronvinciales.rds")
+  # casos_pronvinciales <- read_csv("data/Covid19Casos.csv")
+  # saveRDS(casos_pronvinciales, "data/casos_pronvinciales.rds")
 
-argentina <- fromJSON(file = "data/mapas/ar-all.geo.json")
   
-### Datos abiertos
-casos_pronvinciales <- read_rds("data/casos_pronvinciales.rds")
-# casos_pronvinciales <- read_csv("data/Covid19Casos.csv")
-# saveRDS(casos_pronvinciales, "data/casos_pronvinciales.rds")
+  poblacionArg <- read_delim("data/poblaciones/prov_argentina.csv", ";", 
+                             escape_double = FALSE,  
+                             locale = locale(decimal_mark = ",",  
+                                             grouping_mark = ".", encoding = "ISO-8859-1"),
+                             trim_ws = TRUE)
   
-poblacionArg <- read_delim("data/poblaciones/prov_argentina.csv", ";", 
-                           escape_double = FALSE,  
-                           locale = locale(decimal_mark = ",",  grouping_mark = ".", encoding = "ISO-8859-1"),
-                           trim_ws = TRUE)
-
-### Totales generales
-  argCov <- read_excel("data/argentina.xlsx", "argentina_gral")
-  names(argCov) <- c("dia", "casosD", "Detectados", "muertesD", "Fallecidos",
-                     "Altas", "Recuperados", "UTI",  "MuestraD", "TotalPruebas","DescEpidemiologia", "DescTest",  "Descartados", 
-                     "Importados", "Estrecho", "Comunitaria", "Investigacion",  "InicioSint", "activos_uti",	"letalidad")
-  argCov$dia <- as.Date(argCov$dia, '%d/%m/%Y')
-  covidArg <- read_excel("data/argentina.xlsx", "casos_provincias")
-  covidArg$FECHA <- as.Date(covidArg$FECHA, '%d/%m/%Y')
-
-  casos14 <- covidArg %>% filter(FECHA >= today()-14) %>% 
-    group_by(PROVINCIA) %>% mutate(casos14 = sum(CASOS)) %>% 
-    select(PROVINCIA, casos14) %>% unique()
+  ### Totales generales
+    argCov <- read_excel("data/argentina.xlsx", "argentina_gral")
+    names(argCov) <- c("dia", "casosD", "Detectados", "muertesD", "Fallecidos",
+                       "Altas", "Recuperados", "UTI",  "MuestraD", "TotalPruebas","DescEpidemiologia", "DescTest",  "Descartados", 
+                       "Importados", "Estrecho", "Comunitaria", "Investigacion",  "InicioSint", "activos_uti",	"letalidad")
+    argCov$dia <- as.Date(argCov$dia, '%d/%m/%Y')
+    covidArg <- read_excel("data/argentina.xlsx", "casos_provincias")
+    covidArg$FECHA <- as.Date(covidArg$FECHA, '%d/%m/%Y')
   
-  casos28 <- covidArg %>% filter(FECHA >= today()-28 & FECHA < today()-14) %>% 
-    group_by(PROVINCIA) %>% mutate(casos28 = sum(CASOS)) %>% 
-    select(PROVINCIA, casos28) %>% unique()
+    casos14 <- covidArg %>% filter(FECHA >= today()-14) %>% 
+      group_by(PROVINCIA) %>% mutate(casos14 = sum(CASOS)) %>% 
+      select(PROVINCIA, casos14) %>% unique()
+    
+    casos28 <- covidArg %>% filter(FECHA >= today()-28 & FECHA < today()-14) %>% 
+      group_by(PROVINCIA) %>% mutate(casos28 = sum(CASOS)) %>% 
+      select(PROVINCIA, casos28) %>% unique()
+    
+    razon <- casos14 %>% left_join(casos28)
+    razon$razon <- round(razon$casos14/razon$casos28, 2)
+    
+    incid14 <- casos14 %>% left_join(poblacionArg, by = c("PROVINCIA"="provincia"))
+    incid14$incid <- round(incid14$casos14/incid14$poblacion*100000,0)
+    
+    indicadores <- incid14 %>% left_join(razon) %>% select(PROVINCIA, razon, incid)
+    rm(casos14, casos28, razon, incid14)
+    
+  ### Detalle fallecidos
+    muertosArg <- covidArg %>% select(FECHA, PROVINCIA, MUERTES)
   
-  razon <- casos14 %>% left_join(casos28)
-  razon$razon <- round(razon$casos14/razon$casos28, 2)
-  
-  incid14 <- casos14 %>% left_join(poblacionArg, by = c("PROVINCIA"="provincia"))
-  incid14$incid <- round(incid14$casos14/incid14$poblacion*100000,0)
-  
-  indicadores <- incid14 %>% left_join(razon) %>% select(PROVINCIA, razon, incid)
-  rm(casos14, casos28, razon, incid14)
-  
-### Detalle fallecidos
-  muertosArg <- covidArg %>% select(FECHA, PROVINCIA, MUERTES)
+### Ocup UTI
+  # covidUTI <- read_excel("data/argentina.xlsx", "UTI")
+  # covidArg$FECHA <- as.Date(covidArg$FECHA, '%d/%m/%Y')
   
 #############  
 ### Edades
@@ -152,7 +159,8 @@ poblacionArg <- read_delim("data/poblaciones/prov_argentina.csv", ";",
   ## Clasificacion
   ##############
   confirmados <- casos_pronvinciales %>% 
-    filter(carga_provincia_nombre== residencia_provincia_nombre &  clasificacion_resumen=="Confirmado") %>% 
+    filter(carga_provincia_nombre== residencia_provincia_nombre & 
+             clasificacion_resumen=="Confirmado") %>% 
         group_by(carga_provincia_nombre, fecha_apertura) %>% mutate(confirmados = n()) %>% 
         select(carga_provincia_nombre, fecha_apertura, confirmados) %>% unique()
   
@@ -165,7 +173,7 @@ poblacionArg <- read_delim("data/poblaciones/prov_argentina.csv", ";",
     group_by(carga_provincia_nombre, fecha_apertura) %>% mutate(altas = n()) %>%
     select(carga_provincia_nombre, fecha_apertura, altas) %>% unique()
 
-     # unique(casos_pronvinciales$clasificacion) 
+  
    confirmados_lab <- casos_pronvinciales %>% 
      filter(carga_provincia_nombre== residencia_provincia_nombre & 
               clasificacion_resumen=="Confirmado" &
@@ -176,8 +184,7 @@ poblacionArg <- read_delim("data/poblaciones/prov_argentina.csv", ";",
                                    "Caso confirmado por laboratorio - No Activo por criterio de laboratorio" )) %>% 
      group_by(carga_provincia_nombre, fecha_apertura) %>% mutate(confirmados = n()) %>% 
      select(carga_provincia_nombre, fecha_apertura, confirmados) %>% unique()
-   
-   # table(confirmados_lab$carga_provincia_nombre)
+
    descartados_lab <- casos_pronvinciales %>% 
      filter(carga_provincia_nombre== residencia_provincia_nombre & 
               clasificacion_resumen=="Descartado" &
@@ -190,7 +197,6 @@ poblacionArg <- read_delim("data/poblaciones/prov_argentina.csv", ";",
                                      "fecha_apertura"="fecha_apertura"))
    positiv_lab$positividad <- round(positiv_lab$confirmados/
                                       (positiv_lab$confirmados + positiv_lab$descartados)*100, 1)
-   
    positiv_lab$positividad <- if_else(is.na(positiv_lab$positividad), 0,
                                       as.double(positiv_lab$positividad))
    
@@ -229,6 +235,9 @@ poblacionArg <- read_delim("data/poblaciones/prov_argentina.csv", ";",
                                            as.double(casos_provincias$positividad))
    casos_provincias$activos <- casos_provincias$confirmados -  casos_provincias$altas - casos_provincias$fallecidos 
    
+
+
+
    
    color <- function(d){
      c <- if_else(d==0, '#FFFFFF',
@@ -361,6 +370,57 @@ Si presiona sobre los rectángulos mas pequeños ampliará la provincia/jurisdic
     layout(title = paste("Covid19 - Distribución de casos Confirmados el día ", max(covidArg_hoy$FECHA)))
 
 ```
+
+
+
+
+
+## Evolución de Incidencia por Provincia
+À continuación se muestra la evolución del indicador de la incidencia acumulada en 14 días en cada provicia.
+
+Si este indicador es mayor a 250 casos cada 100000 habitantes se considera que la provincia está en Alto riesgo sanitario y epidemiológico
+
+
+```{r evolIncid, echo=FALSE, message=FALSE, warning=FALSE}
+   diarios <- covidArg %>% 
+  group_by(PROVINCIA) %>% arrange(FECHA) %>% 
+  mutate(casosP = round(roll_mean(CASOS, n=7, align="right", fill = NA), 0))
+
+incid <- diarios %>% 
+  left_join(poblacionArg, by = c("PROVINCIA" = "provincia")) %>% 
+  mutate(incid = round(casosP/poblacion*100000,0)) %>%
+  arrange(PROVINCIA, FECHA) %>% 
+  group_by(PROVINCIA) %>% arrange(FECHA) %>% 
+  mutate(casos14 = roll_sum(CASOS, n=14, fill=NA, align = "right"),
+         incidP= roll_mean(incid, n=7, fill=NA, align = "right")) %>% 
+  mutate(incid14 = round(casos14/poblacion*100000,0)) %>% 
+  mutate(incid14P = round(roll_mean(incid14, n=7, fill=NA, align = "right"),0),
+         colorD = if_else(incidP < 10, 1, 
+                          if_else(incidP < 25, 2, 3)),
+         colorI = if_else(incid14P < 50, 1, 
+                          if_else(incid14P < 150, 2, 3)))
+
+ incid %>% 
+      filter(!is.na(incidP) & 
+               FECHA >="2020-09-01") %>%
+      ggplot(mapping=aes(x=FECHA, color = colorI,  y = incid14)) +  
+      geom_line(aes(group = PROVINCIA), size = 2, show.legend = F) + 
+      stat_peaks() +
+      stat_peaks( geom = "text", 
+                 mapping = aes(label = ..y.label..),
+                 vjust = -0.01, hjust=1.1, color = "red",
+                 fontface = 'bold', size=2.75,
+                 check_overlap = TRUE,  span = NULL) +
+      labs(title = paste("COVID-19- Indicador de Incidencia acumulada en 14 días por Provincia 2021"),
+           subtitle = paste0("Escala libre") ,
+           y = "Casos c/100.000",  x = "Fecha", width = 850) +
+      facet_wrap(~ PROVINCIA,
+                 scales = "free_y", ncol = 6) +
+      scale_color_gradient2(low = "green", high ="red", mid = "yellow",  midpoint = 2 ) 
+
+  
+```
+
 
 
 
@@ -591,6 +651,117 @@ edad_let <- edades_g %>% left_join(edades_m, by=c("sexo"="genero", "grupo"="grup
                xaxis = list(title = "Letalidad"), yaxis = list(title = "Grupo Edad"))
          
 ```
+
+
+
+
+#### Evolucion
+
+Evolución de la distribución de los fallecidos por rango etario
+
+```{r let_Evol2}
+# 
+# edades_d <-  casos_pronvinciales %>%  
+#     filter(clasificacion_resumen=="Confirmado") %>% 
+#     mutate(anio = if_else(sepi_apertura==53, 2020, year(fecha_apertura))) %>% 
+#     group_by(anio, sepi_apertura, edad, edad_años_meses) %>%
+#     mutate(cantidad=n()) %>%  select(anio, sepi_apertura, edad, edad_años_meses, cantidad) %>% unique()
+#   
+#   edades_d$edad <- if_else(edades_d$edad_años_meses=="Meses", 0, edades_d$edad)
+#   
+#   edades_d <-  edades_d %>%  group_by(anio, sepi_apertura, edad) %>%
+#     mutate(cantidad=sum(cantidad)) %>%  select(anio, sepi_apertura, edad, cantidad) %>% unique()
+#   
+#   edades_d$grupo <- if_else(edades_d$edad < 15, "0 a 14", 
+#                      if_else(edades_d$edad < 30, "15 a 29",
+#                      if_else(edades_d$edad < 45, "30 a 44", 
+#                      if_else(edades_d$edad < 60, "45 a 59", 
+#                      if_else(edades_d$edad < 75, "60 a 74", "75 o mas")))))
+# 
+# edades_d <- edades_d %>% filter(!is.na(grupo)) %>% group_by(anio, sepi_apertura, grupo) %>% mutate(cantidad=sum(cantidad)) %>% 
+#     select(anio, sepi_apertura, grupo, cantidad) %>% unique() %>% ungroup() %>% arrange(anio, sepi_apertura) %>% 
+#     group_by(anio, sepi_apertura) %>% mutate(prop = cantidad/sum(cantidad))
+#   
+#   edades_d$semana <- paste0(edades_d$anio, 
+#                           if_else(edades_d$sepi_apertura<10, paste0('0', edades_d$sepi_apertura),
+#                                   as.character(edades_d$sepi_apertura)))
+# 
+#   edades_d2 <- edades_d %>% ungroup() %>%  select(semana, grupo, prop) %>%  spread(grupo, prop) 
+  
+  
+edades_d_f <-  casos_pronvinciales %>%  
+    filter(clasificacion_resumen=="Confirmado" & fallecido=="SI")%>% 
+    mutate(anio = if_else(sepi_apertura==53, 2020, year(fecha_apertura))) %>% 
+    group_by(anio, sepi_apertura, edad, edad_años_meses) %>%
+    mutate(cantidad=n()) %>%  select(anio, sepi_apertura, edad, edad_años_meses, cantidad) %>% unique()
+  
+  edades_d_f$edad <- if_else(edades_d_f$edad_años_meses=="Meses", 0, edades_d_f$edad)
+  
+  media <- edades_d_f %>% group_by(anio, sepi_apertura) %>% 
+    mutate(media = round(mean(edad, na.rm=T), 1)) %>% 
+    select(anio, sepi_apertura, media) %>% 
+    unique() %>% ungroup() %>% 
+    mutate(semana = paste0(anio, if_else(sepi_apertura<10, paste0('0', sepi_apertura),
+                        as.character(sepi_apertura)))) %>% 
+    select(semana, media) %>%  arrange(semana, media)
+  
+  edades_d_f <-  edades_d_f %>%  group_by(anio, sepi_apertura, edad) %>%
+    mutate(cantidad=sum(cantidad)) %>%  select(anio, sepi_apertura, edad, cantidad) %>% unique()
+  
+  edades_d_f$grupo <- if_else(edades_d_f$edad < 15, "0 a 14", 
+                     if_else(edades_d_f$edad < 30, "15 a 29",
+                     if_else(edades_d_f$edad < 45, "30 a 44", 
+                     if_else(edades_d_f$edad < 60, "45 a 59", 
+                     if_else(edades_d_f$edad < 75, "60 a 74", "75 o mas")))))
+
+  edades_d_f <- edades_d_f %>% filter(!is.na(grupo)) %>% group_by(anio, sepi_apertura, grupo) %>%
+  mutate(fall=sum(cantidad)) %>% 
+    select(anio, sepi_apertura, grupo, fall) %>% unique() %>% ungroup() %>% arrange(anio, sepi_apertura) %>% 
+    group_by(anio, sepi_apertura) %>% mutate(prop_f = fall/sum(fall))
+  
+  edades_d_f$semana <- paste0(edades_d_f$anio, 
+                          if_else(edades_d_f$sepi_apertura<10, paste0('0', edades_d_f$sepi_apertura),
+                                  as.character(edades_d_f$sepi_apertura)))
+
+  
+  edades_d_f2 <- edades_d_f %>% ungroup() %>%  select(semana, grupo, prop_f) %>%  spread(grupo, prop_f) 
+  edades_d_f2 <- edades_d_f2 %>% left_join(media)
+  
+  ay <- list( tickfont = list(color = "gray"), overlaying = "y",
+              side = "right", title = "edad mdia")
+  
+fig <- plot_ly(edades_d_f2, x = ~semana, text = ~round(`0 a 14`*100,0), 
+        textposition = 'auto',
+        textfont = list(family= "Times", size= c(18, 21, 20), color= c("White"))) %>% 
+  add_trace( y = ~`0 a 14`, type = "bar", name = "0 a 14", text=~round(`0 a 14`*100,0), 
+        # textposition = 'auto', 
+        color = I("orchid3")) %>%
+  add_trace(y = ~`15 a 29`, name = "15 a 29",  text=~round(`15 a 29`*100,0), 
+            # textposition = 'auto', 
+            color = I("indianred3")) %>%
+  add_trace(y = ~`30 a 44`, name = "30 a 44",  text=~round(`30 a 44`*100,0),
+            # textposition = 'auto',
+            color = I("olivedrab3")) %>%
+  add_trace(y = ~`45 a 59`, name = "45 a 59",  text=~round(`45 a 59`*100,0),
+            # textposition = 'auto', 
+            color = I("steelblue3")) %>%
+  add_trace(y = ~`60 a 74`, name = "60 a 74",  text=~round(`60 a 74`*100,0),
+            # textposition = 'auto', 
+            color = I("steelblue4")) %>%
+  add_trace(y = ~`75 o mas`, name = "75 o mas",  text=~round(`75 o mas`*100,0),
+           color = I("steelblue2")) %>% 
+  add_lines(mode = "lines", y = ~media, name = "Edad Media", yaxis = "y2") %>% 
+  # add_lines(y = ~media, name = "Edad Media", yaxis = "y2") %>% 
+  layout(uniformtext=list(minsize=12, mode='hide'),  textposition = 'inside',
+         yaxis = list(title = "% Fallecidos según Edad", tickformat = "%"),
+         yaxis2 = list(overlaying = "y", side = "right"),
+          yaxis2 = ay,
+         xaxis=list(title="Semana"),
+         barmode = "stack", legend = list(x = 100, y = 1))
+  fig
+   
+```
+
 
 
 
@@ -897,20 +1068,31 @@ Para seleccionar sólo una provincia haga doble click sobre el nombre de la mism
 Para seleccionar sólo una provincia haga doble click sobre el nombre de la misma en la leyenda
 ```{r incProvDiaria, echo=FALSE, fig.align='center',out.height='650px', message=FALSE, warning=FALSE, out.width='100%' }
   # unique(tabla_prov$provincia)
-poblacionArg$provincia <- if_else(poblacionArg$provincia == "Ciudad de Buenos Aires", "CABA", poblacionArg$provincia)
+ # b <- list( x="2021-04-19", y= 1, yref = "y", xref = "x", ax=0, ay=-690,
+ #                text="", textangle = 0, showarrow = T,
+ #                arrowhead = 0,  arrowwidth=0.8, borderwidth=0.5, opacity=0.9)
+
+# poblacionArg$provincia <- if_else(poblacionArg$provincia == "Ciudad de Buenos Aires", "CABA", poblacionArg$provincia)
+
   incidProv <- tabla_prov %>% left_join(poblacionArg) %>% filter(tipo=="casos") %>% 
     mutate(incid = round(cant/poblacion*100000, 1),
            IncP = round(roll_mean(incid,  n=7, align="right", fill = NA), 0)) %>% 
     select(provincia, fecha, tipo, cant, incid, IncP)
-  # 
+    # 
+    # fig %>% layout(title="<b> Evolución de COVID-19 en Argentina</b>",
+    #                 xaxis = list(title = "", 
+    #                              format="%Y-%mm-%d"), yaxis = list(title = ""),
+    #                 annotations=a) %>% layout(showlegend = FALSE, annotations=b, width = 800) 
 
-  fig <- plot_ly(incidProv, x = ~fecha, y = ~IncP, color = ~provincia, alpha = 1,  size = 20, type = 'area') #,"bar" mode='lines+markers') 
+  fig <- plot_ly(incidProv, x = ~fecha, y = ~IncP, color = ~provincia, alpha = 1,  size = 30, type = 'area') #,"bar" mode='lines+markers') 
   fig <- layout(fig,  
                 autosize = F,  width = 800, height=550,# 
                 title="Evolución de la Incidencia diaria por Provincia",
                 xaxis = list(title = "día"), yaxis = list(title = "casos c/100 mil Hab"))
+  # ,  annotations=b)
   fig
-  
+
+       
   
 
 ```
@@ -1048,6 +1230,41 @@ La tasa de Letalidad a nivel nacional ha evolucionado como lo muestra la siguien
 ```
 
 
+
+## Evolucion de Letalidad por Grupoos
+
+```{r volLetalArg, echo=FALSE, fig.align='center', message=FALSE, warning=FALSE, out.width='100%' }
+
+## Semanas Epidemiológicas
+semanas <- read_excel("data/argentina.xlsx", "SEPI")
+semanas$desde <- as.Date(semanas$desde, "%d/%m/%Y")    
+semanas$hasta <- as.Date(semanas$hasta, "%d/%m/%Y")
+
+  let_gr_ev <- edades_d %>% ungroup() %>% 
+    left_join(edades_d_f) %>% ungroup() %>% 
+    mutate(fall = if_else(is.na(fall), 0, as.double(fall))) %>% 
+    # select(semana, grupo, cantidad, fall) %>% 
+    mutate(let = round(fall/cantidad*100, 1)) %>% 
+    left_join(semanas, by=c("sepi_apertura"= "semana", "anio"="AÑO")) %>% ungroup() %>% 
+    group_by(grupo) %>% arrange(desde, grupo) 
+  # %>%  select(desde, grupo, let)
+  
+  # let_gr_ev$semana <- as.integer(let_gr_ev$semana)
+ # let_gr <- let_gr_ev %>% ungroup() %>% group_by(desde) %>% 
+ #   mutate(prop = round(let/sum(let)*100, 1)) %>%  # round((fall/sum(fall))/(cantidad/sum(cantidad))*100,1)) %>% 
+ #   select(desde, grupo, prop) %>% unique()
+ 
+  fig <- plot_ly(let_gr_ev, x = ~semana, y = ~let, color = ~grupo, alpha = 1,  size = 20, type = 'bar')
+  fig <- layout(fig,  
+                autosize = F,  width = 800, height=550,# 
+                title="Evolución de la Letalidad por Grupo Etario",
+                xaxis = list(title = "semana"), yaxis = list(title = "Letalidad"))
+  fig
+```
+
+
+         
+         
 
 
 ## Tasa de Mortalidad
@@ -1231,7 +1448,7 @@ A continuación se visualiará la evolución en la proporción de los casos dete
                            # marker = list(color = 'rgb(55, 83, 109)'), 
                            line = list(color = 'rgb(55, 83, 109)', width =4))
 
-p4  
+  p4  
  
 ```
 
@@ -1265,7 +1482,7 @@ Considerando la fecha de inicio de síntomas, o en caso de no existir la menor e
   confirmados <- casos_pronvinciales %>% filter(clasificacion_resumen=="Confirmado")
   
   confirmados$fis <- if_else(is.na(confirmados$fecha_inicio_sintomas),
-                           min(confirmados$fecha_apertura, confirmados$fecha_diagnostico), 
+                           min(confirmados$fecha_apertura, confirmados$fecha_diagnostico, na.rm=T), 
                            confirmados$fecha_inicio_sintomas)
   confirmados$fis <- as.Date(confirmados$fis, "%d/%m/%Y")
   
@@ -1299,25 +1516,116 @@ Considerando la fecha de inicio de síntomas, o en caso de no existir la menor e
 
 
 
+## Fallecidos por fecha
+```{r}
+ fall <- casos_pronvinciales %>%  ungroup() %>% 
+      filter(clasificacion_resumen =="Confirmado" & fallecido=="SI") %>% 
+      group_by(fecha_fallecimiento) %>% 
+      mutate(fall =n()) %>% select(fecha_fallecimiento, fall) %>%
+  unique() %>% ungroup() %>% 
+      arrange(fecha_fallecimiento) %>%
+      mutate(promF = round(roll_mean(fall, n=7, align="right", fill = NA),0)) %>% 
+      select(fecha=fecha_fallecimiento, fall, promF) %>% unique()
+     
+#FALL ROJO
+  fig <- plot_ly(fall, x = ~fecha, y = ~fall, type = 'bar',  name = 'Fall.',
+               marker = list(color =  'rgba(222,45,38,0.8)'))
+   fig <- fig %>% add_trace(x = ~fecha, y = ~promF, name = 'Promedio',  type = 'scatter', mode = 'lines',
+                           line = list(color = 'rgba(222,45,38,0.8)', width =4))
 
+  fig <- fig %>% layout(title = 'Fallecidos diarios por Fecha real',
+                        width = 800, #height=550,
+                        xaxis = list(title = "", tickfont = list(size = 14, color = 'rgb(55, 83, 109)')),
+                        yaxis = list( title = 'Cantidad', titlefont = list(size = 16, color = 'rgb(55, 83, 109)'),
+                                      tickfont = list( size = 14, color = 'rgb(107, 107, 107)')),
+                        legend = list(x = 0, y = 1, bgcolor = 'rgba(255, 255, 255, 0)',
+                                      bordercolor = 'rgba(255, 255, 255, 0)'))
+  fig
+    
+   
+    
+```
+
+
+```{r}
+# fall2 <- fall
+# fall$fecha <- fall$fecha-15
+# 
+# pba <- fall
+# csos_fis
+ambos <- csos_fis %>% left_join(fall, by=c("fis"="fecha"))
+
+ ay <- list( tickfont = list(color = "gray"), overlaying = "y",
+              side = "right", title = "fall")
+   
+fig <- plot_ly(ambos, x = ~fis) %>% 
+   add_trace( y = ~prom,  name = 'Casos',  type = 'scatter', mode = 'lines',
+               line = list(color =  'rgb(55, 83, 109)', width =4)) %>% 
+   add_trace(y = ~promF, name = 'Fallecidos',  type = 'scatter', mode = 'lines',
+             line = list(color = 'rgba(222,45,38,0.8)', width =4), 
+             yaxis = "y2") %>% 
+   layout(uniformtext=list(minsize=12, mode='hide'),  
+          title="\n Casos y fallecidos por fecha real de ocurrencia",
+          # textposition = 'inside',
+          xaxis = list(title = ""),
+          yaxis = list(title = "Casos"),
+          yaxis2 = list(title = "Fall.", overlaying = "y", side = "right"),
+          yaxis2 = list( tickfont = list(color = "gray"), overlaying = "y",
+              side = "right", title = "fall"))#, #ay,
+          # legend = list(x = 0.1, y = 1))
+ fig
+
+  
+```
 
 ## Casos por Inicio de Síntomas
 Considerando la fecha de inicio de síntomas, o en caso de no existir la menor entre las fechas de apertura o diagnóstico se obtienen las siguientes curvas para cada provincia.
 * Para seleccionar una sola o mas hacer doble clik sobre el nombre de la/s misma/s en la leyenda
 ```{r iniSint, out.height='650px', out.width='100%'}
+  tProv <- casos_pronvinciales %>% 
+    filter(carga_provincia_nombre== residencia_provincia_nombre & 
+             clasificacion_resumen=="Confirmado")
+  # tProv$fecha_apertura <- as.Date(tProv$fecha_apertura, "%d/%m/%Y")
+  # tProv$fecha_diagnostico <- as.Date(tProv$fecha_diagnostico, "%d/%m/%Y")
+  # tProv$fecha_inicio_sintomas <- as.Date(tProv$fecha_inicio_sintomas, "%d/%m/%Y")
+  # max(casos_pronvinciales$fecha_inicio_sintomas, na.rm=T)
 
-  tProv <- confirmados %>%  arrange(fis) %>% 
-            group_by(carga_provincia_nombre, fis) %>% 
-            mutate(casos = n()) %>% 
-            select(carga_provincia_nombre, fis, casos) %>% unique()
+  tProv$fis <- if_else(!is.na(tProv$fecha_inicio_sintomas),
+                       tProv$fecha_inicio_sintomas,
+                       tProv$fecha_apertura)
+                       # if_else((is.na(tProv$fecha_inicio_sintomas) & is.na(tProv$fecha_diagnostico)), 
+                       #        tProv$fecha_apertura,
+                       #        if_else( (is.na(tProv$fecha_inicio_sintomas) & is.na(tProv$fecha_apertura)), 
+                       #          tProv$fecha_diagnostico,
+                       #          if_else((is.na(tProv$fecha_inicio_sintomas) & 
+  # !is.na(tProv$fecha_apertura) & !is.na(tProv$fecha_diagnostico )),
+                       #                 min(tProv$fecha_apertura, tProv$fecha_diagnostico),
+                       #                 tProv$fecha_apertura-3))))
+                               
   
-  fig <- plot_ly(tProv, x = ~fis, y = ~casos, color = ~carga_provincia_nombre, type = "bar") 
+  tProv <- tProv %>% group_by(carga_provincia_nombre, fis) %>% 
+    mutate(confirmados = n()) %>% 
+    select(carga_provincia_nombre, fis, confirmados) %>% unique() %>% ungroup() %>% 
+    group_by(carga_provincia_nombre) %>% arrange(fis) %>% 
+    mutate(prom = round(roll_mean(confirmados, n=7, align="right", fill = NA),0)) 
+
+  # tProv <- confirmados %>%  arrange(fis) %>% 
+  #           group_by(carga_provincia_nombre, fis) %>% 
+  #           mutate(casos = n()) %>% 
+  #           select(carga_provincia_nombre, fis, casos) %>% unique()
+  
+  fig <- plot_ly(tProv, x = ~fis, y = ~confirmados, 
+                 color = ~carga_provincia_nombre, type = "bar") 
+  fig <- fig %>%  add_trace(y = ~prom, # name = 'Prom.',  
+                            type = 'scatter', mode = 'lines',
+                            color = ~carga_provincia_nombre, width =4)
   fig <- layout(fig,   autosize = F, width = 800, height=550,# 
                 title="Evolución de Casos por Fecha de Inicio de Síntomas",
                 xaxis = list(title = "día"), yaxis = list(title = "casos"))
   fig
   
-  
+  # er <- tProv %>%  filter(carga_provincia_nombre=="Entre Ríos")
+  # write.csv(er, "er.csv")
 ```
 
 

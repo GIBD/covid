@@ -61,9 +61,9 @@ sep.miles <- function(x){format(x,big.mark=".")}
   argentina <- fromJSON(file = "data/mapas/ar-all.geo.json")
     
   ## Datos abiertos
-  casos_pronvinciales <- read_rds("data/casos_pronvinciales.rds")
-  # casos_pronvinciales <- read_csv("data/Covid19Casos.csv")
-  # saveRDS(casos_pronvinciales, "data/casos_pronvinciales.rds")
+  # casos_pronvinciales <- read_rds("data/casos_pronvinciales.rds")
+  casos_pronvinciales <- read_csv("data/Covid19Casos.csv")
+  saveRDS(casos_pronvinciales, "data/casos_pronvinciales.rds")
 
   
   poblacionArg <- read_delim("data/poblaciones/prov_argentina.csv", ";", 

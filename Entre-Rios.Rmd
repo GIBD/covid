@@ -65,9 +65,10 @@ casosH <- diasH %>% ungroup() %>%
   group_by(departamento) %>% mutate(casosH=sum(casos)) %>% 
   select(departamento, casosH) %>% unique()
 
-dias <- covid_er %>%  filter(FECHA <= (max(FECHA) - days(7))) %>%
+dias <- covid_er %>%  filter(FECHA <= (max(FECHA) - days(8))) %>%
   group_by(DEPARTAMENTO, FECHA) %>% mutate(casos = sum(CASOS)) %>% 
   select(departamento=DEPARTAMENTO, fecha=FECHA, casos) %>% unique()
+
 casosSem <- dias %>% ungroup() %>%
   group_by(departamento) %>% mutate(casosS=sum(casos)) %>%
   select(departamento, casosS) %>% unique()
@@ -542,7 +543,7 @@ incDep2 %>%
 La positividad es calculada en base a los casos confirmados y descartados por Laboratorio. 
 
 A continuación se muestra la curva de positividad para cada departamento, calculada como el promedio de los últimos 7 días.
-
+  
 ###  {.tabset  .tabset-fade .tabset-pills}
 #### Diaria (prom 7d)
 ```{r positProv,echo=FALSE, message=FALSE, warning=FALSE, out.width='100%'}
@@ -1140,6 +1141,7 @@ En la siguiente tabla se muestran los datos de Cantidad de Casos detectados, Alt
 
 Los datos pueden ser descargados en diversos formatos
 ```{r datosER, echo=FALSE, message=FALSE, warning=FALSE, paged.print=FALSE, out.width='100%'}
+
 inc14 <- incDep2 %>% filter(FECHA==max(FECHA)) %>% select(DEPARTAMENTO, incidP) %>% unique()
 sospechosos <- covid19ER_Sosp %>% group_by(residencia_departamento_nombre) %>% mutate(sospechosos=sum(sospechosos)) %>% 
   select(departamento=residencia_departamento_nombre, sospechosos) %>% unique()

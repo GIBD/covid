@@ -47,33 +47,38 @@ output:
   # Carga de Datos
   #################
 # distribuidas <- 123650
-distribuidas <- 144050
+# distribuidas <- 144050
 
-vacunas <- read_csv("data/datos_nomivac_covid19.csv")
+  vacunas <- read_csv("data/datos_nomivac_covid19.csv")
 
  # entrerios <- fromJSON(file="data/mapas/entrerios_dpto.geo.json")
  #  deptos_er <- st_read(dsn ="data/mapas/departamentos_entrerios.shp") 
-   poblac_er <-  read_delim("data/poblaciones/poblacion_entre_rios.csv",  ";", escape_double = FALSE, 
+  poblac_er <-  read_delim("data/poblaciones/poblacion_entre_rios.csv",  ";", escape_double = FALSE, 
                            locale = locale(decimal_mark = ",", grouping_mark = ".", encoding = "ISO-8859-1"), trim_ws = TRUE)
   names(poblac_er) <- c("departamento", "poblacion")
   
-provincias <- data.frame(table(vacunas$jurisdiccion_residencia))
-provincias_apl <- data.frame(table(vacunas$jurisdiccion_aplicacion))
-departamentos <- data.frame(table(vacunas$depto_residencia))
-departamentos_apl <- data.frame(table(vacunas$depto_aplicacion))
+# provincias <- data.frame(table(vacunas$jurisdiccion_residencia))
+# provincias_apl <- data.frame(table(vacunas$jurisdiccion_aplicacion))
+# departamentos <- data.frame(table(vacunas$depto_residencia))
+# departamentos_apl <- data.frame(table(vacunas$depto_aplicacion))
 
-vacunas$provincia <- if_else(vacunas$jurisdiccion_residencia =="S.I.", 
-                             vacunas$jurisdiccion_aplicacion, vacunas$jurisdiccion_residencia)
-vacunas$departamento <- if_else(vacunas$depto_residencia =="S.I.", 
-                                vacunas$depto_aplicacion, vacunas$depto_aplicacion)
+# vacunas$provincia <- if_else(vacunas$jurisdiccion_residencia =="S.I.", 
+#                              vacunas$jurisdiccion_aplicacion, vacunas$jurisdiccion_residencia)
+# vacunas$departamento <- if_else(vacunas$depto_residencia =="S.I.", 
+#                                 vacunas$depto_aplicacion, vacunas$depto_aplicacion)
 
-er <- vacunas %>% filter(jurisdiccion_aplicacion=="Entre Ríos" & jurisdiccion_residencia=="Entre Ríos" )
+er <- vacunas %>% filter(jurisdiccion_aplicacion=="Entre Ríos" & jurisdiccion_residencia=="Entre Ríos")
 
+# tabla <- er %>% group_by(fecha_aplicacion, depto_aplicacion, condicion_aplicacion, orden_dosis) %>%
+#   mutate(cant=n()) %>%
+#   select(fecha_aplicacion, depto_aplicacion, condicion_aplicacion, orden_dosis, cant) %>% unique()
 
+# write.csv(tabla, "tabla.csv")
 aplicadas <- vacunas %>% filter(jurisdiccion_aplicacion=="Entre Ríos" ) %>% mutate(total = n()) %>% 
   filter(orden_dosis== 1) %>% mutate(dosis1 = n(), dosis2= total - dosis1) %>% select(total, dosis1, dosis2) %>% unique()
   
-
+# 82071803087
+# 776830
 ```
 
 
@@ -228,6 +233,8 @@ grupo$grupo <- if_else(grupo$grupo== "Personas de 18 a 59 años con Factores de 
 ## Dosis aplicadas según población
 
 
+###  {.tabset  .tabset-fade .tabset-pills}
+#### Grafico
 ```{r evolER6, echo=FALSE, fig.align='center', message=FALSE, warning=FALSE, paged.print=FALSE, out.width='100%'}
 
  
@@ -242,32 +249,42 @@ pobl <- er %>% filter(jurisdiccion_aplicacion=="Entre Ríos" & jurisdiccion_resi
   mutate(total_d1 =round(dosis1/poblacion*100, 1),
          total_d2 =round(dosis2/poblacion*100, 1)) %>% arrange(desc(total_d1))
 
-  fig <- plot_ly(pobl, type="bar") #, colors = ~unique(col)) 
+  fig <- plot_ly(pobl, type="bar") 
    fig <- fig %>% add_trace( x = ~total_d1, y = ~dpto, name= "% 1 dosis",
-                            # color=~col, 
                             text=~total_d1, textposition = 'outside',
                             textfont = list(color = 'rgb(0,0,0)'), 
                             mode="lines",
-                               #showlegend = FALSE,
                                line = list(width = 15)) %>% 
       layout(title="Entre Ríos - % Población según dosis aplicada", 
               yaxis=list(title=""),  xaxis=list(title="%")) %>% 
      add_trace( x = ~total_d2, y = ~dpto, name= "% 2 dosis",
-                            # color=~col, 
                             text=~total_d2, textposition = 'outside',
                             textfont = list(color = 'rgb(0,0,0)'), 
                             mode="lines",
-                               #showlegend = FALSE,
-                               line = list(width = 15)) 
+                line = list(width = 15)) 
    fig
 
 
 ```
 
 
+#### Tabla
+
+```{r}
+pobl %>%
+  datatable(extensions = 'Buttons', rownames = FALSE,
+             colnames = c("Departamento", "1 Dosis", "2 Dosis", "Poblacion","% 1° Dosis", "% 2° Dosis"),
+            options = list(dom = 'Blfrtip',
+                           buttons = c('copy', 'csv', 'excel', 'pdf', 'print'),
+                           lengthMenu = list(c(10,25,50,-1), c(10,25,50,"All"))))
+```
+
+
 
 ## Dosis aplicadas a mayores de 60
 
+###  {.tabset  .tabset-fade .tabset-pills}
+#### Grafico
 ```{r evolER7, echo=FALSE, fig.align='center', message=FALSE, warning=FALSE, paged.print=FALSE, out.width='100%'}
   # er$condicion_aplicacion
   mayores <-  er %>% filter(jurisdiccion_aplicacion=="Entre Ríos" & 
@@ -292,3 +309,18 @@ pobl <- er %>% filter(jurisdiccion_aplicacion=="Entre Ríos" & jurisdiccion_resi
 
 
 ```
+
+
+#### Tabla
+```{r}
+total <- pobl %>% left_join(mayores, by= c("dpto"="dpto"))
+total %>%
+  datatable(extensions = 'Buttons', rownames = FALSE,
+             colnames = c("Departamento", "1 Dosis", "2 Dosis", "Poblacion",
+                          "% Dosis 1", "% Dosis 2", "Dosis 1 May60", "Dosis 2 May60"),
+            options = list(dom = 'Blfrtip',
+                           buttons = c('copy', 'csv', 'excel', 'pdf', 'print'),
+                           lengthMenu = list(c(10,25,50,-1), c(10,25,50,"All"))))
+```
+```
+

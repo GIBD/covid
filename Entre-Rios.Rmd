@@ -92,7 +92,7 @@ names(covid19ER) <- c("id_evento_caso", "sexo", "edad", "edad_anos_meses",
                       "carga_provincia_id",	"origen_financiamiento",	"Clasificacion", "clasificacion_resumen",	
                       "residencia_provincia_id", 	"fecha_diagnostico", "residencia_departamento_id","ultima_actualizacion")
 
-covid19ER <- covid19ER %>% filter(residencia_provincia_nombre=="Entre Ríos" & carga_provincia_nombre=="Entre Ríos")
+covid19ER <- covid19ER %>% filter(residencia_provincia_nombre=="Entre Ríos")# & carga_provincia_nombre=="Entre Ríos")
 # write.csv(covid19ER, "covidER.csv")
 
 covid19ER_Conf <- covid19ER %>%
@@ -129,7 +129,7 @@ covid19ER_Rec <- covid19ER %>%
 covid_er_altas <- covid19ER_Rec # <- read_excel("data/entre_rios_casos.xlsx", "ALTAS")
 
 covid19ER_Fall_sisa <- covid19ER %>%
-  filter(carga_provincia_nombre=="Entre Ríos" & 
+  filter(#carga_provincia_nombre=="Entre Ríos" & 
            residencia_provincia_nombre=="Entre Ríos" &
            clasificacion_resumen=="Confirmado" & fallecido=="SI")
 

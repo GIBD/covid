@@ -74,7 +74,8 @@ er <- vacunas %>% filter(jurisdiccion_aplicacion=="Entre Ríos" & jurisdiccion_r
 #   select(fecha_aplicacion, depto_aplicacion, condicion_aplicacion, orden_dosis, cant) %>% unique()
 
 # write.csv(tabla, "tabla.csv")
-aplicadas <- vacunas %>% filter(jurisdiccion_aplicacion=="Entre Ríos" ) %>% mutate(total = n()) %>% 
+aplicadas <- vacunas %>% 
+  filter(jurisdiccion_aplicacion=="Entre Ríos" ) %>% mutate(total = n()) %>% 
   filter(orden_dosis== 1) %>% mutate(dosis1 = n(), dosis2= total - dosis1) %>% select(total, dosis1, dosis2) %>% unique()
   
 # 82071803087

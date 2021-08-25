@@ -512,10 +512,10 @@ fig
 ```{r incDpto, echo=FALSE, message=FALSE, warning=FALSE, paged.print=FALSE}
 incDep %>%
   mutate(promD  = round(promD,1)) %>% 
-  select(DEPARTAMENTO, poblacion, FECHA, casos=cantidad, promD, incid, incidP, incidP2) %>% 
+  select(DEPARTAMENTO, FECHA, casos=cantidad, promD, incid, incidP, incidP2) %>% 
   arrange(DEPARTAMENTO, FECHA) %>% 
   datatable(extensions = 'Buttons', rownames = FALSE,
-            colnames = c("Departamento", "Población", "Fecha", "Casos del día", "Casos Prom. 7 días",
+            colnames = c("Departamento", "Fecha", "Casos del día", "Casos Prom. 7 días",
                          "Incidencia diaria", "Incid. Prom. a 7 días", "Incid. Prom. 14 días"),
             options = list(dom = 'Blfrtip',
                            buttons = c('copy', 'csv', 'excel', 'pdf', 'print'),

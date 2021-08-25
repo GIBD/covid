@@ -80,6 +80,8 @@ poblac_er <-  read_delim("data/poblaciones/poblacion_entre_rios.csv",  ";", esca
                          locale = locale(decimal_mark = ",", grouping_mark = ".", encoding = "ISO-8859-1"), trim_ws = TRUE)
 names(poblac_er) <- c("departamento", "poblacion")
 
+pobTot <- sum(poblac_er$poblacion[2:18])
+
 ### Base Nación
 # covid19ER <- read_csv("data/Covid19Casos.csv")
 covid19ER <- read_rds("data/casos_pronvinciales.rds")
@@ -229,11 +231,11 @@ A continuación se muestra la cantidad de casos diarios totales informados por e
 
 ```{r diaC, echo=FALSE, fig.align='center', message=FALSE, warning=FALSE, paged.print=FALSE, out.width='100%'}
 diario <-  covid_er %>% group_by(FECHA) %>%
-  mutate(casosD = sum(CASOS)) %>% select(FECHA, casosD) %>% unique()
+  mutate(casosD = sum(CASOS)) %>% dplyr::select(FECHA, casosD) %>% unique()
 diario$FECHA <- as.Date(diario$FECHA, "%d/%m/%Y")
 diario <- diario %>% ungroup() %>% arrange(FECHA) %>%
   mutate(casosP=round(roll_mean(casosD, n=7, align="right", fill = NA), 0) ) %>%
-  select(FECHA, casosD, casosP) %>% unique()
+  dplyr::select(FECHA, casosD, casosP) %>% unique()
 
 fig <- plot_ly(diario, x = ~FECHA, y = ~casosD, type = 'bar', name = 'Casos Diarios',
                text= ~casosD,  textposition = 'outside',
@@ -264,7 +266,7 @@ La evolución de casos por departamento desde el inicio de la pandemia se muestr
 
 covid_er$FECHA <- as.Date(covid_er$FECHA, '%d/%m/%Y')
 evolER <- covid_er %>% group_by(DEPARTAMENTO, FECHA) %>% 
-  mutate(cantidad= sum(CASOS)) %>% select(DEPARTAMENTO, FECHA, cantidad) %>% unique()
+  mutate(cantidad= sum(CASOS)) %>% dplyr::select(DEPARTAMENTO, FECHA, cantidad) %>% unique()
 
 diario <- evolER %>% 
   group_by(DEPARTAMENTO) %>% 
@@ -421,7 +423,9 @@ localidades_er_hoy <- covid_er %>% filter(FECHA==max(FECHA)) %>%
   left_join(localidades, by=c("DEPARTAMENTO"="DEPARTAMENTO", "LOCALIDAD"="LOCALIDAD")) %>% 
   group_by(Lat2, Long2) %>% mutate(cant=sum(CASOS), Lat=as.double(Lat), Long=as.double(Long)) %>% 
   select(LOCALIDAD, Lat, Long, cant) %>% unique()
+
 localidades_er_hoy <- as.data.frame(lapply(localidades_er_hoy, rep, localidades_er_hoy$cant))
+
 # write.csv(localidades_er_hoy, "localidades_er_hoy.csv")
 leaflet(height = 900, width = 900) %>% addTiles() %>% 
   addProviderTiles(providers$OpenStreetMap) %>% 
@@ -451,15 +455,36 @@ Para seleccionar sólo un departamento haga doble click sobre el nombre del mism
 ###  {.tabset  .tabset-fade .tabset-pills}
 #### A 7 días
 ```{r incDptalvDiaria, echo=FALSE, fig.align='center', message=FALSE, warning=FALSE, out.width='100%' }
+# pobTot
+
+Incprov <- diario %>%
+   filter(FECHA > "2020-06-14" &
+           !(DEPARTAMENTO %in% c("Otros", "Turistas"))) %>%
+  ungroup() %>% 
+  group_by(FECHA) %>% 
+  mutate(DEPARTAMENTO="Entre Ríos",
+         cantidad = sum(cantidad)) %>% 
+  select(DEPARTAMENTO, FECHA, cantidad) %>%  unique() %>% 
+  ungroup() %>% 
+  mutate(promD= round(roll_mean(cantidad,  n=7, align="right", fill = 0), 1),
+         incid = round(cantidad/pobTot*100000, 0),
+         incidP =  round(roll_mean(incid,  n=7, align="right", fill = 0), 1)) %>% 
+  arrange(DEPARTAMENTO, FECHA)
+# incidP
+
 incDep <- diario %>% 
   filter(FECHA > "2020-06-14" & 
            !(DEPARTAMENTO %in% c("Otros", "Turistas"))) %>% 
   left_join(poblac_er, by=c("DEPARTAMENTO"="departamento")) %>% 
   mutate(incid = round(cantidad/poblacion*100000, 1),
-         incidP =  round(roll_mean(incid,  n=7, align="right", fill = 0), 1)) %>% #NA), 0)) %>% 
+         incidP =  round(roll_mean(incid,  n=7, align="right", fill = 0), 1)) %>% 
+  select(DEPARTAMENTO, FECHA, cantidad, promD, incid, incidP) %>% 
   arrange(DEPARTAMENTO, FECHA)
+# names(incDep)
+# names(Incprov)
+incDep2 <-  rbind.data.frame(Incprov, incDep)
 
-fig <- plot_ly(incDep, x = ~FECHA, y = ~incidP, color = ~DEPARTAMENTO, alpha = 1,  size = 20, type = 'area')
+fig <- plot_ly(incDep2, x = ~FECHA, y = ~incidP, color = ~DEPARTAMENTO, alpha = 1,  size = 20, type = 'area')
 fig <- layout(fig,  autosize = F, width = 800,
               title="Evolución de la Incidencia diaria por Departamento",
               xaxis = list(title = "día"), yaxis = list(title = "casos c/100 mil Hab"))

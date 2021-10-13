@@ -21,10 +21,14 @@ output:
 ```
 
 ```{r importarArg, message=FALSE, warning=FALSE, include=FALSE}
-  library(readr)
-  library(dplyr)
-  library(tidyr)
-  library(tidyverse)
+
+#################
+# Carga de Datos
+#################
+library(readr)
+library(dplyr)
+library(tidyr)
+library(tidyverse)
   library(ggplot2)
   library(lubridate)
   library(knitr)
@@ -34,54 +38,26 @@ output:
   library(plotly)
   library(gganimate)
   library(stringr)
-  library(leaflet)
-  library(sf)
-  # library(tmap)
   library(googlesheets4)
   library(readxl)
   library(RcppRoll)
   library(DT)
 
+er <- read_csv("data/datos_nomivac_covid19.csv") %>% filter(jurisdiccion_aplicacion=="Entre Ríos" & jurisdiccion_residencia=="Entre Ríos")
+# er <- vacunas %>% filter(jurisdiccion_aplicacion=="Entre Ríos" & jurisdiccion_residencia=="Entre Ríos")
+poblac_er <-  read_delim("data/poblaciones/poblacion_entre_rios.csv",  ";", escape_double = FALSE,
+                         locale = locale(decimal_mark = ",", grouping_mark = ".", encoding = "ISO-8859-1"), trim_ws = TRUE)
+names(poblac_er) <- c("departamento", "poblacion")
 
- #################
-  # Carga de Datos
-  #################
-# distribuidas <- 123650
-# distribuidas <- 144050
-
-  vacunas <- read_csv("data/datos_nomivac_covid19.csv")
-
- # entrerios <- fromJSON(file="data/mapas/entrerios_dpto.geo.json")
- #  deptos_er <- st_read(dsn ="data/mapas/departamentos_entrerios.shp") 
-  poblac_er <-  read_delim("data/poblaciones/poblacion_entre_rios.csv",  ";", escape_double = FALSE, 
-                           locale = locale(decimal_mark = ",", grouping_mark = ".", encoding = "ISO-8859-1"), trim_ws = TRUE)
-  names(poblac_er) <- c("departamento", "poblacion")
-  
-# provincias <- data.frame(table(vacunas$jurisdiccion_residencia))
-# provincias_apl <- data.frame(table(vacunas$jurisdiccion_aplicacion))
-# departamentos <- data.frame(table(vacunas$depto_residencia))
-# departamentos_apl <- data.frame(table(vacunas$depto_aplicacion))
-
-# vacunas$provincia <- if_else(vacunas$jurisdiccion_residencia =="S.I.", 
-#                              vacunas$jurisdiccion_aplicacion, vacunas$jurisdiccion_residencia)
-# vacunas$departamento <- if_else(vacunas$depto_residencia =="S.I.", 
-#                                 vacunas$depto_aplicacion, vacunas$depto_aplicacion)
-
-er <- vacunas %>% filter(jurisdiccion_aplicacion=="Entre Ríos" & jurisdiccion_residencia=="Entre Ríos")
-
-# tabla <- er %>% group_by(fecha_aplicacion, depto_aplicacion, condicion_aplicacion, orden_dosis) %>%
-#   mutate(cant=n()) %>%
-#   select(fecha_aplicacion, depto_aplicacion, condicion_aplicacion, orden_dosis, cant) %>% unique()
-
-# write.csv(tabla, "tabla.csv")
-aplicadas <- vacunas %>% 
+```
+```{r armo, message=FALSE, warning=FALSE, include=FALSE}
+# er <- vacunas
+aplicadas <- er %>% 
   filter(jurisdiccion_aplicacion=="Entre Ríos" ) %>% 
   group_by(condicion_aplicacion, orden_dosis) %>% 
   mutate(total = n()) %>% 
   filter(orden_dosis== 1) %>% mutate(dosis1 = n(), dosis2= total - dosis1) %>% select(total, dosis1, dosis2) %>% unique()
   
-# 82071803087
-# 776830
 ```
 
 
@@ -92,32 +68,26 @@ En Entre Ríos se han aplicado hasta el momento `r  aplicadas$total` dosis, de l
 
 
 ```{r evolER, echo=FALSE, fig.align='center', message=FALSE, warning=FALSE, paged.print=FALSE, out.width='100%'}
-  aplicaciones <- er %>% 
-  filter(jurisdiccion_aplicacion=="Entre Ríos") %>%
-  # filter(jurisdiccion_aplicacion=="Entre Ríos" & condicion_aplicacion ==">60") %>%
-    group_by(fecha_aplicacion, orden_dosis) %>% 
-    mutate(cant=n()) %>% select(fecha=fecha_aplicacion, dosis=orden_dosis, cant) %>% unique() %>% 
-    spread(dosis, cant) %>% 
-    select(fecha, dosis1=`1`, dosis2=`2`) %>% 
-    mutate(dosis1 = if_else(is.na(dosis1), 0, as.double(dosis1)),
-           dosis2 = if_else(is.na(dosis2), 0, as.double(dosis2)),
-           total =dosis1+dosis2)  %>% ungroup() %>% arrange(fecha) %>% 
-    mutate(prom = round(roll_mean(total, n=7, align="right", fill = NA), 0)) 
-  
-    
-  
-  fig <- plot_ly(aplicaciones, x = ~fecha, y = ~dosis1, type = 'bar',  name = '1° Dosis')
-  fig <- fig %>% add_trace(y = ~dosis2, name = '2° Dosis')
-  fig <- fig %>% layout(title = "Dosis diarias aplicadas en Entre Ríos", 
-                        xaxis = list(title="Fecha" ), 
-                        yaxis = list(title = "Dosis"), 
-                        barmode = "stack",
-                        legend = list(font = list(size = 10)))
-  fig <- fig %>% add_lines(y = ~prom, name = 'Prom.')
-  
-  # plotly_IMAGE(fig, format = "png", out_file = "output.png")
-  fig
+aplicaciones <- er %>%  filter(jurisdiccion_aplicacion=="Entre Ríos") %>%
+  group_by(fecha_aplicacion, orden_dosis) %>% 
+  mutate(cant=n()) %>% select(fecha=fecha_aplicacion, dosis=orden_dosis, cant) %>% unique() %>% 
+  spread(dosis, cant) %>% 
+  select(fecha, dosis1=`1`, dosis2=`2`) %>% 
+  mutate(dosis1 = if_else(is.na(dosis1), 0, as.double(dosis1)),
+         dosis2 = if_else(is.na(dosis2), 0, as.double(dosis2)),
+         total =dosis1+dosis2)  %>% ungroup() %>% arrange(fecha) %>% 
+  mutate(prom = round(roll_mean(total, n=7, align="right", fill = NA), 0)) 
 
+fig <- plot_ly(aplicaciones, x = ~fecha, y = ~dosis1, type = 'bar',  name = '1° Dosis')
+fig <- fig %>% add_trace(y = ~dosis2, name = '2° Dosis')
+fig <- fig %>% layout(title = "Dosis diarias aplicadas en Entre Ríos", 
+                      xaxis = list(title="Fecha" ), 
+                      yaxis = list(title = "Dosis"), 
+                      barmode = "stack",
+                      legend = list(font = list(size = 10)))
+fig <- fig %>% add_lines(y = ~prom, name = 'Prom.')
+
+fig
 
 ```
 
@@ -128,23 +98,21 @@ En Entre Ríos se han aplicado hasta el momento `r  aplicadas$total` dosis, de l
 La cantidad de dosis aplicadas en cada departamento se muestra a continuación discriminada por el orden de las dosis
 
 ```{r evolER2, echo=FALSE, fig.align='center', message=FALSE, warning=FALSE, paged.print=FALSE, out.width='100%'}
-# table(er$grupo_etario)
-  dptal <- er %>% 
-  filter(jurisdiccion_aplicacion=="Entre Ríos"  & jurisdiccion_residencia=="Entre Ríos") %>%
-  # filter(jurisdiccion_aplicacion=="Entre Ríos" & jurisdiccion_residencia=="Entre Ríos" & 
-  #          condicion_aplicacion ==">60" & grupo_etario %in% c("60-69", "70-79", "80-89","90-99",">=100")) %>%
-  group_by(depto_aplicacion, orden_dosis) %>% mutate(dosis=n()) %>% 
-    select(depto_aplicacion, orden_dosis, dosis) %>% unique() %>%
-    spread(orden_dosis, dosis) %>% mutate(total = `1`+`2`) %>% 
-    select(depto = depto_aplicacion, dosis1=`1`, dosis2= `2`, total ) %>% arrange(desc(depto))
 
-  fig <- plot_ly(dptal, x = ~dosis1, y = ~depto, type = 'bar', name = '1° Dosis', 
-                 text =  ~dosis1, textposition = 'outside')
-  fig <- fig %>% add_trace( x = ~dosis2, y = ~depto, name = '2° Dosis', 
-                 text =  ~dosis2, textposition = 'outside')
-  fig <- fig %>% layout(title = "Dosis totales por Dpto.", 
-                        yaxis = list(title = ''),xaxis = list(title = 'dosis'), barmode = 'group')
-  fig
+dptal <- er %>% 
+  filter(jurisdiccion_aplicacion=="Entre Ríos"  & jurisdiccion_residencia=="Entre Ríos") %>%
+  group_by(depto_aplicacion, orden_dosis) %>% mutate(dosis=n()) %>% 
+  select(depto_aplicacion, orden_dosis, dosis) %>% unique() %>%
+  spread(orden_dosis, dosis) %>% mutate(total = `1`+`2`) %>% 
+  select(depto = depto_aplicacion, dosis1=`1`, dosis2= `2`, total ) %>% arrange(desc(depto))
+
+fig <- plot_ly(dptal, x = ~dosis1, y = ~depto, type = 'bar', name = '1° Dosis', 
+               text =  ~dosis1, textposition = 'outside')
+fig <- fig %>% add_trace( x = ~dosis2, y = ~depto, name = '2° Dosis', 
+                          text =  ~dosis2, textposition = 'outside')
+fig <- fig %>% layout(title = "Dosis totales por Dpto.", 
+                      yaxis = list(title = ''),xaxis = list(title = 'dosis'), barmode = 'group')
+fig
 
 
 ```
@@ -156,9 +124,9 @@ La cantidad de dosis aplicadas por día en cada departamento se muestra a contin
 
 ```{r evolER3, echo=FALSE, fig.align='center', message=FALSE, warning=FALSE, paged.print=FALSE, out.width='100%'}
 
-  dptalD <- er %>% filter(jurisdiccion_aplicacion=="Entre Ríos" & jurisdiccion_residencia=="Entre Ríos") %>%
-    group_by(depto_aplicacion, fecha_aplicacion) %>% mutate(diarias=n()) %>% 
-    select(depto =depto_aplicacion, fecha=fecha_aplicacion, diarias) %>% unique() 
+dptalD <- er %>% 
+  group_by(depto_aplicacion, fecha_aplicacion) %>% mutate(diarias=n()) %>% 
+  select(depto =depto_aplicacion, fecha=fecha_aplicacion, diarias) %>% unique() 
 
 p <- dptalD %>% filter(depto %in% c("Feliciano", "La Paz", "Paraná", "Diamante", 
                                     "Nogoyá", "Federal","Gualeguay", "Tala","Victoria" )) %>% 
@@ -168,22 +136,18 @@ p <- dptalD %>% filter(depto %in% c("Feliciano", "La Paz", "Paraná", "Diamante"
   geom_smooth(method = 'loess',
               formula = 'y ~ x', alpha = 0.2, size = 1, span = .3, se=FALSE, color="#ef8a62") + 
   labs(title = paste("COVID-19 Vacunación en ER"), 
-       y = "Dosis diarias", 
-       x = "Fecha") +
+       y = "Dosis diarias",  x = "Fecha") +
   facet_wrap(~depto,scales="free", nrow = 3,strip.position = "top")
 
-
-  ggplotly(p, name="Costa Oeste", width = 900, height = 900)
+ggplotly(p, name="Costa Oeste", width = 900, height = 900)
   
 
 ```
 
 
 ```{r evolER4, echo=FALSE, fig.align='center', message=FALSE, warning=FALSE, paged.print=FALSE, out.width='100%'}
-
- 
 p <- dptalD %>% filter(!(depto %in% c("Feliciano", "La Paz", "Paraná", "Diamante", 
-                                    "Nogoyá", "Federal","Gualeguay", "Tala","Victoria" )) )%>% 
+                                      "Nogoyá", "Federal","Gualeguay", "Tala","Victoria" )) )%>% 
   ggplot(mapping=aes(x=fecha, y=diarias)) +
   geom_line(color="#67a9cf") +
   geom_point(color="#67a9cf") +
@@ -193,9 +157,8 @@ p <- dptalD %>% filter(!(depto %in% c("Feliciano", "La Paz", "Paraná", "Diamant
        y = "Dosis diarias", 
        x = "Fecha") +
   facet_wrap(~depto,scales="free", nrow = 3,strip.position = "top") 
-  # + theme( strip.background = element_blank(), strip.placement = "outside")
-   
-  ggplotly(p, name="Costa Este", width = 900, height = 900)
+
+ggplotly(p, name="Costa Este", width = 900, height = 900)
 
 ```
 
@@ -205,10 +168,7 @@ p <- dptalD %>% filter(!(depto %in% c("Feliciano", "La Paz", "Paraná", "Diamant
 ## Dosis aplicadas según grupo prioritario
 
 ```{r evolER5, echo=FALSE, fig.align='center', message=FALSE, warning=FALSE, paged.print=FALSE, out.width='100%'}
-
- 
 grupo <- er %>% filter(jurisdiccion_aplicacion=="Entre Ríos") %>%
-  
   group_by(condicion_aplicacion, orden_dosis) %>% 
   mutate(cantidad = n()) %>%
   select(grupo=condicion_aplicacion, orden_dosis, cantidad) %>% unique() %>% 
@@ -217,15 +177,14 @@ grupo <- er %>% filter(jurisdiccion_aplicacion=="Entre Ríos") %>%
   arrange(desc(total))
 grupo$dosis2 <- if_else(is.na(grupo$dosis2), 0, as.double(grupo$dosis2))
 
-grupo$grupo <- if_else(grupo$grupo== "Personas de 18 a 59 años con Factores de Riesgo",  "Personas de 18 a 59 años \n con Factores de Riesgo", grupo$grupo)
-  fig <- plot_ly(grupo) %>% add_trace( type = "funnel",
-                            y = grupo$grupo,
-                            x= grupo$dosis1, name="1° Dosis") %>%
-    layout(yaxis = list(categoryarray = unique(grupo$grupo))) %>% 
-    add_trace( type = "funnel",
-                            y = grupo$grupo,
-                            x= grupo$dosis2, name="2° Dosis")
-  fig
+grupo$grupo <- if_else(grupo$grupo== "Personas de 18 a 59 años con Factores de Riesgo",
+                       "Personas de 18 a 59 años \n con Factores de Riesgo", grupo$grupo)
+
+fig <- plot_ly(grupo) %>% 
+  add_trace( type = "funnel", y = grupo$grupo, x= grupo$dosis1, name="1° Dosis") %>%
+  layout(yaxis = list(categoryarray = unique(grupo$grupo))) %>% 
+  add_trace( type = "funnel", y = grupo$grupo, x= grupo$dosis2, name="2° Dosis")
+fig
 
 ```
 
@@ -239,8 +198,6 @@ grupo$grupo <- if_else(grupo$grupo== "Personas de 18 a 59 años con Factores de 
 ###  {.tabset  .tabset-fade .tabset-pills}
 #### Grafico
 ```{r evolER6, echo=FALSE, fig.align='center', message=FALSE, warning=FALSE, paged.print=FALSE, out.width='100%'}
-
- 
 pobl <- er %>% filter(jurisdiccion_aplicacion=="Entre Ríos" & jurisdiccion_residencia=="Entre Ríos") %>%
   group_by(depto_residencia, orden_dosis) %>% 
   mutate(cantidad = n()) %>%
@@ -252,20 +209,20 @@ pobl <- er %>% filter(jurisdiccion_aplicacion=="Entre Ríos" & jurisdiccion_resi
   mutate(total_d1 =round(dosis1/poblacion*100, 1),
          total_d2 =round(dosis2/poblacion*100, 1)) %>% arrange(desc(total_d1))
 
-  fig <- plot_ly(pobl, type="bar") 
-   fig <- fig %>% add_trace( x = ~total_d1, y = ~dpto, name= "% 1 dosis",
-                            text=~total_d1, textposition = 'outside',
-                            textfont = list(color = 'rgb(0,0,0)'), 
-                            mode="lines",
-                               line = list(width = 15)) %>% 
-      layout(title="Entre Ríos - % Población según dosis aplicada", 
-              yaxis=list(title=""),  xaxis=list(title="%")) %>% 
-     add_trace( x = ~total_d2, y = ~dpto, name= "% 2 dosis",
-                            text=~total_d2, textposition = 'outside',
-                            textfont = list(color = 'rgb(0,0,0)'), 
-                            mode="lines",
-                line = list(width = 15)) 
-   fig
+fig <- plot_ly(pobl, type="bar") 
+
+fig <- fig %>% add_trace( x = ~total_d1, y = ~dpto, name= "% 1 dosis",
+                          text=~total_d1, textposition = 'outside',
+                          textfont = list(color = 'rgb(0,0,0)'), 
+                          mode="lines",
+                          line = list(width = 15)) %>% 
+  layout(title="Entre Ríos - % Población según dosis aplicada", 
+         yaxis=list(title=""),  xaxis=list(title="%")) %>% 
+  add_trace( x = ~total_d2, y = ~dpto, name= "% 2 dosis",
+             text=~total_d2, textposition = 'outside',
+             textfont = list(color = 'rgb(0,0,0)'), 
+             mode="lines", line = list(width = 15)) 
+fig
 
 
 ```
@@ -289,26 +246,24 @@ pobl %>%
 ###  {.tabset  .tabset-fade .tabset-pills}
 #### Grafico
 ```{r evolER7, echo=FALSE, fig.align='center', message=FALSE, warning=FALSE, paged.print=FALSE, out.width='100%'}
-  # er$condicion_aplicacion
-  mayores <-  er %>% filter(jurisdiccion_aplicacion=="Entre Ríos" & 
-                              jurisdiccion_residencia=="Entre Ríos" &
-                              condicion_aplicacion =="60 o más años" & 
-                grupo_etario %in% c("60-69", "70-79", "80-89","90-99",">=100")) %>%
-    group_by(depto_residencia, orden_dosis) %>% 
-    mutate(cantidad = n()) %>%
-    select(dpto=depto_residencia, orden_dosis, cantidad) %>% unique() %>% 
-    spread(orden_dosis, cantidad) %>%
-    select(dpto, dosis1=`1`, dosis2= `2`) %>% 
-    filter(!(dpto == "S.I."))
+mayores <-  er %>% filter(jurisdiccion_aplicacion=="Entre Ríos" & 
+                            jurisdiccion_residencia=="Entre Ríos" &
+                            condicion_aplicacion =="60 o más años" & 
+                            grupo_etario %in% c("60-69", "70-79", "80-89","90-99",">=100")) %>%
+  group_by(depto_residencia, orden_dosis) %>% 
+  mutate(cantidad = n()) %>%
+  select(dpto=depto_residencia, orden_dosis, cantidad) %>% unique() %>% 
+  spread(orden_dosis, cantidad) %>%
+  select(dpto, dosis1=`1`, dosis2= `2`) %>% 
+  filter(!(dpto == "S.I."))
 
- 
-  fig <- plot_ly(mayores, x = ~dosis1, y = ~dpto, type = 'bar', name = '1° Dosis', 
-                 text =  ~dosis1, textposition = 'outside') 
-  fig <- fig %>% add_trace( x = ~dosis2, y = ~dpto, name = '2° Dosis', 
-                            text =  ~dosis2, textposition = 'outside') 
-  fig <- fig %>% layout(title = "Dosis totales en Mayores de 60 Años", 
-                        yaxis = list(title = ''),xaxis = list(title = 'dosis'), barmode = 'group')
-  fig 
+fig <- plot_ly(mayores, x = ~dosis1, y = ~dpto, type = 'bar', name = '1° Dosis', 
+               text =  ~dosis1, textposition = 'outside') 
+fig <- fig %>% add_trace( x = ~dosis2, y = ~dpto, name = '2° Dosis', 
+                          text =  ~dosis2, textposition = 'outside') 
+fig <- fig %>% layout(title = "Dosis totales en Mayores de 60 Años", 
+                      yaxis = list(title = ''),xaxis = list(title = 'dosis'), barmode = 'group')
+fig 
 
 
 ```
